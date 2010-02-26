@@ -3,6 +3,7 @@
     <wb-module deploy-name="Shadowolf">
         <wb-resource deploy-path="/" source-path="/WebContent"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/extern"/>
         <property name="context-root" value="Shadowolf"/>
         <property name="java-output-path"/>
     </wb-module>

@@ -1,6 +1,8 @@
 package com.shadowolf.servlet;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -57,7 +59,9 @@ public class AnnounceServlet extends HttpServlet {
  		 * trackerid: Optional. If a previous announce contained a tracker id, it should be set here. 
 		 */
 		
-		
+		PrintWriter respWriter = response.getWriter();
+		respWriter.write("Hello, world!");
+		respWriter.write("Your passkey: " + request.getParameter("passkey"));
 	}
 
 	protected static String makeResponse(String failure) {

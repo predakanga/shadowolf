@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
+
+<project name="shadowolf" basedir="." default="build">
+	<property name="servlet.dir" value="C:/Users/Eddie/Desktop/apache-tomcat-6.0.24"/>
+	<property name="servlet.lib.dir" value="${servlet.dir}/lib"/>
+	
+	<property name="build.dir" value="../build" />
+	<property name="extern.lib.dir" value="../extern/lib"/>
+	<property name="java.src.dir" value="../src/"/>
+	<property name="webapp.src.dir" value="../WebContent"/>
+	<property name="project.name" value="shadowolf"/>
+	
+	<property name="java.build.dir" value="${build.dir}/java"/>
+	<property name="java.build.classes.dir" value="${build.dir}/java/classes"/>
+	<property name="java.build.src.dir" value="${build.dir}/java/src"/>
+	<property name="java.jar" value="${build.dir}/java/${project.name}.jar"/>
+	<property name="java.src.jar" value="${build.dir}/java/${project.name}-src.jar"/>
+	
+	<property name="webapp.name" value="${project.name}"/>
+	<property name="webapp.build.dir" value="${build.dir}/webapp/${webapp.name}"/>
+	<property name="webapp.build.classes.dir" value="${build.dir}/webapp/${webapp.name}/WEB-INF"/>
+	<property name="webapp.war" value="${build.dir}/webapp/${webapp.name}.war"/>
+	
+	<path id="java.classpath">
+		<fileset dir="${extern.lib.dir}">
+			<patternset>
+				<include name="**/*.jar" />
+			</patternset>
+		</fileset>
+		
+		<fileset dir="${servlet.lib.dir}">
+			<patternset>
+				<include name="**/*.jar" />
+			</patternset>
+		</fileset>
+	</path>
+	
+	<path id="webapp.classes.path">
+		<fileset dir="${java.build.classes.dir}">
+			<patternset>
+				<include name="**/*.class" />
+			</patternset>
+		</fileset>	
+		
+		<fileset dir="${java.src.dir}">
+			<patternset>
+				<exclude name="**/*.java" />
+			</patternset>
+		</fileset>
+	</path>
+	
+	<path id="webapp.lib.path">
+		<fileset dir="${extern.lib.dir}">
+			<patternset>
+				<include name="**/*.jar"/>
+			</patternset>
+		</fileset>
+	</path>
+	
+	<path id="webapp.source.path">
+		<fileset dir="${webapp.src.dir}">
+			<patternset>
+				<exclude name="lib/*.jar"/>
+			</patternset>
+		</fileset>
+	</path>
+	
+	<target name="build">
+		<delete dir="${java.build.dir}" />
+		<delete dir="${webapp.build.dir}" />
+		
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${java.build.classes.dir}" />
+		<mkdir dir="${java.build.src.dir}" />
+		<mkdir dir="${webapp.build.dir}" />
+		<mkdir dir="${webapp.build.classes.dir}" />
+		
+		<javac
+			srcdir="${java.src.dir}"
+			destdir="${java.build.classes.dir}"
+		>
+			<classpath refid="java.classpath"/>
+		</javac>
+		
+		<copy todir="${java.build.src.dir}">
+			<fileset dir="${java.src.dir}"/>
+		</copy>
+		
+		<jar jarfile="${java.src.jar}">
+			<fileset dir="${java.build.src.dir}"/>
+		</jar>
+		
+		<mkdir dir="${webapp.build.dir}/WEB-INF/classes"/>
+		<copy todir="${webapp.build.dir}/WEB-INF/classes">
+			<path refid="webapp.classes.path"/>
+ 		</copy>
+ 		
+ 		<mkdir dir="${webapp.build.dir}/WEB-INF/lib"/>
+ 		<copy todir="${webapp.build.dir}/WEB-INF/lib">
+ 			<path refid="webapp.lib.path"/>
+ 		</copy>
+ 		
+		<copy todir="${webapp.build.dir}">
+			<path refid="webapp.source.path"/>
+		</copy>
+		
+		<jar jarfile="${webapp.war}">
+			<fileset dir="${webapp.build.dir}"/>
+		</jar>	
+	</target>
+</project>

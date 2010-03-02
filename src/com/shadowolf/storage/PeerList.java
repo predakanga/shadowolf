@@ -10,8 +10,13 @@ public class PeerList extends WriteLockedStorage {
 	public PeerList(int[] peers) {
 		this();
 	
-		for(int p : peers) {
-			this.list.add(p);
+		this.getLock(); 
+		try {
+			for(int p : peers) {
+				this.list.add(p);
+			}
+		} finally {
+			this.releaseLock();
 		}
 	}
 	
@@ -19,11 +24,19 @@ public class PeerList extends WriteLockedStorage {
 	}
 	
 	public Boolean addPeer(int p) {
+		Boolean status = false;
 		if(this.contains(p)) {
 			return true;
 		}
 		
-		return this.list.add(p);
+		this.getLock();
+		try {	
+			status = this.list.add(p);
+		} finally {
+			this.releaseLock();	
+		}
+		
+		return status;
 	}
 	
 	public Boolean contains(int p) {
@@ -31,10 +44,15 @@ public class PeerList extends WriteLockedStorage {
 	}
 	
 	public Integer remove(int p) {
-		return this.list.remove(p);
+		this.getLock();
+		try {
+			return this.list.remove(p);
+		} finally {
+			this.releaseLock();
+		}
 	}
 	
-	public List<Integer> getPeerss() {
+	public List<Integer> getPeers() {
 		return this.getPeers(20);
 	}
 	

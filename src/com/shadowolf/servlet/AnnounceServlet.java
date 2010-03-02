@@ -3,40 +3,37 @@ package com.shadowolf.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/**
- * Servlet implementation class AnnounceServlet
- */
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.helpers.Loader;
+
+import com.shadowolf.tracker.TrackerResponse;
+
 public class AnnounceServlet extends HttpServlet {
-	public static final int DEFAULT_MIN_INTERVAL = 600;
-	public static final int DEFAULT_INTERVAL = 1800;
-	
+	//borrowed from http://stackoverflow.com/questions/1061171/sha-1-hashes-mixed-with-strings
+	private static final char[] CHAR_FOR_BYTE = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+	private static final Logger logger = Logger.getLogger(AnnounceServlet.class);
 	private static final long serialVersionUID = 1L;
-       
-    /**
-     * @see HttpServlet#HttpServlet()
-     */
-    public AnnounceServlet() {
-        super();
-        // TODO Auto-generated constructor stub
-    }
 
-	/**
-	 * @see Servlet#init(ServletConfig)
-	 */
+	public AnnounceServlet() {
+		super();
+		PropertyConfigurator.configure(Loader.getResource("log4j.properties"));
+	}
+
 	public void init() throws ServletException {
-
+		logger.info("Servlet initialized");
 	}
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		logger.info("Test!");
 		/*
 		 * http://wiki.theory.org/BitTorrentSpecification#Tracker_HTTP.2FHTTPS_Protocol
 		 * 
@@ -57,53 +54,37 @@ public class AnnounceServlet extends HttpServlet {
 		 * numwant: Optional. Number of peers that the client would like to receive from the tracker. This value is permitted to be zero. If omitted, typically defaults to 50 peers.
  		 * key: Optional. An additional identification that is not shared with any users. It is intended to allow a client to prove their identity should their IP address change.
  		 * trackerid: Optional. If a previous announce contained a tracker id, it should be set here. 
-		 */
+		 */	
 		
-		PrintWriter respWriter = response.getWriter();
-		respWriter.write("Hello, world!");
-		respWriter.write("Your passkey: " + request.getParameter("passkey"));
-	}
-
-	protected static String makeResponse(String failure) {
-		failure = "d14:failure reason" + failure.length() + ":" + failure + "e\r\n";
-		return failure;
-	}
-	
-	protected static String makeResponse(int seeders, int leechers, int[] peers) {
-		return makeResponse(seeders, leechers, peers, DEFAULT_INTERVAL, DEFAULT_MIN_INTERVAL);
-	}
-	
-	protected static String makeResponse(int seeders, int leechers, int[] peers, int interval) {
-		return makeResponse(seeders, leechers, peers, interval, DEFAULT_MIN_INTERVAL);
-	}
-	
-	protected static String makeResponse(int seeders, int leechers, int[] peers, int interval, int minInterval) {
-		/* http://wiki.theory.org/BitTorrentSpecification#Tracker_Response
-		 * failure reason: If present, then no other keys may be present. The value is a human-readable error message as to why the request failed (string).
-		 * warning message: (new, optional) Similar to failure reason, but the response still gets processed normally. The warning message is shown just like an error.
-		 * interval: Interval in seconds that the client should wait between sending regular requests to the tracker
-		 * min interval: (optional) Minimum announce interval. If present clients must not reannounce more frequently than this.
-		 * tracker id: A string that the client should send back on its next announcements. If absent and a previous announce sent a tracker id, do not discard the old value; keep using it.
-		 * complete: number of peers with the entire file, i.e. seeders (integer)
-		 * incomplete: number of non-seeder peers, aka "leechers" (integer)
-		 * peers: (dictionary model) The value is a list of dictionaries, each with the following keys:
-		      o peer id: peer's self-selected ID, as described above for the tracker request (string)
-		      o ip: peer's IP address either IPv6 (hexed) or IPv4 (dotted quad) or DNS name (string)
-		      o port: peer's port number (integer) 
-		  * peers: (binary model) Instead of using the dictionary model described above, the peers value may be a string consisting of multiples of 6 bytes. First 4 bytes are the IP address and last 2 bytes are the port number. All in network (big endian) notation.
-	     */
-		
-		//for failure reason see makeResponse(String failure) {}
-		
-		String response = "e8:intervali" + interval + "e" + "12:min intervali" + minInterval + 
-			"e10:incompletei" + leechers + "d8:completei" + seeders + "5peers" + 
-			(6 * peers.length) + ":";
-		
-		for(int i : peers) {
-			response += i;
+		if(request.getParameter("info_hash") == null) {
+			return;
 		}
+
 		
-		response += "e\r\n";
-		return response;
+		String info_hash = request.getParameter("info_hash");
+		logger.info(encode(info_hash.getBytes()));
+		//logger.info("Info hash (str, raw):" + request.getParameter("info_hash").getBytes(Charset.forName("UTF-8")));
+	//	logger.info("Info hash (str, hex):" + hashCode(info_hash.getBytes()));
+		//logger.info("Info hash (int): " + Integer.parseInt("Ox" + encode(info_hash)));
+		PrintWriter respWriter = response.getWriter();
+		respWriter.write(TrackerResponse.bencoded(0,0, new int[0]));
 	}
+	
+	//borrowed from http://stackoverflow.com/questions/1061171/sha-1-hashes-mixed-with-strings
+    public static String encode(byte[] data){
+        if(data == null || data.length==0){
+            return "";
+        }
+        char[] store = new char[data.length*2];
+        for(int i=0; i<data.length; i++){
+            final int val = (data[i]&0xFF);
+            final int charLoc=i<<1;
+            store[charLoc]=CHAR_FOR_BYTE[val>>>4];
+            store[charLoc+1]=CHAR_FOR_BYTE[val&0x0F];
+        }
+        return new String(store);
+    }
+
+    
+	
 }

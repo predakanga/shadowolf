@@ -2,6 +2,7 @@ package com.shadowolf.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -17,23 +18,25 @@ import com.shadowolf.tracker.TrackerResponse;
 public class AnnounceServlet extends HttpServlet {
 	//borrowed from http://stackoverflow.com/questions/1061171/sha-1-hashes-mixed-with-strings
 	private static final char[] CHAR_FOR_BYTE = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
-	private static final Logger logger = Logger.getLogger(AnnounceServlet.class);
+	private static final Logger LOGGER = Logger.getLogger(AnnounceServlet.class);
 	private static final long serialVersionUID = 1L;
-
+	private static final Pattern[] whitelist = new Pattern[] {
+		Pattern.compile("UT.*")
+	};
+	
 	public AnnounceServlet() {
 		super();
 		PropertyConfigurator.configure(Loader.getResource("log4j.properties"));
 	}
 
 	public void init() throws ServletException {
-		logger.info("Servlet initialized");
+		LOGGER.info("Servlet initialized");
 	}
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		logger.info("Test!");
+	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		/*
 		 * http://wiki.theory.org/BitTorrentSpecification#Tracker_HTTP.2FHTTPS_Protocol
 		 * 
@@ -56,25 +59,59 @@ public class AnnounceServlet extends HttpServlet {
  		 * trackerid: Optional. If a previous announce contained a tracker id, it should be set here. 
 		 */	
 		
+		/*
+		 * Required fields.
+		 */
 		if(request.getParameter("info_hash") == null) {
+			response.getWriter().write(TrackerResponse.bencoded("Missing parameter: info_hash"));
+			return;
+		} else if (request.getParameter("peer_id") == null) {
+			response.getWriter().write(TrackerResponse.bencoded("Missing parameter: peer_id"));
+			return;
+		} 
+		
+		/*
+		 * Parse fields.
+		 */
+		if (request.getParameter("event") == null || request.getParameter("event") == "") {
+			final String event = "announce";
+		}  else {
+			final String event = request.getParameter("event");
+		}
+		
+		final String peer_id = request.getParameter("peer_id");
+		if(checkWhitelist(peer_id) == false) {
+			response.getWriter().write(TrackerResponse.bencoded("Your client is banned."));
 			return;
 		}
-
 		
-		String info_hash = request.getParameter("info_hash");
-		logger.info(encode(info_hash.getBytes()));
-		//logger.info("Info hash (str, raw):" + request.getParameter("info_hash").getBytes(Charset.forName("UTF-8")));
-	//	logger.info("Info hash (str, hex):" + hashCode(info_hash.getBytes()));
-		//logger.info("Info hash (int): " + Integer.parseInt("Ox" + encode(info_hash)));
+		final String info_hash = encode(request.getParameter("info_hash").getBytes());
+		
+		final int port = Integer.parseInt(request.getParameter("port"));
+		final int uploaded = (request.getParameter("uploaded") != null) ? Integer.parseInt(request.getParameter("uploaded")) : 0;
+		final int downloaded = (request.getParameter("downloaded") != null) ? Integer.parseInt(request.getParameter("downloaded")) : 0;
+		final int left = (request.getParameter("left") != null) ? Integer.parseInt(request.getParameter("left")) : 0;
+		final int numwant = (request.getParameter("numwant") != null && Integer.parseInt(request.getParameter("numwant")) < 30) ? 
+				Integer.parseInt(request.getParameter("numwant")) : 30;
+		final boolean compact = (isIPv6(request.getRemoteAddr()) == false && 
+				request.getParameter("compact") != null && request.getParameter("compact") == "1");		
+		
+		/*
+		 * Sanity checks.
+		 */
+		
+		
+		
 		PrintWriter respWriter = response.getWriter();
-		respWriter.write(TrackerResponse.bencoded(0,0, new int[0]));
+		respWriter.write(TrackerResponse.bencoded(0,0, "0:"));
 	}
 	
 	//borrowed from http://stackoverflow.com/questions/1061171/sha-1-hashes-mixed-with-strings
-    public static String encode(byte[] data){
+    public final static String encode(final byte[] data){
         if(data == null || data.length==0){
             return "";
         }
+        
         char[] store = new char[data.length*2];
         for(int i=0; i<data.length; i++){
             final int val = (data[i]&0xFF);
@@ -85,6 +122,17 @@ public class AnnounceServlet extends HttpServlet {
         return new String(store);
     }
 
+    public final static boolean isIPv6(final String IP) {
+    	return IP != null && IP.contains(".");
+    }
     
+    public final static boolean checkWhitelist(final String peer_id) {
+    	for(Pattern client : whitelist) {
+    		if(client.matcher(peer_id).find()) {
+    			return true;
+    		}
+    	}
+    	return false;
+    }
 	
 }

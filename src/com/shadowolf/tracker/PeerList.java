@@ -18,8 +18,8 @@ public class PeerList {
 	private ConcurrentHashMap<String, Vector<Object[]>> seeders = 
 		new ConcurrentHashMap<String, Vector<Object[]>>();
 	
-	private ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> leechers = 
-		new ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>>();
+	private ConcurrentHashMap<String, Vector<Object[]>> leechers = 
+		new ConcurrentHashMap<String, Vector<Object[]>>();
 	
 	public void addUpdate(final String info_hash, final String IP, 
 				final int port, final String event) {
@@ -47,7 +47,7 @@ public class PeerList {
 		
 		//This is a temporary hash-set that we use to store the peers we're going to be 
 		//returning.  We use a hash set to ensure that peers don't get added more than once.
-		HashSet<Object> peers = new HashSet<Object>(numPeers);
+		HashSet<Object[]> peers = new HashSet<Object[]>(numPeers);
 		
 		//finally, we loop, generating random numbers, until we have enough peers
 		while(peers.size() < numPeers) {

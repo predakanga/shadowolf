@@ -4,19 +4,19 @@ public class TrackerResponse {
 	public static final int DEFAULT_MIN_INTERVAL = 600;
 	public static final int DEFAULT_INTERVAL = 1800;
 	
-	public static String bencoded(String failure) {
+	public final static String bencoded(final String failure) {
 		return "d14:failure reason" + failure.length() + ":" + failure + "e\r\n";
 	}
 	
-	public static String bencoded(int seeders, int leechers, int[] peers) {
+	public final  static String bencoded(final int seeders, final int leechers, final String peers) {
 		return bencoded(seeders, leechers, peers, DEFAULT_INTERVAL, DEFAULT_MIN_INTERVAL);
 	}
 	
-	public static String bencoded(int seeders, int leechers, int[] peers, int interval) {
+	public final static String bencoded(final int seeders, final int leechers, final String peers, final int interval) {
 		return bencoded(seeders, leechers, peers, interval, DEFAULT_MIN_INTERVAL);
 	}
 	
-	public static String bencoded(int seeders, int leechers, int[] peers, int interval, int minInterval) {
+	public final static String bencoded(final int seeders, final int leechers, final String peers, final int interval, final int minInterval) {
 		/* http://wiki.theory.org/BitTorrentSpecification#Tracker_Response
 		 * failure reason: If present, then no other keys may be present. The value is a human-readable error message as to why the request failed (string).
 		 * warning message: (new, optional) Similar to failure reason, but the response still gets processed normally. The warning message is shown just like an error.
@@ -36,11 +36,7 @@ public class TrackerResponse {
 		
 		String response = "d8:intervali" + interval + "e" + "12:min intervali" + minInterval + 
 			"e10:incompletei" + leechers + "e8:completei" + seeders + "e5:peers" + 
-			(6 * peers.length) + ":";
-		
-		for(int i : peers) {
-			response += i;
-		}
+			peers;
 		
 		response += "e\r\n";
 		

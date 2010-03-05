@@ -2,6 +2,7 @@ package com.shadowolf.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
@@ -20,9 +21,9 @@ public class AnnounceServlet extends HttpServlet {
 	private static final char[] CHAR_FOR_BYTE = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 	private static final Logger LOGGER = Logger.getLogger(AnnounceServlet.class);
 	private static final long serialVersionUID = 1L;
-	private static final Pattern[] whitelist = new Pattern[] {
-		Pattern.compile("UT.*")
-	};
+	
+	private static Pattern[] whitelist = new Pattern[0];
+	private static ConcurrentSkipListMap<String, Boolean> cachedPeerIDs = new ConcurrentSkipListMap<String, Boolean>();
 	
 	public AnnounceServlet() {
 		super();
@@ -30,7 +31,7 @@ public class AnnounceServlet extends HttpServlet {
 	}
 
 	public void init() throws ServletException {
-		LOGGER.info("Servlet initialized");
+		loadWhitelist();
 	}
 
 	/**
@@ -123,16 +124,31 @@ public class AnnounceServlet extends HttpServlet {
     }
 
     public final static boolean isIPv6(final String IP) {
-    	return IP != null && IP.contains(".");
+    	return IP != null && IP.contains(":");
     }
     
     public final static boolean checkWhitelist(final String peer_id) {
-    	for(Pattern client : whitelist) {
-    		if(client.matcher(peer_id).find()) {
-    			return true;
-    		}
+    	if(cachedPeerIDs.containsKey(peer_id)) {
+    		return cachedPeerIDs.get(peer_id).booleanValue();
+    	} else {
+	    	for(Pattern client : whitelist) {
+	    		if(client.matcher(peer_id).find()) {
+	    			LOGGER.info("Added whitelist entry for peer_id:    " + peer_id + "         ");
+	    			cachedPeerIDs.put(peer_id, new Boolean(true));
+	    			return true;
+	    		}
+	    	}
+	    	LOGGER.info("Disallowed client announced:      " + peer_id + "     ");
+	    	cachedPeerIDs.put(peer_id, new Boolean(false));
+	    	return false;
     	}
-    	return false;
+    }
+    
+    private final static void loadWhitelist() {
+    	//TODO: un hardcode this and log!
+    	whitelist = new Pattern[]  {
+    		Pattern.compile("UT.*")
+    	};
     }
 	
 }

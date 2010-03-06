@@ -11,52 +11,22 @@ import com.shadowolf.tracker.Peer;
  */
 //Sort-of PMD compliant.
 public class User { 
-	private static ConcurrentHashMap<String, ConcurrentHashMap<String, User>> users = new ConcurrentHashMap<String, ConcurrentHashMap<String,User>>(1024, 0.66F, 24); 
 	
 	protected ConcurrentHashMap<Long, Peer> peers = new ConcurrentHashMap<Long, Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
 	
-	private final String peerId;// NOPMD by Eddie on 3/6/10 3:32 AM
-	private final String passkey; // NOPMD by Eddie on 3/6/10 3:32 AM
-	private Long uploaded = new Long(0);
-	private Long downloaded = new Long(0);
+	protected final String peerId;// NOPMD by Eddie on 3/6/10 3:32 AM
+	protected String passkey; // NOPMD by Eddie on 3/6/10 3:32 AM
+	protected Long uploaded = new Long(0);
+	protected Long downloaded = new Long(0);
 	
-	public User() throws InstantiationError {
-		throw new InstantiationError("Cannot instantiate User class!");
+	protected User() {
+		//this exists for our child class.
+		this.peerId = null;
 	}
 	
-	private User(final String peerId, final String passkey) {
+	public User(final String peerId, final String passkey) {
 		this.peerId = peerId;
 		this.passkey = passkey;
-	}
-	
-	public static User getUser(final String peerId, final String passkey) {
-		User u;
-		if(users.containsKey(passkey)) {
-			if((u = users.get(passkey).get(peerId)) != null) {
-				return u;
-			} else {
-				u = new User(peerId, passkey);
-				return users.get(passkey).put(peerId, u);
-			}
-		} else {
-			u = new User(peerId, passkey);
-			users.put(passkey, new ConcurrentHashMap<String, User>(3, 1.0F, 4));
-			return users.get(passkey).put(peerId, u);
-		}
-		
-	}
-	
-	public synchronized UserAggregate aggregate() {
-		Iterator<User> iter = users.get(passkey).values().iterator();
-		
-		UserAggregate user = new UserAggregate();
-		
-		while(iter.hasNext()) {
-			final User u = iter.next();
-			user.addPeerlist(u.getPeers());
-		}
-		
-		return user;
 	}
 	
 	public void updateStats(String infoHash, long uploaded, long downloaded) {

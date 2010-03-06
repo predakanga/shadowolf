@@ -20,10 +20,24 @@ public class PeerList {
 	private ConcurrentHashMap<String, Vector<Peer>> leechers = 
 		new ConcurrentHashMap<String, Vector<Peer>>(1024, 0.66F, 24);
 	
+	private ConcurrentHashMap<String, ConcurrentHashMap<String, int[]>> stats =
+		new ConcurrentHashMap<String, ConcurrentHashMap<String, int[]>>(1024, 0.66F, 24);
+	
 	public PeerList() {}
 	
+	public void updateStats(final String info_hash, final Peer peer, 
+			final long uploaded, final long downloaded) {
+		this.updateStats(info_hash, peer.getIpAddress(), peer.getPort(), uploaded, downloaded);
+	}
+	
+	public void updateStats(final String info_hash, final String IP, 
+			final String port, final long uploaded, final long downloaded) {
+		
+	}
+	
+	
 	public void remove(final String info_hash, final String IP,
-				final int port, final boolean isSeeder) {
+				final String port, final boolean isSeeder) {
 		final Peer peer = new Peer();
 		peer.setIpAddress(IP);
 		peer.setLastAnnounce(new Date());
@@ -49,7 +63,7 @@ public class PeerList {
 	}
 	
 	public void add(final String info_hash, final String IP, 
-				final int port, final boolean isSeeder) {
+				final String port, final boolean isSeeder) {
 		final Peer peer = new Peer();
 		peer.setIpAddress(IP);
 		peer.setLastAnnounce(new Date());

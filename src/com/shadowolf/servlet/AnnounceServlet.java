@@ -14,7 +14,11 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
 
+import com.shadowolf.tracker.AnnounceException;
+import com.shadowolf.tracker.PeerList;
 import com.shadowolf.tracker.TrackerResponse;
+import com.shadowolf.user.User;
+import com.shadowolf.user.UserFactory;
 
 public class AnnounceServlet extends HttpServlet {
 	//borrowed from http://stackoverflow.com/questions/1061171/sha-1-hashes-mixed-with-strings
@@ -74,53 +78,72 @@ public class AnnounceServlet extends HttpServlet {
 		/*
 		 * Parse fields.
 		 */
+		String event = "";
 		if (request.getParameter("event") == null || request.getParameter("event") == "") {
-			final String event = "announce";
+			event = "announce";
 		}  else {
-			final String event = request.getParameter("event");
+			event = request.getParameter("event");
 		}
 		
-		final String peer_id = request.getParameter("peer_id");
-		if(checkWhitelist(peer_id) == false) {
+		final String peerId = request.getParameter("peer_id");
+		if(checkWhitelist(peerId) == false) {
 			response.getWriter().write(TrackerResponse.bencoded("Your client is banned."));
 			return;
 		}
 		
-		final String info_hash = encode(request.getParameter("info_hash").getBytes());
+		final long infoHash = Long.parseLong(encode(request.getParameter("info_hash").getBytes()), 16);
 		
 		final int port = Integer.parseInt(request.getParameter("port"));
-		final int uploaded = (request.getParameter("uploaded") != null) ? Integer.parseInt(request.getParameter("uploaded")) : 0;
-		final int downloaded = (request.getParameter("downloaded") != null) ? Integer.parseInt(request.getParameter("downloaded")) : 0;
+		final long uploaded = (request.getParameter("uploaded") != null) ? Long.parseLong(request.getParameter("uploaded")) : 0;
+		final long downloaded = (request.getParameter("downloaded") != null) ? Long.parseLong(request.getParameter("downloaded")) : 0;
 		final int left = (request.getParameter("left") != null) ? Integer.parseInt(request.getParameter("left")) : 0;
 		final int numwant = (request.getParameter("numwant") != null && Integer.parseInt(request.getParameter("numwant")) < 30) ? 
 				Integer.parseInt(request.getParameter("numwant")) : 30;
 		final boolean compact = (isIPv6(request.getRemoteAddr()) == false && 
 				request.getParameter("compact") != null && request.getParameter("compact") == "1");		
-		
+		final String passkey = request.getParameter("passkey");
 		/*
 		 * Sanity checks.
 		 */
 		
-		
+		try {
+			if(event == "announce") {
+				User u = UserFactory.getUser(peerId, passkey);
+				
+				u.updateStats(infoHash, uploaded, downloaded);
+				
+				if(left > 0) {
+					PeerList.getList(infoHash).addLeecher(u.getPeer(infoHash));
+				} else {
+					PeerList.getList(infoHash).addSeeder(u.getPeer(infoHash));
+				}
+			}
+		} catch (AnnounceException e) {
+			response.getWriter().write(TrackerResponse.bencoded(e.getMessage()));
+			return;
+		} catch (IllegalAccessException e) {
+			response.getWriter().write(TrackerResponse.bencoded("Something went wrong, please contact your site administrator."));
+			return;
+		}
 		
 		PrintWriter respWriter = response.getWriter();
 		respWriter.write(TrackerResponse.bencoded(0,0, "0:"));
 	}
 	
 	//borrowed from http://stackoverflow.com/questions/1061171/sha-1-hashes-mixed-with-strings
-    public final static String encode(final byte[] data){
-        if(data == null || data.length==0){
-            return "";
-        }
+	public final static String encode(final byte[] data){
+		if(data == null || data.length==0){
+			return "";
+		}
         
-        char[] store = new char[data.length*2];
-        for(int i=0; i<data.length; i++){
-            final int val = (data[i]&0xFF);
-            final int charLoc=i<<1;
-            store[charLoc]=CHAR_FOR_BYTE[val>>>4];
-            store[charLoc+1]=CHAR_FOR_BYTE[val&0x0F];
-        }
-        return new String(store);
+		char[] store = new char[data.length*2];
+		for(int i=0; i<data.length; i++){
+			final int val = (data[i]&0xFF);
+			final int charLoc=i<<1;
+			store[charLoc]=CHAR_FOR_BYTE[val>>>4];
+			store[charLoc+1]=CHAR_FOR_BYTE[val&0x0F];
+		}
+		return new String(store);
     }
 
     public final static boolean isIPv6(final String IP) {

@@ -16,13 +16,13 @@ final public class UserFactory {
 		if(users.containsKey(passkey)) {
 			if((u = users.get(passkey).get(peerId)) != null) {
 				return u;
+			} else if (users.get(passkey).size() >= 3) {
+				throw new AnnounceException("You can only be active from 3 locations at once!");
 			} else {
 				u = new User(peerId, passkey);
 				return users.get(passkey).put(peerId, u);
 			}
-		} else if (users.get(passkey).size() >= 3) {
-			throw new AnnounceException("You can only be active from 3 locations at once!");
-		} else {
+		}  else {
 			u = new User(peerId, passkey);
 			users.put(passkey, new ConcurrentHashMap<String, User>(3, 1.0F, 4));
 			return users.get(passkey).put(peerId, u);
@@ -40,7 +40,7 @@ final public class UserFactory {
 				final User u = iter.next();
 				ConcurrentHashMap<Long, Peer> peers = u.getPeers();
 				synchronized(peers) {
-					user.addPeerlist(u.getPeers());
+					user.addPeerlist(u.peers);
 				}
 				user.addDownloaded(u.getDownloaded());
 				user.addUploaded(u.getUploaded());

@@ -15,10 +15,10 @@ public class User {
 	
 	protected final String peerId;// NOPMD by Eddie on 3/6/10 3:32 AM
 	protected String passkey; // NOPMD by Eddie on 3/6/10 3:32 AM
-	protected long uploaded = new Long(0);
-	protected long downloaded = new Long(0);
-	protected Object upLock = new Object();
-	protected Object downLock = new Object();
+	protected long uploaded = 0L;
+	protected long downloaded = 0L;
+	protected final Object upLock = new Object();
+	protected final Object downLock = new Object();
 	
 	protected User() {
 		//this exists for our child class.
@@ -58,10 +58,10 @@ public class User {
 		}
 	}
 	
-	public void updateStats(long infoHash, long uploaded, long downloaded) throws IllegalAccessException {
+	public void updateStats(long infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException {
 		long upDiff; long downDiff;
 		
-		Peer peer = this.peers.get(infoHash);
+		Peer peer = this.getPeer(infoHash, ipAddress, port);
 		
 		synchronized (peer) {
 			upDiff = uploaded - peer.getUploaded();
@@ -79,9 +79,11 @@ public class User {
 		}
 	}
 	
-	public Peer getPeer(final long infoHash) throws IllegalAccessException{
-		if(this.peers.containsKey(infoHash)) {
-			return this.peers.put(infoHash, new Peer(this.passkey, this.peerId, infoHash));  // NOPMD by Eddie on 3/6/10 3:32 AM
+	public Peer getPeer(final long infoHash, String ipAddress, String port) throws IllegalAccessException {
+		if(this.peers.get(infoHash) == null) {
+			Peer p =  new Peer(this.passkey, this.peerId, infoHash, ipAddress, port);
+			this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
+			return p;
 		} else {
 			return this.peers.get(infoHash);
 		}

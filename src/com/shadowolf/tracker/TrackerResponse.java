@@ -1,6 +1,9 @@
 package com.shadowolf.tracker;
 
-public class TrackerResponse {
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
+final public class TrackerResponse {
 	public static final int DEFAULT_MIN_INTERVAL = 600;
 	public static final int DEFAULT_INTERVAL = 1800;
 	
@@ -8,7 +11,8 @@ public class TrackerResponse {
 		return "d14:failure reason" + failure.length() + ":" + failure + "e\r\n";
 	}
 	
-	public final  static String bencoded(final int seeders, final int leechers, final String peers) {
+	
+	public final static String bencoded(final int seeders, final int leechers, final String peers) {
 		return bencoded(seeders, leechers, peers, DEFAULT_INTERVAL, DEFAULT_MIN_INTERVAL);
 	}
 	
@@ -42,4 +46,73 @@ public class TrackerResponse {
 		
 		return response;
 	}
+	
+	public final static byte[] bencodeCompact(Peer[] peers) throws AnnounceException, UnsupportedEncodingException {
+		byte[] start = (6 * peers.length + ":").getBytes("US-ASCII");
+		byte[] buffer = new byte[start.length + 6 * peers.length];
+		for(int i = 0; i < start.length; i++) {
+			buffer[i] = start[i];
+		}
+		
+		for(int i = start.length; i < peers.length ;i++) {
+			final int idx = (i - start.length) / 6;
+			final int peersIdx = (i - start.length) % 6;
+			buffer[i] = compactEncoding(peers[idx])[peersIdx];
+		}
+		
+		return buffer;
+	}
+	
+	public final static String bencodeFull(Peer[] peers, boolean noPeerIDs) throws AnnounceException {
+		//5:peersld7:peer id4:fuck2:ip15:0:0:0:0:0:0:0:14:porti123eee (with one peer)?
+
+		String buffer = "l"; //open peerlist list
+		
+		for(Peer p : peers) {
+			buffer += "d"; //open peer dictionary
+			
+			if(noPeerIDs == false) {
+				try {
+					final String peerId = URLEncoder.encode(p.getPeerId(), "US-ASCII");
+					buffer += "7:peer_id" + peerId.length() + ":" + peerId;
+				} catch (UnsupportedEncodingException e) {
+					throw new AnnounceException("There was a character encoding exception.  Please contact your site administrator.");
+				}
+			}
+			
+			buffer += "2:ip" + p.getIpAddress().length() + ":" + p.getIpAddress();
+			buffer += "4:porti" + p.getPort() + "e";
+			buffer += "e"; //close peer dictionary
+		}
+		
+		buffer += "e"; //close peerlist list
+		return buffer;
+	}
+	
+	private final static byte[] compactEncoding(Peer p) throws AnnounceException {
+		if(isIPv6(p.getIpAddress()) == false) {
+			String[] octets = p.getIpAddress().split("\\.");
+
+			if(octets.length != 4) {
+				throw new AnnounceException("There was a problem encoding peer IP address.");
+			}
+			
+			int port = new Integer(p.getPort());
+			return new byte[] {
+					((byte) (Integer.parseInt(octets[0]) & 0xFF)),
+					((byte) (Integer.parseInt(octets[1]) & 0xFF)),
+					((byte) (Integer.parseInt(octets[2]) & 0xFF)),
+					((byte) (Integer.parseInt(octets[3]) & 0xFF)),
+					(byte)( ((byte)(port >>> 8)) & 0xff),
+					(byte)((byte)port & 0xff),
+			};
+		}
+		
+		return new byte[] {};
+	}
+	
+	public final static boolean isIPv6(final String IP) {
+    	return IP != null && IP.contains(":");
+    }
+	
 }

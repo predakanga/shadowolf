@@ -28,8 +28,8 @@ public class PeerList {
 		return lists.get(infoHash);
 	}
 	
-	public static double collectUploaded(Iterator<Peer> iter) {
-		double uploaded = 0;
+	public static long collectUploaded(Iterator<Peer> iter) {
+		long uploaded = 0;
 		
 		while(iter.hasNext()) {
 			uploaded += iter.next().getUploaded();
@@ -38,8 +38,8 @@ public class PeerList {
 		return uploaded;
 	}
 	
-	public static double collectDownloaded(Iterator<Peer> iter) {
-		double downloaded = 0;
+	public static long collectDownloaded(Iterator<Peer> iter) {
+		long downloaded = 0;
 		
 		while(iter.hasNext()) {
 			downloaded += iter.next().getDownloaded();
@@ -121,8 +121,8 @@ public class PeerList {
 		return getPeers(this.seeders, num);
 	}
 	
-	public double getTotalUpload() {
-		double up = 0;
+	public long getTotalUpload() {
+		long up = 0;
 		
 		synchronized(this.seeders) {
 			up += collectUploaded(this.seeders.iterator()); 
@@ -135,8 +135,8 @@ public class PeerList {
 		return up;
 	}
 	
-	public synchronized double getTotalDownload() {
-		double down = 0;
+	public synchronized long getTotalDownload() {
+		long down = 0;
 		
 		synchronized(this.seeders) {
 			down += collectDownloaded(this.seeders.iterator()); 

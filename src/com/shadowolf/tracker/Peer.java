@@ -12,23 +12,29 @@ public class Peer implements Serializable {
 	private long infoHash;
 	private long uploaded;
 	private long downloaded;
+	private String ipAddress;
+	private String port;
 	
 	
 	public Peer() {
 		//This exists for javabean compliance	
 	}
 	
-	public Peer(final String passkey, final String peerId, final long infoHash, final long uploaded, final long downloaded) {
+	public Peer(final String passkey, final String peerId, final long infoHash, 
+			final long uploaded, final long downloaded, final String ipAddress, final String port) {
 		this.passkey = passkey;
 		this.peerId = peerId;
 		this.infoHash = infoHash;
 		this.uploaded = uploaded;
 		this.downloaded = downloaded;
 		this.lastAnnounce = new Date();
+		this.ipAddress = ipAddress;
+		this.port = port;
 	}
 	
-	public Peer(final String passkey, final String peerId, final long infoHash) {
-		this(passkey, peerId, infoHash, 0, 0);
+	public Peer(final String passkey, final String peerId, final long infoHash,
+			final String ipAddress, final String port) {
+		this(passkey, peerId, infoHash, 0, 0, ipAddress, port);
 	}
 	
 	public Date getLastAnnounce() {
@@ -69,5 +75,21 @@ public class Peer implements Serializable {
 
 	public String getPeerId() {
 		return this.peerId;
+	}
+
+	public String getIpAddress() {
+		return this.ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	public String getPort() {
+		return this.port;
+	}
+
+	public void setPort(String port) {
+		this.port = port;
 	}
 }

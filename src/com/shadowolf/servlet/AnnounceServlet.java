@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,6 +16,7 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
 
 import com.shadowolf.tracker.AnnounceException;
+import com.shadowolf.tracker.Peer;
 import com.shadowolf.tracker.PeerList;
 import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.user.User;
@@ -67,11 +69,16 @@ public class AnnounceServlet extends HttpServlet {
 		/*
 		 * Required fields.
 		 */
+		
+		ServletOutputStream sos = response.getOutputStream();
+	//	sos.write(new byte[] { (byte)255, (byte)254 });
+		//return;
+		
 		if(request.getParameter("info_hash") == null) {
-			response.getWriter().write(TrackerResponse.bencoded("Missing parameter: info_hash"));
+			sos.print(TrackerResponse.bencoded("Missing parameter: info_hash"));
 			return;
 		} else if (request.getParameter("peer_id") == null) {
-			response.getWriter().write(TrackerResponse.bencoded("Missing parameter: peer_id"));
+			sos.print(TrackerResponse.bencoded("Missing parameter: peer_id"));
 			return;
 		} 
 		
@@ -81,57 +88,92 @@ public class AnnounceServlet extends HttpServlet {
 		String event = "";
 		if (request.getParameter("event") == null || request.getParameter("event") == "") {
 			event = "announce";
-		}  else {
+		} else {
 			event = request.getParameter("event");
 		}
 		
 		final String peerId = request.getParameter("peer_id");
 		if(checkWhitelist(peerId) == false) {
-			response.getWriter().write(TrackerResponse.bencoded("Your client is banned."));
+			sos.print(TrackerResponse.bencoded("Your client is banned."));
 			return;
 		}
+
+		//sos.print(TrackerResponse.bencoded(request.getParameterMap().keySet().toString())); 
+		final long infoHash = byteArrayToLong(request.getParameter("info_hash").getBytes("ISO-8859-1"));
 		
-		final long infoHash = Long.parseLong(encode(request.getParameter("info_hash").getBytes()), 16);
-		
-		final int port = Integer.parseInt(request.getParameter("port"));
+		final String port = request.getParameter("port");
 		final long uploaded = (request.getParameter("uploaded") != null) ? Long.parseLong(request.getParameter("uploaded")) : 0;
 		final long downloaded = (request.getParameter("downloaded") != null) ? Long.parseLong(request.getParameter("downloaded")) : 0;
 		final int left = (request.getParameter("left") != null) ? Integer.parseInt(request.getParameter("left")) : 0;
 		final int numwant = (request.getParameter("numwant") != null && Integer.parseInt(request.getParameter("numwant")) < 30) ? 
-				Integer.parseInt(request.getParameter("numwant")) : 30;
-		final boolean compact = (isIPv6(request.getRemoteAddr()) == false && 
-				request.getParameter("compact") != null && request.getParameter("compact") == "1");		
+				Integer.parseInt(request.getParameter("numwant")) : null;
+		final boolean compact = request.getParameter("compact") != null && request.getParameter("compact") == "1";
+		final boolean noPeerId = request.getParameter("no_peer_id") != null;
 		final String passkey = request.getParameter("passkey");
 		/*
 		 * Sanity checks.
 		 */
 		
+		
+		
 		try {
-			if(event == "announce") {
-				User u = UserFactory.getUser(peerId, passkey);
-				
-				u.updateStats(infoHash, uploaded, downloaded);
-				
+			//update user and peer lists
+			User u = UserFactory.getUser(peerId, passkey);
+			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);
+			
+			if(event == "announce" || event == "started" || event == "completed") {
 				if(left > 0) {
-					PeerList.getList(infoHash).addLeecher(u.getPeer(infoHash));
+					PeerList.getList(infoHash).addLeecher(u.getPeer(infoHash, request.getRemoteAddr(), port));
 				} else {
-					PeerList.getList(infoHash).addSeeder(u.getPeer(infoHash));
+					PeerList.getList(infoHash).addSeeder(u.getPeer(infoHash, request.getRemoteAddr(), port));
+				}
+			} else if (event == "stopped") {
+				if(left > 0) { 					
+					PeerList.getList(infoHash).removeLeech(u.getPeer(infoHash, request.getRemoteAddr(), port)); 
+				} else {
+					PeerList.getList(infoHash).removeSeeder(u.getPeer(infoHash, request.getRemoteAddr(), port));
 				}
 			}
+			
+			//prepare return
+			int seeders = PeerList.getList(infoHash).getSeeders().length;
+			int leechers =  PeerList.getList(infoHash).getLeechers().length;
+			Peer[] peers = null;
+			
+			if(left > 0) {
+				peers = PeerList.getList(infoHash).getSeeders(numwant);
+			} else {
+				peers = PeerList.getList(infoHash).getLeechers(numwant);
+			}
+			
+			String encodedPeers = "";
+			if(compact) {
+				encodedPeers += TrackerResponse.bencodeCompact(peers);
+			} else {
+				encodedPeers += TrackerResponse.bencodeFull(peers, noPeerId);
+			}
+			sos.print(TrackerResponse.bencoded(seeders, leechers, encodedPeers));
 		} catch (AnnounceException e) {
-			response.getWriter().write(TrackerResponse.bencoded(e.getMessage()));
+			sos.print(TrackerResponse.bencoded(e.getMessage()));
 			return;
 		} catch (IllegalAccessException e) {
-			response.getWriter().write(TrackerResponse.bencoded("Something went wrong, please contact your site administrator."));
+			sos.print(TrackerResponse.bencoded("Something went wrong, please contact your site administrator."));
 			return;
+		}	
+	}
+	
+	private final static long byteArrayToLong(byte[] bytes) {
+		long l = 0;
+		for(int i =0; i < bytes.length; i++){	    	
+			l <<= 8;
+			l ^= (long)bytes[i] & 0xFF;	    	
 		}
 		
-		PrintWriter respWriter = response.getWriter();
-		respWriter.write(TrackerResponse.bencoded(0,0, "0:"));
+		return l;
 	}
 	
 	//borrowed from http://stackoverflow.com/questions/1061171/sha-1-hashes-mixed-with-strings
-	public final static String encode(final byte[] data){
+	private final static String encode(final byte[] data){
 		if(data == null || data.length==0){
 			return "";
 		}
@@ -146,9 +188,7 @@ public class AnnounceServlet extends HttpServlet {
 		return new String(store);
     }
 
-    public final static boolean isIPv6(final String IP) {
-    	return IP != null && IP.contains(":");
-    }
+    
     
     public final static boolean checkWhitelist(final String peer_id) {
     	if(cachedPeerIDs.containsKey(peer_id)) {

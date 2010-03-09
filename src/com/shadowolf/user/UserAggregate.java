@@ -17,12 +17,12 @@ public class UserAggregate extends User {
 	}
 	
 	@Override
-	public void updateStats(long infoHash, long uploaded, long downloaded) throws IllegalAccessException {
+	public void updateStats(long infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException {
 		throw new IllegalAccessException("Cannot update stats from a UserAggregate instance");
 	}
 	
 	@Override
-	public Peer getPeer(final long infoHash) throws IllegalAccessException {
+	public Peer getPeer(final long infoHash, String ip, String port) throws IllegalAccessException {
 		throw new IllegalAccessException("Cannot get peer from UserAggregate instance");
 	}
 }

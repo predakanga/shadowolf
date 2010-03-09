@@ -13,19 +13,20 @@ final public class UserFactory {
 	
 	public static User getUser(final String peerId, final String passkey) throws AnnounceException {
 		User u;
-		if(users.containsKey(passkey)) {
-			if((u = users.get(passkey).get(peerId)) != null) {
-				return u;
+		if(users.get(passkey) != null) {
+			if((users.get(passkey).get(peerId)) != null) {
+				return users.get(passkey).get(peerId);
 			} else if (users.get(passkey).size() >= 3) {
 				throw new AnnounceException("You can only be active from 3 locations at once!");
 			} else {
 				u = new User(peerId, passkey);
-				return users.get(passkey).put(peerId, u);
+				users.get(passkey).put(peerId, u);
+				return u;
 			}
 		}  else {
 			u = new User(peerId, passkey);
 			users.put(passkey, new ConcurrentHashMap<String, User>(3, 1.0F, 4));
-			return users.get(passkey).put(peerId, u);
+			return u;
 		}
 		
 	}
@@ -33,6 +34,9 @@ final public class UserFactory {
 	public UserAggregate aggregate(String passkey) {
 		UserAggregate user = new UserAggregate(passkey);
 		
+		if(users.get(passkey) == null) {
+			return user;
+		}
 		synchronized(users.get(passkey)) {
 			Iterator<User> iter = users.get(passkey).values().iterator();
 			

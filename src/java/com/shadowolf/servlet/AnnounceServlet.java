@@ -19,6 +19,7 @@ import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.Peer;
 import com.shadowolf.tracker.PeerList;
 import com.shadowolf.tracker.TrackerResponse;
+import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
@@ -83,14 +84,22 @@ public class AnnounceServlet extends HttpServlet {
 		/*
 		 * Parse fields.
 		 */
-		String event = "";
-		if (request.getParameter("event") == null)  {
-			event = "announce";
+		Event event = null; 
+		String paramEvent = request.getParameter("event");
+		
+		if (paramEvent == null)  {
+			event = Event.ANNOUNCE;
 		} else {
-			if(request.getParameter("event") == "") {
-				event = "announce";
-			} else {
-				event = request.getParameter("event").trim();
+			LOGGER.debug("Parameter for event: %%%" + paramEvent + "%%%");
+			
+			if(paramEvent.equals("")) {
+				event = Event.ANNOUNCE;
+			} else if(paramEvent.equals("completed")) {
+				event = Event.COMPLETED;
+			} else if(paramEvent.equals("stopped")) {
+				event = Event.STOPPED;
+			} else if(paramEvent.equals("started")) {
+				event = Event.STARTED;
 			}
 		}
 		
@@ -127,11 +136,11 @@ public class AnnounceServlet extends HttpServlet {
 			User u = UserFactory.getUser(peerId, passkey);
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);
 			
-			LOGGER.debug("Event: " + event + ". Parameters: " + request.getParameterMap().keySet() + "\n");
+			LOGGER.debug("Event: " + event.toString() + ". Parameters: " + request.getParameterMap().keySet() + "\n");
 			Peer p = u.getPeer(infoHash, request.getRemoteAddr(), port);
 			PeerList peerlist = PeerList.getList(infoHash);
 			
-			if(event != "stopped") {
+			if(event != Event.STOPPED) {
 				if(left > 0) {
 					LOGGER.debug("Adding leecher");
 					peerlist.addLeecher(p);
@@ -139,9 +148,9 @@ public class AnnounceServlet extends HttpServlet {
 					LOGGER.debug("Adding seeder");
 					peerlist.addSeeder(p);
 				}
-			} else if (event == "stopped") {
+			} else {
 				if(left > 0) { 					
-					peerlist.removeLeech(p); 
+					peerlist.removeLeecher(p); 
 					return;
 				} else {
 					peerlist.removeSeeder(p);
@@ -160,7 +169,7 @@ public class AnnounceServlet extends HttpServlet {
 			
 			if(left > 0){
 				peers = peerlist.getSeeders(numwant);
-				LOGGER.debug("Got " + peers.length + " seeders");
+				//LOGGER.debug("Got " + peers.length + " seeders");
 			}
 			
 			if(left > 0 && peers.length < 30) {
@@ -176,8 +185,8 @@ public class AnnounceServlet extends HttpServlet {
 			
 			if(compact) {
 				byte[] coded = TrackerResponse.bencodedCompact(seeders, leechers, peers, 1, 1);
-				LOGGER.debug("Response length: " + coded.length);
-				LOGGER.debug("Response: " + new String(coded));
+				//LOGGER.debug("Response length: " + coded.length);
+				//LOGGER.debug("Response: " + new String(coded));
 				sos.write(coded);
 				sos.flush();
 			} else {

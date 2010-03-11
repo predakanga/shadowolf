@@ -69,17 +69,6 @@ public class PeerList {
 		}
 	}
 	
-	private static boolean addToList(final ArrayList<Peer> list, final Peer p) {
-		if(list.contains(p)) {
-			return true; 
-		} else {
-			synchronized(list) {
-				LOGGER.debug("Adding a peer to list");
-				return list.add(p);
-			}
-		}
-	}
-	
 	private static boolean removeFromList(final ArrayList<Peer> list, final Peer p) {
 		synchronized(list) {
 			return list.remove(p);
@@ -95,6 +84,10 @@ public class PeerList {
 	}
 	
 	public boolean addSeeder(Peer p) {
+		if(this.seeders.contains(p)) {
+			return true;
+		}
+		
 		boolean status = false;
 		synchronized (this.seeders) {
 			status = this.seeders.add(p);
@@ -105,7 +98,12 @@ public class PeerList {
 	}
 	
 	public boolean addLeecher(Peer p) {
+		if(this.leechers.contains(p)) {
+			return true;
+		}
+		
 		boolean status = false;
+
 		synchronized (this.leechers) {
 			status = this.leechers.add(p);
 		}
@@ -114,12 +112,32 @@ public class PeerList {
 		return status;
 	}
 	
-	public boolean removeSeeder(Peer p) {
-		return removeFromList(this.seeders, p);
+	public boolean removeLeecher(Peer p) {
+		if(this.leechers.contains(p) == false) {
+			return true;
+		}
+		
+		boolean status = false;
+		synchronized (this.leechers) {
+			status = this.leechers.remove(p);
+		}
+		
+		LOGGER.debug("Removed leecher.  Total: " + this.leechers.size());
+		return status;
 	}
 	
-	public boolean removeLeech(Peer p) {
-		return removeFromList(this.leechers, p);
+	public boolean removeSeeder(Peer p) {
+		if(this.seeders.contains(p) == false) {
+			return true;
+		}
+		
+		boolean status = false;
+		synchronized (this.seeders) {
+			status = this.seeders.remove(p);
+		}
+		
+		LOGGER.debug("Removed seeder.  Total: " + this.seeders.size());
+		return status;
 	}
 	
 	public Peer[] getLeechers() {

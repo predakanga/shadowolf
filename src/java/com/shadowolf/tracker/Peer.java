@@ -34,7 +34,7 @@ public class Peer implements Serializable {
 		this.ipAddress = ipAddress;
 		this.port = port;
 		
-		LOGGER.debug("Constructing peer with parameters:" + "\n" +
+		/*LOGGER.debug("Constructing peer with parameters:" + "\n" +
 				"\t\t" + "passkey: " + this.passkey + "\n" +
 				"\t\t" + "peer_id: " + this.peerId + "\n" +
 				"\t\t" + "info_hash: " + this.infoHash + "\n" +
@@ -43,6 +43,8 @@ public class Peer implements Serializable {
 				"\t\t" + "lastAnnounce: " + this.lastAnnounce.toString() + "\n" +
 				"\t\t" + "IP: " + this.ipAddress +  "\n" +
 				"\t\t" + "Port: " + this.port);
+				
+		 */
 	}
 	
 	public Peer(final String passkey, final String peerId, final long infoHash,

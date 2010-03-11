@@ -7,7 +7,7 @@
 	
 	<property name="build.dir" value="../build" />
 	<property name="extern.lib.dir" value="../extern/lib"/>
-	<property name="java.src.dir" value="../src/"/>
+	<property name="java.src.dir" value="../src/java"/>
 	<property name="webapp.src.dir" value="../WebContent"/>
 	<property name="project.name" value="shadowolf"/>
 	
@@ -77,6 +77,7 @@
 		<mkdir dir="${webapp.build.classes.dir}" />
 		
 		<javac
+			debug="true"
 			srcdir="${java.src.dir}"
 			destdir="${java.build.classes.dir}"
 		>
@@ -94,6 +95,9 @@
 		<mkdir dir="${webapp.build.dir}/WEB-INF/classes"/>
 		<copy todir="${webapp.build.dir}/WEB-INF/classes">
 			<path refid="webapp.classes.path"/>
+			<fileset dir="${java.src.dir}">
+				<include name="log4j.properties"/>
+			</fileset>
  		</copy>
  		
  		<mkdir dir="${webapp.build.dir}/WEB-INF/lib"/>
@@ -108,5 +112,7 @@
 		<jar jarfile="${webapp.war}">
 			<fileset dir="${webapp.build.dir}"/>
 		</jar>	
+		
+		<copy todir="${servlet.dir}/webapps" file="${webapp.war}"/>
 	</target>
 </project>

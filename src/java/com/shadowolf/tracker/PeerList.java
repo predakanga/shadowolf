@@ -5,7 +5,11 @@ import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import org.apache.log4j.Logger;
+
 public class PeerList {
+	private static final Logger LOGGER = Logger.getLogger(PeerList.class);
+	
 	public static final int SEEDER = 0;
 	public static final int LEECHER = 1;
 	public static final int NOT_IN_LIST = 2;
@@ -70,6 +74,7 @@ public class PeerList {
 			return true; 
 		} else {
 			synchronized(list) {
+				LOGGER.debug("Adding a peer to list");
 				return list.add(p);
 			}
 		}
@@ -90,11 +95,23 @@ public class PeerList {
 	}
 	
 	public boolean addSeeder(Peer p) {
-		return addToList(this.seeders, p);
+		boolean status = false;
+		synchronized (this.seeders) {
+			status = this.seeders.add(p);
+		}
+		
+		LOGGER.debug("Added seeder.  Total: " + this.seeders.size());
+		return status;
 	}
 	
 	public boolean addLeecher(Peer p) {
-		return addToList(this.leechers, p);
+		boolean status = false;
+		synchronized (this.leechers) {
+			status = this.leechers.add(p);
+		}
+		
+		LOGGER.debug("Added leecher.  Total: " + this.leechers.size());
+		return status;
 	}
 	
 	public boolean removeSeeder(Peer p) {

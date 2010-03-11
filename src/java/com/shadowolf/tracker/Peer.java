@@ -3,8 +3,11 @@ package com.shadowolf.tracker;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.apache.log4j.Logger;
+
 //PMD 0 errors
 public class Peer implements Serializable {
+	private static final Logger LOGGER = Logger.getLogger(Peer.class);
 	private static final long serialVersionUID = 1L;
 	private String peerId;
 	private String passkey;
@@ -30,6 +33,16 @@ public class Peer implements Serializable {
 		this.lastAnnounce = new Date();
 		this.ipAddress = ipAddress;
 		this.port = port;
+		
+		LOGGER.debug("Constructing peer with parameters:" + "\n" +
+				"\t\t" + "passkey: " + this.passkey + "\n" +
+				"\t\t" + "peer_id: " + this.peerId + "\n" +
+				"\t\t" + "info_hash: " + this.infoHash + "\n" +
+				"\t\t" + "uploaded: " + this.uploaded + "\n" +
+				"\t\t" + "downloaded: " + this.downloaded + "\n" +
+				"\t\t" + "lastAnnounce: " + this.lastAnnounce.toString() + "\n" +
+				"\t\t" + "IP: " + this.ipAddress +  "\n" +
+				"\t\t" + "Port: " + this.port);
 	}
 	
 	public Peer(final String passkey, final String peerId, final long infoHash,

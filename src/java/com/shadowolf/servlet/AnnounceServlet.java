@@ -1,7 +1,6 @@
 package com.shadowolf.servlet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.regex.Pattern;
 
@@ -11,6 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
@@ -69,10 +69,8 @@ public class AnnounceServlet extends HttpServlet {
 		/*
 		 * Required fields.
 		 */
-		
 		ServletOutputStream sos = response.getOutputStream();
-	//	sos.write(new byte[] { (byte)255, (byte)254 });
-		//return;
+		LOGGER.debug("Received announce with qs: " + request.getQueryString());
 		
 		if(request.getParameter("info_hash") == null) {
 			sos.print(TrackerResponse.bencoded("Missing parameter: info_hash"));
@@ -86,10 +84,14 @@ public class AnnounceServlet extends HttpServlet {
 		 * Parse fields.
 		 */
 		String event = "";
-		if (request.getParameter("event") == null || request.getParameter("event") == "") {
+		if (request.getParameter("event") == null)  {
 			event = "announce";
 		} else {
-			event = request.getParameter("event");
+			if(request.getParameter("event") == "") {
+				event = "announce";
+			} else {
+				event = request.getParameter("event").trim();
+			}
 		}
 		
 		final String peerId = request.getParameter("peer_id");
@@ -104,10 +106,15 @@ public class AnnounceServlet extends HttpServlet {
 		final String port = request.getParameter("port");
 		final long uploaded = (request.getParameter("uploaded") != null) ? Long.parseLong(request.getParameter("uploaded")) : 0;
 		final long downloaded = (request.getParameter("downloaded") != null) ? Long.parseLong(request.getParameter("downloaded")) : 0;
-		final int left = (request.getParameter("left") != null) ? Integer.parseInt(request.getParameter("left")) : 0;
-		final int numwant = (request.getParameter("numwant") != null && Integer.parseInt(request.getParameter("numwant")) < 30) ? 
-				Integer.parseInt(request.getParameter("numwant")) : null;
-		final boolean compact = request.getParameter("compact") != null && request.getParameter("compact") == "1";
+		
+		final long left = (request.getParameter("left") != null) ? Long.parseLong(request.getParameter("left")) : 0;
+		LOGGER.debug("Left: " + left);
+		
+		int numwant = 0;
+		if(request.getParameter("numwant") != null) {
+			numwant = Integer.parseInt(request.getParameter("numwant")) < 30 ? Integer.parseInt(request.getParameter("numwant")) : 0; 
+		} 		
+		final boolean compact = request.getParameter("compact") != null;
 		final boolean noPeerId = request.getParameter("no_peer_id") != null;
 		final String passkey = request.getParameter("passkey");
 		/*
@@ -115,51 +122,81 @@ public class AnnounceServlet extends HttpServlet {
 		 */
 		
 		
-		
 		try {
 			//update user and peer lists
 			User u = UserFactory.getUser(peerId, passkey);
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);
 			
-			if(event == "announce" || event == "started" || event == "completed") {
+			LOGGER.debug("Event: " + event + ". Parameters: " + request.getParameterMap().keySet() + "\n");
+			Peer p = u.getPeer(infoHash, request.getRemoteAddr(), port);
+			PeerList peerlist = PeerList.getList(infoHash);
+			
+			if(event != "stopped") {
 				if(left > 0) {
-					PeerList.getList(infoHash).addLeecher(u.getPeer(infoHash, request.getRemoteAddr(), port));
+					LOGGER.debug("Adding leecher");
+					peerlist.addLeecher(p);
 				} else {
-					PeerList.getList(infoHash).addSeeder(u.getPeer(infoHash, request.getRemoteAddr(), port));
+					LOGGER.debug("Adding seeder");
+					peerlist.addSeeder(p);
 				}
 			} else if (event == "stopped") {
 				if(left > 0) { 					
-					PeerList.getList(infoHash).removeLeech(u.getPeer(infoHash, request.getRemoteAddr(), port)); 
+					peerlist.removeLeech(p); 
+					return;
 				} else {
-					PeerList.getList(infoHash).removeSeeder(u.getPeer(infoHash, request.getRemoteAddr(), port));
+					peerlist.removeSeeder(p);
+					return;
 				}
 			}
 			
 			//prepare return
-			int seeders = PeerList.getList(infoHash).getSeeders().length;
-			int leechers =  PeerList.getList(infoHash).getLeechers().length;
+			int seeders = peerlist.getSeeders().length;
+			LOGGER.debug("Total seeders: " + seeders);
+			
+			int leechers =  peerlist.getLeechers().length;
+			LOGGER.debug("Total leechers: " + leechers);
+			
 			Peer[] peers = null;
 			
-			if(left > 0) {
-				peers = PeerList.getList(infoHash).getSeeders(numwant);
-			} else {
-				peers = PeerList.getList(infoHash).getLeechers(numwant);
+			if(left > 0){
+				peers = peerlist.getSeeders(numwant);
+				LOGGER.debug("Got " + peers.length + " seeders");
 			}
 			
-			String encodedPeers = "";
-			if(compact) {
-				encodedPeers += TrackerResponse.bencodeCompact(peers);
+			if(left > 0 && peers.length < 30) {
+				numwant = 30 - peers.length; //29
+				Peer[] tempL = peerlist.getLeechers(30 - peers.length);
+				LOGGER.debug("GOT " + tempL.length + " leechers");
+				peers = (Peer[]) ArrayUtils.addAll(peers, tempL);
 			} else {
-				encodedPeers += TrackerResponse.bencodeFull(peers, noPeerId);
+				peers = peerlist.getLeechers(numwant);
+				LOGGER.debug("GOT " + peers.length + " leechers");
 			}
-			sos.print(TrackerResponse.bencoded(seeders, leechers, encodedPeers));
+			
+			
+			if(compact) {
+				byte[] coded = TrackerResponse.bencodedCompact(seeders, leechers, peers, 1, 1);
+				LOGGER.debug("Response length: " + coded.length);
+				LOGGER.debug("Response: " + new String(coded));
+				sos.write(coded);
+				sos.flush();
+			} else {
+				sos.print(TrackerResponse.bencoded(seeders, leechers, peers, 1, 1));
+			}
+			
+			//LOGGER.debug(peerlist.getSeeders()[0].getIpAddress());
 		} catch (AnnounceException e) {
 			sos.print(TrackerResponse.bencoded(e.getMessage()));
 			return;
 		} catch (IllegalAccessException e) {
 			sos.print(TrackerResponse.bencoded("Something went wrong, please contact your site administrator."));
 			return;
-		}	
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			LOGGER.debug("\n\n");
+			sos.flush();
+		}
 	}
 	
 	private final static long byteArrayToLong(byte[] bytes) {
@@ -210,7 +247,8 @@ public class AnnounceServlet extends HttpServlet {
     private final static void loadWhitelist() {
     	//TODO: un hardcode this and log!
     	whitelist = new Pattern[]  {
-    		Pattern.compile("UT.*")
+    		Pattern.compile("UT.*"),
+    		Pattern.compile(".*")
     	};
     }
 	

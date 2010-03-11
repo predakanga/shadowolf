@@ -69,12 +69,6 @@ public class PeerList {
 		}
 	}
 	
-	private static boolean removeFromList(final ArrayList<Peer> list, final Peer p) {
-		synchronized(list) {
-			return list.remove(p);
-		}
-	}
-	
 	private PeerList(long infoHash) {
 		this.infoHash = infoHash;
 	}
@@ -128,6 +122,7 @@ public class PeerList {
 	
 	public boolean removeSeeder(Peer p) {
 		if(this.seeders.contains(p) == false) {
+			LOGGER.debug("Not removing because of non-existance");
 			return true;
 		}
 		

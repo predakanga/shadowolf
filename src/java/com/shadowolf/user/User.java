@@ -59,34 +59,31 @@ public class User {
 	}
 	
 	public void updateStats(long infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException {
-		long upDiff; long downDiff;
+		long upDiff; 
+		long downDiff;
 		
 		Peer peer = this.getPeer(infoHash, ipAddress, port);
 		
 		synchronized (peer) {
 			upDiff = uploaded - peer.getUploaded();
 			downDiff = downloaded - peer.getDownloaded();
-			peer.setDownloaded(downloaded);
-			peer.setUploaded(uploaded);
+			//peer.setDownloaded(downloaded);
+			//peer.setUploaded(uploaded);
 		}
 		
-		synchronized(this.upLock) {
-			this.uploaded += upDiff;
-		}
-		
-		synchronized(this.downLock) {
-			this.downloaded += downDiff;
-		}
+		this.addDownloaded(downDiff);
+		this.addUploaded(upDiff);
 	}
 	
 	public Peer getPeer(final long infoHash, String ipAddress, String port) throws IllegalAccessException {
 		if(this.peers.get(infoHash) == null) {
 			Peer p =  new Peer(this.passkey, this.peerId, infoHash, ipAddress, port);
-			this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
-			return p;
-		} else {
-			return this.peers.get(infoHash);
-		}
+			synchronized(this.peers) {
+				this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
+			}
+		} 
+		
+		return this.peers.get(infoHash);
 	}	
 	
 	

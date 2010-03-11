@@ -11,7 +11,7 @@ public class Peer implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private String peerId;
 	private String passkey;
-	private Date lastAnnounce;
+	private long lastAnnounce;
 	private long infoHash;
 	private long uploaded;
 	private long downloaded;
@@ -30,7 +30,7 @@ public class Peer implements Serializable {
 		this.infoHash = infoHash;
 		this.uploaded = uploaded;
 		this.downloaded = downloaded;
-		this.lastAnnounce = new Date();
+		this.lastAnnounce = new Date().getTime();
 		this.ipAddress = ipAddress;
 		this.port = port;
 		
@@ -52,11 +52,11 @@ public class Peer implements Serializable {
 		this(passkey, peerId, infoHash, 0, 0, ipAddress, port);
 	}
 	
-	public Date getLastAnnounce() {
+	public long getLastAnnounce() {
 		return this.lastAnnounce;
 	}
 	public void setLastAnnounce(final Date lastAnnounce) {
-		this.lastAnnounce = lastAnnounce;
+		this.lastAnnounce = lastAnnounce.getTime();
 	}
 
 	public String getPasskey() {

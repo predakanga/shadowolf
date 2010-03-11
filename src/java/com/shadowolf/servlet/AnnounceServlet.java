@@ -149,10 +149,12 @@ public class AnnounceServlet extends HttpServlet {
 					peerlist.addSeeder(p);
 				}
 			} else {
-				if(left > 0) { 					
+				if(left > 0) { 	
+					LOGGER.debug("Removing leecher");
 					peerlist.removeLeecher(p); 
 					return;
 				} else {
+					LOGGER.debug("Removing leecher");
 					peerlist.removeSeeder(p);
 					return;
 				}

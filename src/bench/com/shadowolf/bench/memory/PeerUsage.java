@@ -10,15 +10,15 @@ import com.shadowolf.user.UserFactory;
 
 public class PeerUsage {
 	public static void main(String[] args) throws UnknownHostException, IllegalAccessException, AnnounceException, UnsupportedEncodingException {
-		final int maxPeers = 10;
+		final int maxPeers = 100000000;
 		final int maxUsers = 10000000;
 		
 		//
-		
+		int n = 0;
 		for(int i=0; i < maxUsers; i++) {
 			final User u = UserFactory.getUser("0123456789001234567890", i + "");
-			
-			for(int n = 0; n < maxPeers; n++) {
+			final int stop = n+10;
+			for(; n < stop; n++) {
 				//twenty bytes for ole infoHash
 				final byte[] infoHash = new byte[] { 
 					(byte)0xFF, 
@@ -46,8 +46,8 @@ public class PeerUsage {
 			}
 			
 			if(i % 1000 == 0) {
-				System.out.println("At " + i + " peers: " + Runtime.getRuntime().freeMemory() +
-						" of " + Runtime.getRuntime().totalMemory());
+				System.out.println("At " + i + " users, "  +
+						" with: " + n + " torrents, free:" + Runtime.getRuntime().freeMemory() +" of " + Runtime.getRuntime().totalMemory());
 			}
 		}
 	}

@@ -38,7 +38,7 @@ final public class UserFactory {
 				
 				while(iter.hasNext()) {
 					final User u = iter.next();
-					ConcurrentHashMap<Long, Peer> peers = u.getPeers();
+					ConcurrentHashMap<byte[], Peer> peers = u.getPeers();
 					synchronized(peers) {
 						user.addPeerlist(u.peers);
 					}

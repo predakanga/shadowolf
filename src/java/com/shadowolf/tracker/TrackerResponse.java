@@ -1,10 +1,7 @@
 package com.shadowolf.tracker;
 
 import java.io.UnsupportedEncodingException;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
 import java.net.URLEncoder;
-import java.net.UnknownHostException;
 
 import org.apache.commons.lang.ArrayUtils;
 
@@ -30,47 +27,16 @@ final public class TrackerResponse {
 	public final static String bencoded(final String failure) {
 		return "d14:failure reason" + failure.length() + ":" + failure + "e\r\n";
 	}
-	
-	public final static String bencoded(final int seeders, final int leechers, final Peer[] peers) throws AnnounceException {
-		return bencoded(seeders, leechers, full(peers, false), DEFAULT_INTERVAL);
-	}
-	
-	public final static String bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval) throws AnnounceException {
-		return bencoded(seeders, leechers, full(peers, false), interval, DEFAULT_MIN_INTERVAL);
-	}
-	
-	public final static String bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval, final int minInterval) throws AnnounceException {
-		return bencoded(seeders, leechers, full(peers, false), interval, minInterval);
-	}
-	
-	
-	public final static String bencoded(final int seeders, final int leechers, final String peers) {
+		
+	public static final byte[] bencoded(final int seeders, final int leechers, final Peer[] peers) throws AnnounceException {
 		return bencoded(seeders, leechers, peers, DEFAULT_INTERVAL, DEFAULT_MIN_INTERVAL);
 	}
 	
-	public final static String bencoded(final int seeders, final int leechers, final String peers, final int interval) {
+	public static final byte[] bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval) throws AnnounceException {
 		return bencoded(seeders, leechers, peers, interval, DEFAULT_MIN_INTERVAL);
 	}
 	
-	public static final byte[] bencodedCompact(final int seeders, final int leechers, final Peer[] peers) throws AnnounceException {
-		return bencodedCompact(seeders, leechers, peers, DEFAULT_INTERVAL, DEFAULT_MIN_INTERVAL);
-	}
-	
-	public static final byte[] bencodedCompact(final int seeders, final int leechers, final Peer[] peers, final int interval) throws AnnounceException {
-		return bencodedCompact(seeders, leechers, peers, interval, DEFAULT_MIN_INTERVAL);
-	}
-	
-	public final static String bencoded(final int seeders, final int leechers, final String peers, final int interval, final int minInterval) {
-		String response = "d8:intervali" + interval + "e" + "12:min intervali" + minInterval + 
-			"e10:incompletei" + leechers + "e8:completei" + seeders + "e5:peers" + 
-			peers;
-		
-		response += "e\r\n";
-		
-		return response;
-	}
-	
-	public static final byte[] bencodedCompact(final int seeders, final int leechers, final Peer[] peers, final int interval, final int minInterval) throws AnnounceException {
+	public static final byte[] bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval, final int minInterval) throws AnnounceException {
 		try {
 			final byte[] enc = compact(peers);
 			final byte[] start = ("d8:intervali" + interval + "e" + "12:min intervali" + minInterval + 
@@ -88,7 +54,7 @@ final public class TrackerResponse {
 		CompactPeerBencoder cpb = new CompactPeerBencoder();
 		
 		for(Peer p : peers) {
-			if(isIPv6(p.getIpAddress())) {
+			if(p.getIpAddress().length > 4) {
 				cpb.addToIPv6(compactEncoding(p));
 			} else {
 				cpb.addToIPv4(compactEncoding(p));
@@ -98,82 +64,24 @@ final public class TrackerResponse {
 		return cpb.encode();
 	}
 	
-	public final static String full(Peer[] peers, boolean noPeerIDs) throws AnnounceException {
-		//5:peersld7:peer id4:fuck2:ip15:0:0:0:0:0:0:0:14:porti123eee (with one peer)?
+	public final static byte[] compactEncoding(Peer p) {
+		byte[] portArr = p.getPort();
+		byte[] IPArr = p.getIpAddress();
 
-		String buffer = "l"; //open peerlist list
-		
-		for(Peer p : peers) {
-			buffer += "d"; //open peer dictionary
-			
-			if(noPeerIDs != false) {
-				try {
-					final String peerId = URLEncoder.encode(p.getPeerId(), "UTF-8");
-					buffer += "7:peer_id" + peerId.length() + ":" + peerId;
-				} catch (UnsupportedEncodingException e) {
-					throw new AnnounceException("There was a character encoding exception.  Please contact your site administrator.");
-				}
-			}
-			
-			buffer += "2:ip" + p.getIpAddress().length() + ":" + p.getIpAddress();
-			buffer += "4:porti" + p.getPort() + "e";
-			buffer += "e"; //close peer dictionary
-		}
-		
-		buffer += "e"; //close peerlist list
-		return buffer;
-	}
-	
-	public final static byte[] compactEncoding(Peer p) throws AnnounceException {
-		String IP = p.getIpAddress();
-		int port = new Integer(p.getPort());
-		
-		byte[] portArr =  new byte[] {
-				(byte)(((byte)(port >>> 8)) & 0xff),
-				(byte)((byte)port & 0xff),
-		};
-		
-		if(isIPv6(IP) == false) {			
-			try {
-				byte[] IPArr = Inet4Address.getByName(IP).getAddress();
-				
-				if(IPArr.length != 4) {
-					throw new AnnounceException("Error parsing IP.");
-				}
-				
-				byte[] address = new byte[6];
-				System.arraycopy(IPArr, 0, address, 0, 4);
-				System.arraycopy(portArr, 0, address, 4, 2);
-				return address;
-			} catch (UnknownHostException e) {
-				throw new AnnounceException("Error parsing IP.");
-			}
+		if(IPArr.length == 4) {
+			byte[] address = new byte[6];
+			System.arraycopy(IPArr, 0, address, 0, 4);
+			System.arraycopy(portArr, 0, address, 4, 2);
+			return address;
 		} else {
-			
-			
-			try {
-				byte[] IPArr = Inet6Address.getByName(IP).getAddress();
-				
-				if(IPArr.length != 16) {
-					throw new AnnounceException("Error parsing IP.");
-				}
-				
-				byte[] address = new byte[18];
-				System.arraycopy(IPArr, 0, address, 0, 16);
-				System.arraycopy(portArr, 0, address, 16, 2);
-				return address;
-			} catch (UnknownHostException e) {
-				throw new AnnounceException("Error parsing IP.");
-			}
+			byte[] address = new byte[18];
+			System.arraycopy(IPArr, 0, address, 0, 16);
+			System.arraycopy(portArr, 0, address, 16, 2);
+			return address;
 		}
-		
-		//return new byte[] {};
 	}
 	
-	public final static boolean isIPv6(final String IP) {
-    	return IP != null && IP.contains(":");
-    }
-	
+
 	public static void main(String[] args) throws UnsupportedEncodingException {
 		URLEncoder.encode(null, "UTF-8");
 	}

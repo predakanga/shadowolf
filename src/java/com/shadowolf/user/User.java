@@ -1,5 +1,6 @@
 package com.shadowolf.user;
 
+import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,7 +12,7 @@ import com.shadowolf.tracker.Peer;
  */
 public class User { 
 	
-	protected ConcurrentHashMap<Long, Peer> peers = new ConcurrentHashMap<Long, Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
+	protected ConcurrentHashMap<byte[], Peer> peers = new ConcurrentHashMap<byte[], Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
 	
 	protected final String peerId;// NOPMD by Eddie on 3/6/10 3:32 AM
 	protected String passkey; // NOPMD by Eddie on 3/6/10 3:32 AM
@@ -28,14 +29,6 @@ public class User {
 	public User(final String peerId, final String passkey) {
 		this.peerId = peerId;
 		this.passkey = passkey;
-	}
-	
-	public void addUploaded(int uploaded) {
-		this.addUploaded((long) uploaded);
-	}
-	
-	public void addDownloaded(int downloaded) {
-		this.addDownloaded((long) downloaded);
 	}
 	
 	public void addUploaded(String uploaded) {
@@ -58,7 +51,7 @@ public class User {
 		}
 	}
 	
-	public void updateStats(long infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException {
+	public void updateStats(byte[] infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
 		long upDiff; 
 		long downDiff;
 		
@@ -75,9 +68,9 @@ public class User {
 		this.addUploaded(upDiff);
 	}
 	
-	public Peer getPeer(final long infoHash, String ipAddress, String port) throws IllegalAccessException {
+	public Peer getPeer(final byte[] infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
 		if(this.peers.get(infoHash) == null) {
-			Peer p =  new Peer(this.passkey, this.peerId, infoHash, ipAddress, port);
+			Peer p =  new Peer(this.passkey, this.peerId, 0L, 0L, ipAddress, port);
 			synchronized(this.peers) {
 				this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
 			}
@@ -113,7 +106,7 @@ public class User {
 		return this.passkey;
 	}
 	
-	public ConcurrentHashMap<Long, Peer> getPeers() {
+	public ConcurrentHashMap<byte[], Peer> getPeers() {
 		return this.peers;
 	}
 
@@ -128,4 +121,5 @@ public class User {
 			return this.downloaded;
 		}
 	}
+
 }

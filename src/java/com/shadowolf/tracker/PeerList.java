@@ -3,7 +3,7 @@ package com.shadowolf.tracker;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
@@ -14,7 +14,7 @@ public class PeerList {
 	public static final int LEECHER = 1;
 	public static final int NOT_IN_LIST = 2;
 	
-	private static ConcurrentSkipListMap<Long, PeerList> lists = new ConcurrentSkipListMap<Long, PeerList>();
+	private static ConcurrentHashMap<byte[], PeerList> lists = new ConcurrentHashMap<byte[], PeerList>();
 	private final static int SEEDER_START = 64;
 	private final static int LEECHER_START = 16;
 	
@@ -22,14 +22,13 @@ public class PeerList {
 	
 	private ArrayList<Peer> seeders = new ArrayList<Peer>(SEEDER_START);
 	private ArrayList<Peer> leechers = new ArrayList<Peer>(LEECHER_START);
-	private long infoHash;
 	
-	public static PeerList getList(long infoHash) {
-		if(lists.containsKey(infoHash) == false) {
-			lists.put(infoHash, new PeerList(infoHash));
+	public static PeerList getList(byte[] infoHash2) {
+		if(lists.containsKey(infoHash2) == false) {
+			lists.put(infoHash2, new PeerList());
 		}
 		
-		return lists.get(infoHash);
+		return lists.get(infoHash2);
 	}
 	
 	public static long collectUploaded(Iterator<Peer> iter) {
@@ -69,14 +68,9 @@ public class PeerList {
 		}
 	}
 	
-	private PeerList(long infoHash) {
-		this.infoHash = infoHash;
+	private PeerList() {
 	}
-	
-	public long getInfoHash() {
-		return this.infoHash;
-	}
-	
+		
 	public boolean addSeeder(Peer p) {
 		if(this.seeders.contains(p)) {
 			return true;

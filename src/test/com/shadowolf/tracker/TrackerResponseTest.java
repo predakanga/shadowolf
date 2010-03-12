@@ -30,7 +30,7 @@ public class TrackerResponseTest {
 		
 		Peer peer = null;
 		try {
-			peer = new Peer("doesn't matter", "doesn't matter", 0L, 0L, "127.201.1.255", "60");
+			peer = new Peer(0L, 0L, "127.201.1.255", "60");
 		} catch (UnknownHostException e1) {
 			fail("Unexpected exception");
 		}
@@ -53,8 +53,8 @@ public class TrackerResponseTest {
 		Peer[] peers = null;
 		try {
 			peers = new Peer[] {
-					new Peer("foo", "bar", 0L, 0L, "255.255.123.123", "65000"),
-					new Peer("foo", "bar", 0L, 0L, "255.255.123.123", "65001")
+					new Peer(0L, 0L, "255.255.123.123", "65000"),
+					new Peer(0L, 0L, "255.255.123.123", "65001")
 			};
 		} catch (UnknownHostException e1) {
 			fail();
@@ -88,8 +88,8 @@ public class TrackerResponseTest {
 		Peer[] peers = null;
 		try {
 			peers = new Peer[] {
-					new Peer("foo", "bar", 0L, 0L, "255.255.123.123", "65000"),
-					new Peer("foo", "bar", 0L, 0L, "255.255.123.123", "65001")
+					new Peer(0L, 0L, "255.255.123.123", "65000"),
+					new Peer(0L, 0L, "255.255.123.123", "65001")
 			};
 		} catch (UnknownHostException e1) {
 			fail("butts butts butts");
@@ -124,8 +124,8 @@ public class TrackerResponseTest {
 		Peer[] peers = null;
 		try {
 			peers = new Peer[] {
-					new Peer("foo", "bar", 0l, 0l, "255.255.123.123", "65000"),
-					new Peer("foo", "bar", 0l, 0l, "255.255.123.123", "65001")
+					new Peer(0l, 0l, "255.255.123.123", "65000"),
+					new Peer(0l, 0l, "255.255.123.123", "65001")
 			};
 		} catch (UnknownHostException e1) {
 			fail("butts butts butts");
@@ -155,7 +155,7 @@ public class TrackerResponseTest {
 	@Test
 	public void testCompactEncodingIPv6() {
 		try {
-			TrackerResponse.compactEncoding(new Peer("a", "b", 0l, 0l, "::1", "65000"));
+			TrackerResponse.compactEncoding(new Peer(0l, 0l, "::1", "65000"));
 			
 		} catch (UnknownHostException e1) {
 			fail("butts butts butts");

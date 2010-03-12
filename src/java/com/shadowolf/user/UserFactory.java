@@ -1,5 +1,6 @@
 package com.shadowolf.user;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -7,19 +8,23 @@ import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.Peer;
 
 final public class UserFactory {
-	private static ConcurrentHashMap<String, ConcurrentHashMap<String, User>> users = new ConcurrentHashMap<String, ConcurrentHashMap<String,User>>(1024, 0.66F, 24); 
+	private static ConcurrentHashMap<String, HashMap<String, User>> users = new ConcurrentHashMap<String, HashMap<String,User>>(1024); 
 
 	private UserFactory() {}
 	
 	public static User getUser(final String peerId, final String passkey) throws AnnounceException {
 		if(users.get(passkey) == null) {
-			users.put(passkey, new ConcurrentHashMap<String, User>(3, 1.0F, 4));
+			users.put(passkey, new HashMap<String, User>(1));
 		}
 		
 		if (users.get(passkey).size() >= 3) {
 			throw new AnnounceException("You can only be active from 3 locations at once!");
-		} else if (users.get(passkey).get(peerId) == null){
-			users.get(passkey).put(peerId, new User(peerId, passkey));
+		} else 	{
+			synchronized (users.get(passkey)) {
+				if (users.get(passkey).get(peerId) == null){
+					users.get(passkey).put(peerId, new User(peerId, passkey));;
+				}
+			}
 		}	
 		
 		return users.get(passkey).get(peerId);
@@ -38,7 +43,7 @@ final public class UserFactory {
 				
 				while(iter.hasNext()) {
 					final User u = iter.next();
-					ConcurrentHashMap<byte[], Peer> peers = u.getPeers();
+					HashMap<byte[], Peer> peers = u.getPeers();
 					synchronized(peers) {
 						user.addPeerlist(u.peers);
 					}

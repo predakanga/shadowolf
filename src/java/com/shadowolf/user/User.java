@@ -1,8 +1,9 @@
 package com.shadowolf.user;
 
+import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.shadowolf.tracker.Peer;
 
@@ -12,7 +13,8 @@ import com.shadowolf.tracker.Peer;
  */
 public class User { 
 	
-	protected ConcurrentHashMap<byte[], Peer> peers = new ConcurrentHashMap<byte[], Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
+	protected HashMap<byte[], Peer> peers = 
+		new HashMap<byte[], Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
 	
 	protected final String peerId;// NOPMD by Eddie on 3/6/10 3:32 AM
 	protected String passkey; // NOPMD by Eddie on 3/6/10 3:32 AM
@@ -51,7 +53,7 @@ public class User {
 		}
 	}
 	
-	public void updateStats(byte[] infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
+	public void updateStats(byte[] infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
 		long upDiff; 
 		long downDiff;
 		
@@ -68,24 +70,30 @@ public class User {
 		this.addUploaded(upDiff);
 	}
 	
-	public Peer getPeer(final byte[] infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
-		if(this.peers.get(infoHash) == null) {
-			Peer p =  new Peer(this.passkey, this.peerId, 0L, 0L, ipAddress, port);
-			synchronized(this.peers) {
-				this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
+	public Peer getPeer(final byte[] infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
+		synchronized(this.peers){ 
+			if(this.peers.get(infoHash) == null) {
+				Peer p =  new Peer(0L, 0L, ipAddress, port);
+				synchronized(this.peers) {
+					this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
+				}
 			}
-		} 
+		}
 		
-		return this.peers.get(infoHash);
+		synchronized(this.peers) { 
+			return this.peers.get(infoHash);
+		}
 	}	
 	
 	
 	public long iterateGetDownloaded() {
 		long d = 0;
-		Iterator<Peer> iter = this.peers.values().iterator();
-		
-		while(iter.hasNext()) {
-			d += iter.next().getDownloaded();
+		synchronized(this.peers) {
+			Iterator<Peer> iter = this.peers.values().iterator();
+			
+			while(iter.hasNext()) {
+				d += iter.next().getDownloaded();
+			}
 		}
 		
 		return d;
@@ -93,12 +101,13 @@ public class User {
 	
 	public long iterateGetUploaded() {
 		long d = 0;
-		Iterator<Peer> iter = this.peers.values().iterator();
-		
-		while(iter.hasNext()) {
-			d += iter.next().getUploaded();
-		}
-		
+		synchronized(this.peers) {
+			Iterator<Peer> iter = this.peers.values().iterator();
+			
+			while(iter.hasNext()) {
+				d += iter.next().getUploaded();
+			}
+		}	
 		return d;
 	}
 	
@@ -106,7 +115,7 @@ public class User {
 		return this.passkey;
 	}
 	
-	public ConcurrentHashMap<byte[], Peer> getPeers() {
+	public HashMap<byte[], Peer> getPeers() {
 		return this.peers;
 	}
 

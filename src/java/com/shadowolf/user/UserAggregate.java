@@ -1,7 +1,7 @@
 package com.shadowolf.user;
 
 import java.net.UnknownHostException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 import com.shadowolf.tracker.Peer;
 
@@ -13,7 +13,7 @@ public class UserAggregate extends User {
 		this.passkey = passkey;
 	}
 
-	public void addPeerlist(ConcurrentHashMap<byte[], Peer> list) {
+	public void addPeerlist(HashMap<byte[], Peer> list) {
 		this.peers.putAll(list);
 	}
 	

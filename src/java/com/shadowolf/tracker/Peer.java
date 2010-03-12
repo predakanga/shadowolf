@@ -8,22 +8,16 @@ import java.util.Date;
 //PMD 0 errors
 public class Peer {
 	//private static final Logger LOGGER = Logger.getLogger(Peer.class);
-	private int lastAnnounce;
-	final private String peerId;
-	final private String passkey;
+	private long lastAnnounce;
 	final private long uploaded;
 	final private long downloaded;
 	final private byte[] ipAddress;
 	final private byte[] port;
 	
-	
-	public Peer(final String passkey, final String peerId, final long uploaded, 
-			final long downloaded, final String ipAddress, final String port) throws UnknownHostException {
-		this.passkey = passkey;
-		this.peerId = peerId;
+	public Peer(final long uploaded,final long downloaded, final String ipAddress, final String port) throws UnknownHostException  {
 		this.uploaded = uploaded;
 		this.downloaded = downloaded;
-		this.lastAnnounce = 1111;// (int)new Date().getTime();
+		this.lastAnnounce = new Date().getTime();
 		this.ipAddress = TrackerRequest.IPToBytes(ipAddress);
 		this.port = TrackerRequest.portToBytes(port);
 		
@@ -40,24 +34,18 @@ public class Peer {
 		 */
 	}
 	
-	public int getLastAnnounce() {
+	public long getLastAnnounce() {
 		return this.lastAnnounce;
 	}
 	public void setLastAnnounce(final Date lastAnnounce) {
 		this.lastAnnounce = (int)lastAnnounce.getTime();
 	}
 
-	public String getPasskey() {
-		return passkey;
-	}
 	public long getUploaded() {
 		return uploaded;
 	}
 	public long getDownloaded() {
 		return downloaded;
-	}
-	public String getPeerId() {
-		return this.peerId;
 	}
 	public byte[] getIpAddress() {
 		return this.ipAddress;

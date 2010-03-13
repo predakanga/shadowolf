@@ -185,16 +185,6 @@ public class AnnounceServlet extends HttpServlet {
 			sos.flush();
 		}
 	}
-	
-	private final static long byteArrayToLong(byte[] bytes) {
-		long l = 0;
-		for(int i =0; i < bytes.length; i++){	    	
-			l <<= 8;
-			l ^= (long)bytes[i] & 0xFF;	    	
-		}
-		
-		return l;
-	}    
     
     public final static boolean checkWhitelist(final String peer_id) {
     	if(cachedPeerIDs.containsKey(peer_id)) {

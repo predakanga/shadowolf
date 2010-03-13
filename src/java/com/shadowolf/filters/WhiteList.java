@@ -49,9 +49,13 @@ public class WhiteList implements Filter {
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+		//if the list is empty, it probably hasn't been parsed
 		if(this.list.length == 0) {
+			
+			//since it's probably not parsed, we'll go ahead and manually parse it
 			this.parseList();
 			
+			//if it's still empty, the list itself is empty, so we have to warn that and approve everything (denying all requests seems silly)
 			if(this.list.length == 0) {
 				LOGGER.warn("Whitelist is empty... approving all requests.");
 				chain.doFilter(request, response);

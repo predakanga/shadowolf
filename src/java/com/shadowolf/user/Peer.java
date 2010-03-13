@@ -1,7 +1,9 @@
-package com.shadowolf.tracker;
+package com.shadowolf.user;
 
 import java.net.UnknownHostException;
 import java.util.Date;
+
+import com.shadowolf.tracker.TrackerRequest;
 
 //import org.apache.log4j.Logger;
 

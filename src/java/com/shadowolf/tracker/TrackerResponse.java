@@ -5,6 +5,8 @@ import java.net.URLEncoder;
 
 import org.apache.commons.lang.ArrayUtils;
 
+import com.shadowolf.user.Peer;
+
 /* http://wiki.theory.org/BitTorrentSpecification#Tracker_Response
  * failure reason: If present, then no other keys may be present. The value is a human-readable error message as to why the request failed (string).
  * warning message: (new, optional) Similar to failure reason, but the response still gets processed normally. The warning message is shown just like an error.
@@ -51,7 +53,7 @@ final public class TrackerResponse {
 	}
 	
 	public final static byte[] compact(Peer[] peers) throws AnnounceException, UnsupportedEncodingException {
-		CompactPeerBencoder cpb = new CompactPeerBencoder();
+		CompactPeerEncoder cpb = new CompactPeerEncoder();
 		
 		for(Peer p : peers) {
 			if(p.getIpAddress().length > 4) {

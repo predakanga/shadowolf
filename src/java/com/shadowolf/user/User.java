@@ -5,7 +5,6 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import com.shadowolf.tracker.Peer;
 
 /*
  * This class is a multiton around itself.  The class doesn't serve much purpose other than to keep track

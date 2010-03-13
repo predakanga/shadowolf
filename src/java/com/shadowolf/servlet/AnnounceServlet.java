@@ -17,10 +17,10 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
 
 import com.shadowolf.tracker.AnnounceException;
-import com.shadowolf.tracker.Peer;
-import com.shadowolf.tracker.PeerList;
 import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.tracker.TrackerRequest.Event;
+import com.shadowolf.user.Peer;
+import com.shadowolf.user.PeerList;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 

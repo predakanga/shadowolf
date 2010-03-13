@@ -3,7 +3,6 @@ package com.shadowolf.user;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 
-import com.shadowolf.tracker.Peer;
 
 public class UserAggregate extends User {
 

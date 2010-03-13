@@ -4,7 +4,7 @@ import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.lang.ArrayUtils;
 
-public class CompactPeerBencoder {
+public class CompactPeerEncoder {
 	private byte[] IPv4 = new byte[0];
 	private byte[] IPv6 = new byte[0];
 	

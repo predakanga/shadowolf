@@ -1,4 +1,4 @@
-package com.shadowolf.tracker;
+package com.shadowolf.user;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
+
 
 public class PeerList {
 	private static final Logger LOGGER = Logger.getLogger(PeerList.class);

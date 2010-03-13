@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.shadowolf.tracker.AnnounceException;
-import com.shadowolf.tracker.Peer;
 
 final public class UserFactory {
 	private static ConcurrentHashMap<String, HashMap<String, User>> users = new ConcurrentHashMap<String, HashMap<String,User>>(1024); 

@@ -9,6 +9,8 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.shadowolf.user.Peer;
+
 public class TrackerResponseTest {
 	@Test
 	public void testBencodedString() {

@@ -1,35 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
-  <display-name>Shadowolf</display-name>
-    <welcome-file-list>
-    <welcome-file>index.html</welcome-file>
-    <welcome-file>index.htm</welcome-file>
-    <welcome-file>index.jsp</welcome-file>
-    <welcome-file>default.html</welcome-file>
-    <welcome-file>default.htm</welcome-file>
-    <welcome-file>default.jsp</welcome-file>
-  </welcome-file-list>
-  <filter>
-    <filter-name>UrlRewriteFilter</filter-name>
-    <filter-class>org.tuckey.web.filters.urlrewrite.UrlRewriteFilter</filter-class>
-    <init-param>
-      <param-name>logLevel</param-name>
-      <param-value>WARN</param-value>
-    </init-param>
-  </filter>
-  <filter-mapping>
-    <filter-name>UrlRewriteFilter</filter-name>
-    <url-pattern>/*</url-pattern>
-  </filter-mapping>
-  <servlet>
-    <description></description>
-    <display-name>AnnounceServlet</display-name>
-    <servlet-name>AnnounceServlet</servlet-name>
-    <servlet-class>com.shadowolf.servlet.AnnounceServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>AnnounceServlet</servlet-name>
-    <url-pattern>/Announce</url-pattern>
-    <url-pattern>/announce</url-pattern>
-  </servlet-mapping>
+<web-app 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns="http://java.sun.com/xml/ns/javaee" 
+	xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" 
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" 
+	id="Shadowolf" 
+version="2.5">
+
+	<!-- <display-name>Shadowolf</display-name>
+	<description>Bittorrent Tracker</description> -->
+	
+	<!--  <welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+	</welcome-file-list> -->
+	<filter>
+		<filter-name>UrlRewriteFilter</filter-name>
+		<filter-class>org.tuckey.web.filters.urlrewrite.UrlRewriteFilter</filter-class>
+		<init-param>
+			<param-name>logLevel</param-name>
+			<param-value>WARN</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>UrlRewriteFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<filter>
+		<filter-name>WhiteList</filter-name>
+		<filter-class>com.shadowolf.filters.WhiteList</filter-class>
+		<init-param>
+			<param-name>logLevel</param-name>
+			<param-value>DEBUG</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>WhiteList</filter-name>
+		<servlet-name>AnnounceServlet</servlet-name>
+		<dispatcher>FORWARD</dispatcher>
+		<!-- <url-pattern>/announce</url-pattern>
+		<url-pattern>/Announce</url-pattern> -->
+	</filter-mapping>
+	
+	<servlet>
+    	<servlet-name>AnnounceServlet</servlet-name>
+    	<servlet-class>com.shadowolf.servlet.AnnounceServlet</servlet-class>
+    	<!-- <description>AnnounceServlet</description>
+    	<display-name>AnnounceServlet</display-name> -->
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>AnnounceServlet</servlet-name>
+		<url-pattern>/Announce</url-pattern>
+		<url-pattern>/announce</url-pattern>
+	</servlet-mapping>
 </web-app>

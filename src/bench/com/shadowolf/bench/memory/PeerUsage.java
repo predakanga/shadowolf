@@ -10,7 +10,6 @@ import com.shadowolf.user.UserFactory;
 
 public class PeerUsage {
 	public static void main(String[] args) throws UnknownHostException, IllegalAccessException, AnnounceException, UnsupportedEncodingException {
-		final int maxPeers = 100000000;
 		final int maxUsers = 10000000;
 		
 		//

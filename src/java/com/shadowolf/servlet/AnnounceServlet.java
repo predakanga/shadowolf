@@ -22,9 +22,10 @@ import com.shadowolf.user.PeerList;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
+@SuppressWarnings("serial")
 public class AnnounceServlet extends HttpServlet {
 	private static final Logger LOGGER = Logger.getLogger(AnnounceServlet.class);
-	private static final long serialVersionUID = 1L;
+	private static final int DEFAULT_NUMWANT = 200;
 	
 	public AnnounceServlet() {
 		super();
@@ -45,12 +46,17 @@ public class AnnounceServlet extends HttpServlet {
 		LOGGER.debug("Received announce with qs: " + request.getQueryString());
 		
 		if(request.getParameter("info_hash") == null) {
-			sos.print(TrackerResponse.bencoded("Missing parameter: info_hash"));
+			sos.print(TrackerResponse.Errors.MISSING_INFO_HASH.toString());
 			return;
 		} else if (request.getParameter("peer_id") == null) {
-			sos.print(TrackerResponse.bencoded("Missing parameter: peer_id"));
+			sos.print(TrackerResponse.Errors.MISSING_PEER_ID.toString());
 			return;
-		} 
+		} else if (request.getParameter("passkey") == null) {
+			sos.print(TrackerResponse.Errors.MISSING_PASSKEY.toString());
+			return;
+		} else if (request.getParameter("port") == null) {
+			sos.print(TrackerResponse.Errors.MISSING_PORT.toString());
+		}
 		
 		/*
 		 * Parse fields.
@@ -74,58 +80,43 @@ public class AnnounceServlet extends HttpServlet {
 			}
 		}
 		
+		//pre-validated fields
 		final String peerId = request.getParameter("peer_id");
-
-		//sos.print(TrackerResponse.bencoded(request.getParameterMap().keySet().toString())); 
 		final String infoHash = request.getParameter("info_hash"); 
-		
 		final String port = request.getParameter("port");
-		final long uploaded = (request.getParameter("uploaded") != null) ? Long.parseLong(request.getParameter("uploaded")) : 0;
-		final long downloaded = (request.getParameter("downloaded") != null) ? Long.parseLong(request.getParameter("downloaded")) : 0;
+		final String passkey = request.getParameter("passkey");
 		
+		//numeric fields _should_ be there, but I'm offering no guarantee
+		final long uploaded = (request.getParameter("uploaded") != null) ? Long.parseLong(request.getParameter("uploaded")) : 0;
+		final long downloaded = (request.getParameter("downloaded") != null) ? Long.parseLong(request.getParameter("downloaded")) : 0;		
 		final long left = (request.getParameter("left") != null) ? Long.parseLong(request.getParameter("left")) : 0;
-		LOGGER.debug("Left: " + left);
 		
 		int numwant = 0;
 		if(request.getParameter("numwant") != null) {
-			numwant = Integer.parseInt(request.getParameter("numwant")) < 30 ? Integer.parseInt(request.getParameter("numwant")) : 0; 
+			numwant = Integer.parseInt(request.getParameter("numwant")) < DEFAULT_NUMWANT ? Integer.parseInt(request.getParameter("numwant")) : 0; 
 		} 		
 		
 		//we're ignoring compact because we don't _need_ to implement the (now useless)
 		//full response... and no_peer_id too
-		//final boolean compact = request.getParameter("compact") != null;
-		//final boolean noPeerId = request.getParameter("no_peer_id") != null;
-		final String passkey = request.getParameter("passkey");
-		/*
-		 * Sanity checks.
-		 */
-		
 		
 		try {
-			LOGGER.debug("Passkey: " + passkey);
-			//update user and peer lists
 			User u = UserFactory.getUser(peerId, passkey);
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);
 			
-			LOGGER.debug("Event: " + event.toString() + ". Parameters: " + request.getParameterMap().keySet() + "\n");
 			Peer p = u.getPeer(infoHash, request.getRemoteAddr(), port);
 			PeerList peerlist = PeerList.getList(infoHash);
 			
 			if(event != Event.STOPPED) {
 				if(left > 0) {
-					LOGGER.debug("Adding leecher");
 					peerlist.addLeecher(p);
 				} else {
-					LOGGER.debug("Adding seeder");
 					peerlist.addSeeder(p);
 				}
 			} else {
 				if(left > 0) { 	
-					LOGGER.debug("Removing leecher");
 					peerlist.removeLeecher(p); 
 					return;
 				} else {
-					LOGGER.debug("Removing leecher");
 					peerlist.removeSeeder(p);
 					return;
 				}
@@ -133,31 +124,24 @@ public class AnnounceServlet extends HttpServlet {
 			
 			//prepare return
 			int seeders = peerlist.getSeeders().length;
-			LOGGER.debug("Total seeders: " + seeders);
-			
 			int leechers =  peerlist.getLeechers().length;
-			LOGGER.debug("Total leechers: " + leechers);
 			
 			Peer[] peers = null;
 			
-			if(left > 0){
+			if(left > 0) {
 				peers = peerlist.getSeeders(numwant);
-				//LOGGER.debug("Got " + peers.length + " seeders");
 			}
 			
-			if(left > 0 && peers.length < 30) {
-				numwant = 30 - peers.length; //29
-				Peer[] tempL = peerlist.getLeechers(30 - peers.length);
-				LOGGER.debug("GOT " + tempL.length + " leechers");
+			if(left > 0 && peers.length < DEFAULT_NUMWANT) {
+				numwant = DEFAULT_NUMWANT - peers.length; 
+				Peer[] tempL = peerlist.getLeechers(DEFAULT_NUMWANT - peers.length);
 				peers = (Peer[]) ArrayUtils.addAll(peers, tempL);
 			} else {
 				peers = peerlist.getLeechers(numwant);
-				LOGGER.debug("GOT " + peers.length + " leechers");
 			}
 			
 			
 			sos.write(TrackerResponse.bencoded(seeders, leechers, peers, 1, 1));
-			//LOGGER.debug(peerlist.getSeeders()[0].getIpAddress());
 		} catch (UnknownHostException e) {
 			sos.print(TrackerResponse.bencoded("Something is wrong with your reported host."));
 			return;
@@ -165,14 +149,12 @@ public class AnnounceServlet extends HttpServlet {
 			sos.print(TrackerResponse.bencoded("Something went wrong, please contact your site administrator."));
 			return;
 		} catch (AnnounceException e) {
-			sos.print(TrackerResponse.bencoded(e.getMessage()));
+			sos.print(e.getMessage());
 			return; 
 		} catch (Exception e) {
-			e.printStackTrace();
 			sos.print(TrackerResponse.bencoded("Something went catastrophically wrong, please contact your site administrator."));
-			e.printStackTrace();
+			return;
 		} finally {
-			LOGGER.debug("\n\n");
 			sos.flush();
 		}
 	}

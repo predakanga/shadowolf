@@ -10,7 +10,7 @@ public class CompactPeerEncoder {
 	
 	public void addToIPv4(byte[] address) throws AnnounceException {
 		if(address.length != 6) {
-			throw new AnnounceException("Unexpected IPv4 length");
+			throw new AnnounceException(TrackerResponse.Errors.UNEXPECTED_4_PEER_LENGTH.toString());
 		}
 		
 		byte[] temp = ArrayUtils.addAll(IPv4, address);
@@ -19,7 +19,7 @@ public class CompactPeerEncoder {
 	
 	public void addToIPv6(byte[] address) throws AnnounceException {
 		if(address.length != 18) {
-			throw new AnnounceException("Unexpected IPv4 length");
+			throw new AnnounceException(TrackerResponse.Errors.UNEXPECTED_6_PEER_LENGTH.toString());
 		}
 		
 		byte[] temp = ArrayUtils.addAll(IPv6, address);

@@ -17,6 +17,8 @@ import com.shadowolf.tracker.TrackerResponse;
 
 public class WhiteList extends XMLParsingFilter {
 	private static final String CONF_KEY = "com.shadowolf.filters.whitelist.path";
+	private static final String DEFAULT_CONF_PATH = "/WEB-INF/whitelist.xml";
+	
 	private static Logger LOGGER = Logger.getLogger(WhiteList.class);
 	private String[] list = new String[0];
 	
@@ -45,7 +47,7 @@ public class WhiteList extends XMLParsingFilter {
 		if(System.getenv(CONF_KEY) != null) {
 			return System.getenv(CONF_KEY);
 		} else {
-			return conf.getServletContext().getRealPath("/WEB-INF/whitelist.xml");
+			return conf.getServletContext().getRealPath(DEFAULT_CONF_PATH);
 		}
 	}
 
@@ -72,7 +74,7 @@ public class WhiteList extends XMLParsingFilter {
 			}
 		}
 		
-		response.getWriter().write(TrackerResponse.bencoded("Your client is banned."));
+		response.getWriter().write(TrackerResponse.Errors.BANNED_CLIENT.toString());
 	}
 	
 	private void addListElement(String peerId) {

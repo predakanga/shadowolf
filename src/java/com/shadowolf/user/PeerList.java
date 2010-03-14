@@ -113,13 +113,11 @@ public class PeerList {
 			status = this.leechers.remove(p);
 		}
 		
-		LOGGER.debug("Removed leecher.  Total: " + this.leechers.size());
 		return status;
 	}
 	
 	public boolean removeSeeder(Peer p) {
 		if(this.seeders.contains(p) == false) {
-			LOGGER.debug("Not removing because of non-existance");
 			return true;
 		}
 		
@@ -128,7 +126,6 @@ public class PeerList {
 			status = this.seeders.remove(p);
 		}
 		
-		LOGGER.debug("Removed seeder.  Total: " + this.seeders.size());
 		return status;
 	}
 	

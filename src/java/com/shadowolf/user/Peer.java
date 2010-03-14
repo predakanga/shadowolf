@@ -22,25 +22,13 @@ public class Peer {
 		this.lastAnnounce = new Date().getTime();
 		this.ipAddress = TrackerRequest.IPToBytes(ipAddress);
 		this.port = TrackerRequest.portToBytes(port);
-		
-		/*LOGGER.debug("Constructing peer with parameters:" + "\n" +
-				"\t\t" + "passkey: " + this.passkey + "\n" +
-				"\t\t" + "peer_id: " + this.peerId + "\n" +
-				"\t\t" + "info_hash: " + this.infoHash + "\n" +
-				"\t\t" + "uploaded: " + this.uploaded + "\n" +
-				"\t\t" + "downloaded: " + this.downloaded + "\n" +
-				"\t\t" + "lastAnnounce: " + this.lastAnnounce.toString() + "\n" +
-				"\t\t" + "IP: " + this.ipAddress +  "\n" +
-				"\t\t" + "Port: " + this.port);
-				
-		 */
 	}
 	
 	public long getLastAnnounce() {
 		return this.lastAnnounce;
 	}
 	public void setLastAnnounce(final Date lastAnnounce) {
-		this.lastAnnounce = (int)lastAnnounce.getTime();
+		this.lastAnnounce = lastAnnounce.getTime();
 	}
 
 	public long getUploaded() {

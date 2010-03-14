@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +26,9 @@ import com.shadowolf.tracker.TrackerResponse;
 
 public class InfoHashEnforcement extends XMLParsingFilter {
 	private final static Logger LOGGER = Logger.getLogger(InfoHashEnforcement.class);
+	private final static String CONF_KEY = "com.shadowolf.sqlconf.path";
+	private final static String DEFAULT_CONF_PATH = "/WEB-INF/sqlconf.xml";
+	private final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	
 	private HashSet<String> hashes = new HashSet<String>();
 	
@@ -49,10 +51,10 @@ public class InfoHashEnforcement extends XMLParsingFilter {
 
 	@Override
 	protected String getPath() {
-		if(System.getenv("com.shadowolf.filters.sqlconf.path") != null) {
-			return System.getenv("com.shadowolf.sqlconf.path");
+		if(System.getenv(CONF_KEY) != null) {
+			return System.getenv(CONF_KEY);
 		} else {
-			return this.conf.getServletContext().getRealPath("/WEB-INF/sqlconf.xml");
+			return this.conf.getServletContext().getRealPath(DEFAULT_CONF_PATH);
 		}
 	}
 
@@ -61,7 +63,7 @@ public class InfoHashEnforcement extends XMLParsingFilter {
 		if(hashes.contains(request.getParameter("info_hash"))) {
 			chain.doFilter(request, response);
 		} else {
-			response.getWriter().write(TrackerResponse.bencoded("Torrent is unregistered"));
+			response.getWriter().write(TrackerResponse.Errors.TORRENT_NOT_REGISTERED.toString());
 		}
 	}
 
@@ -72,7 +74,6 @@ public class InfoHashEnforcement extends XMLParsingFilter {
 	
 	protected class SQLConfParser extends XMLParser {
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
-			LOGGER.debug("Parsing" + qName);
 			if(qName.equalsIgnoreCase("source") && attributes.getValue("name").equals("info_hash")) {
 				table = attributes.getValue("table");
 				column = attributes.getValue("column");
@@ -85,7 +86,7 @@ public class InfoHashEnforcement extends XMLParsingFilter {
 		
 		public SQLReader() {
 			try {
-				DataSource source = (DataSource)(new InitialContext().lookup("java:comp/env/jdbc/database"));
+				DataSource source = (DataSource)(new InitialContext().lookup(DATABASE_NAME));
 				Connection conn = source.getConnection();
 				this.stmt = conn.prepareStatement("SELECT " + column + " FROM " + table);
 				LOGGER.debug("SELECT " + column + " FROM " + table);
@@ -93,14 +94,12 @@ public class InfoHashEnforcement extends XMLParsingFilter {
 				LOGGER.error("Unexpected NamingException...");
 			} catch (SQLException e) {
 				LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
-				e.printStackTrace();
 			}
 		}
 		
 		@Override
 		public void run() {
 			try {
-				LOGGER.debug("SELECT " + column + " FROM " + table);
 				this.stmt.execute();
 				final ResultSet rs = this.stmt.getResultSet();
 				final HashSet<String> temp = new HashSet<String>(rs.getFetchSize());

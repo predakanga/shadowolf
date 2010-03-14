@@ -7,11 +7,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
 
 import com.shadowolf.tracker.AnnounceException;
+import com.shadowolf.tracker.TrackerResponse;
 
 final public class UserFactory {
 	private static final Logger LOGGER = Logger.getLogger(UserFactory.class);
 	private static ConcurrentHashMap<String, HashMap<String, User>> users = new ConcurrentHashMap<String, HashMap<String,User>>(1024); 
-
+	public static final short MAX_LOCATIONS = 3;
+	
 	private UserFactory() {}
 	
 	public static User getUser(final String peerId, final String passkey) throws AnnounceException {
@@ -20,8 +22,8 @@ final public class UserFactory {
 			users.put(passkey, new HashMap<String, User>(1));
 		}
 		
-		if (users.get(passkey).size() >= 3) {
-			throw new AnnounceException("You can only be active from 3 locations at once!");
+		if (users.get(passkey).size() >= MAX_LOCATIONS) {
+			throw new AnnounceException(TrackerResponse.Errors.TOO_MANY_LOCATIONS.toString());
 		} else 	{
 			synchronized (users.get(passkey)) {
 				if (users.get(passkey).get(peerId) == null) {

@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
  * of all Peers that constitute a user, for statistics and access control.
  */
 public class User { 
-	private static final Logger LOGGER = Logger.getLogger(User.class);
+	//private static final Logger LOGGER = Logger.getLogger(User.class);
 	
 	protected HashMap<String, Peer> peers = 
 		new HashMap<String, Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
@@ -64,8 +64,6 @@ public class User {
 		synchronized (peer) {
 			upDiff = uploaded - peer.getUploaded();
 			downDiff = downloaded - peer.getDownloaded();
-			//peer.setDownloaded(downloaded);
-			//peer.setUploaded(uploaded);
 		}
 		
 		this.addDownloaded(downDiff);
@@ -75,9 +73,7 @@ public class User {
 	public Peer getPeer(final String infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
 		synchronized(this.peers){ 
 			if(this.peers.get(infoHash) == null) {
-				LOGGER.debug("Creating new peer with infoHash: " + infoHash);
 				Peer p =  new Peer(0L, 0L, ipAddress, port);
-				LOGGER.debug(p.getPort());
 				this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
 			}
 		}

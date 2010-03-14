@@ -6,6 +6,7 @@ import java.net.URLEncoder;
 import org.apache.commons.lang.ArrayUtils;
 
 import com.shadowolf.user.Peer;
+import com.shadowolf.user.UserFactory;
 
 /* http://wiki.theory.org/BitTorrentSpecification#Tracker_Response
  * failure reason: If present, then no other keys may be present. The value is a human-readable error message as to why the request failed (string).
@@ -23,6 +24,69 @@ import com.shadowolf.user.Peer;
  */
 
 final public class TrackerResponse {
+	public enum Errors {
+		TORRENT_NOT_REGISTERED {
+			public String toString() { 
+				return bencoded("Torrent is not registered with this tracker");
+			}
+		},
+		
+		INVALID_PASSKEY {
+			public String toString() { 
+				return bencoded("Unrecognized passkey");
+			}
+		},
+		
+		BANNED_CLIENT {
+			public String toString() {
+				return bencoded("Your client is banned.  Please upgrade to a client on the whitelist.");
+			}
+		},
+		
+		
+		MISSING_PORT {
+			public String toString() {
+				return bencoded("Your client did not send required parameter: port");
+			}
+		},
+		
+		MISSING_INFO_HASH {
+			public String toString() {
+				return bencoded("Your client did not send required parameter: info_hash");
+			}
+		},
+		
+		MISSING_PASSKEY {
+			public String toString() {
+				return bencoded("Your client did not send required parameter: passkey");
+			}
+		},
+		
+		MISSING_PEER_ID {
+			public String toString() {
+				return bencoded("Your client did not send required parameter: peer_id");
+			}
+		},
+		
+		TOO_MANY_LOCATIONS {
+			public String toString() {
+				return bencoded("You're already seeding from " + UserFactory.MAX_LOCATIONS + " locations");
+			}
+		},
+		
+		UNEXPECTED_4_PEER_LENGTH {
+			public String toString() {
+				return bencoded("IPv4 address: unexpected length");
+			}
+		},
+		
+		UNEXPECTED_6_PEER_LENGTH {
+			public String toString() {
+				return bencoded("IPv6 address: unexpected length");
+			}
+		}
+	};
+	
 	public static final int DEFAULT_MIN_INTERVAL = 600;
 	public static final int DEFAULT_INTERVAL = 1800;
 	
@@ -48,7 +112,7 @@ final public class TrackerResponse {
 			byte[] temp = ArrayUtils.addAll(start, enc);
 			return ArrayUtils.addAll(temp, end);
 		} catch (UnsupportedEncodingException e) {
-			throw new AnnounceException("There was a problem encoding characters.  Contact your site administrator");
+			throw new AnnounceException("Epic failure");
 		}
 	}
 	

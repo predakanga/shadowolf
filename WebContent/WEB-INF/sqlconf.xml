@@ -6,7 +6,7 @@
 		column="info_hash"
 	/>
 	<source name="passkeys"
-		table="users"
-		column="passkey"
+		table="users_main"
+		column="torrent_pass"
 	/>
 </database>

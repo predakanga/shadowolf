@@ -1,7 +1,6 @@
 package com.shadowolf.filters;
 
 import java.io.IOException;
-import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -15,41 +14,44 @@ import org.apache.log4j.Logger;
 
 import com.shadowolf.filters.common.SingleColumnScheduledDatabaseFilter;
 import com.shadowolf.tracker.TrackerResponse;
-import com.shadowolf.util.Data;
 
-public class InfoHashEnforcement extends SingleColumnScheduledDatabaseFilter {
-	private static final Logger LOGGER = Logger.getLogger(InfoHashEnforcement.class);
+public class PasskeyEnforcement extends SingleColumnScheduledDatabaseFilter {
+	private static final Logger LOGGER = Logger.getLogger(PasskeyEnforcement.class);
 
-	@Override
 	public String getSourceName() {
-		return "info_hash";
+		return "passkeys";
 	}
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-		if (hashes.contains(Data.byteArrayToHexString(request.getParameter("info_hash").getBytes("ISO-8859-1")))) {
+		LOGGER.debug(hashes.size());
+
+		if (hashes.contains(request.getParameter("passkey"))) {
 			chain.doFilter(request, response);
 		} else {
-			response.getWriter().write(TrackerResponse.Errors.TORRENT_NOT_REGISTERED.toString());
+			response.getWriter().write(TrackerResponse.Errors.INVALID_PASSKEY.toString());
 		}
+
 	}
 
 	@Override
-	public void parseResults(ResultSet rs) {
+	protected void parseResults(ResultSet rs) {
 		try {
 			HashSet<String> temp = new HashSet<String>(rs.getFetchSize());
+
 			rs.first();
+
 			while (rs.next()) {
-				Blob b = rs.getBlob(column);
-				byte[] bs = b.getBytes(1l, (int) b.length());
-				temp.add(Data.byteArrayToHexString(bs));
+				temp.add(rs.getString(column));
 			}
-			
-			synchronized(hashes) {
+
+			synchronized (hashes) {
 				hashes = temp;
 			}
+
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
+
 	}
 }

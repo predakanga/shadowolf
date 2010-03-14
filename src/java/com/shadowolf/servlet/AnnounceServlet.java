@@ -9,7 +9,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
@@ -21,6 +20,7 @@ import com.shadowolf.user.Peer;
 import com.shadowolf.user.PeerList;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
+import com.shadowolf.util.Data;
 
 @SuppressWarnings("serial")
 public class AnnounceServlet extends HttpServlet {
@@ -135,7 +135,7 @@ public class AnnounceServlet extends HttpServlet {
 			if(left > 0 && peers.length < DEFAULT_NUMWANT) {
 				numwant = DEFAULT_NUMWANT - peers.length; 
 				Peer[] tempL = peerlist.getLeechers(DEFAULT_NUMWANT - peers.length);
-				peers = (Peer[]) ArrayUtils.addAll(peers, tempL);
+				peers = (Peer[]) Data.addObjectArrays(peers, tempL);
 			} else {
 				peers = peerlist.getLeechers(numwant);
 			}

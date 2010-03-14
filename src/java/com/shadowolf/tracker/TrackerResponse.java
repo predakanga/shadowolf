@@ -3,10 +3,9 @@ package com.shadowolf.tracker;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import org.apache.commons.lang.ArrayUtils;
-
 import com.shadowolf.user.Peer;
 import com.shadowolf.user.UserFactory;
+import com.shadowolf.util.Data;
 
 /* http://wiki.theory.org/BitTorrentSpecification#Tracker_Response
  * failure reason: If present, then no other keys may be present. The value is a human-readable error message as to why the request failed (string).
@@ -109,8 +108,8 @@ final public class TrackerResponse {
 				"e10:incompletei" + leechers + "e8:completei" + seeders + "e").getBytes("UTF-8");
 			final byte[] end = "e\r\n".getBytes("UTF-8");
 			
-			byte[] temp = ArrayUtils.addAll(start, enc);
-			return ArrayUtils.addAll(temp, end);
+			byte[] temp = Data.addByteArrays(start, enc);
+			return Data.addByteArrays(temp, end);
 		} catch (UnsupportedEncodingException e) {
 			throw new AnnounceException("Epic failure");
 		}

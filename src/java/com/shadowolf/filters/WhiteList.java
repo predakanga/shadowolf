@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -17,8 +16,10 @@ import com.shadowolf.filters.common.XMLParsingFilter;
 import com.shadowolf.tracker.TrackerResponse;
 
 public class WhiteList extends XMLParsingFilter {
-	private String[] list = new String[0];
+	private static final String CONF_KEY = "com.shadowolf.filters.whitelist.path";
 	private static Logger LOGGER = Logger.getLogger(WhiteList.class);
+	private String[] list = new String[0];
+	
 	private ArrayList<String> tempList = new ArrayList<String>(0);
 	
 	
@@ -41,8 +42,8 @@ public class WhiteList extends XMLParsingFilter {
 
 	@Override
 	protected String getPath() {	
-		if(System.getenv("com.shadowolf.filters.whitelist.path") != null) {
-			return System.getenv("com.shadowolf.whitelist.path");
+		if(System.getenv(CONF_KEY) != null) {
+			return System.getenv(CONF_KEY);
 		} else {
 			return conf.getServletContext().getRealPath("/WEB-INF/whitelist.xml");
 		}

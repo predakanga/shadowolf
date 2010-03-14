@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<database>
+	<source name="info_hash"
+		table="torrents"
+		column="info_hash"
+	/>
+	<source name="passkeys"
+		table="users"
+		column="passkey"
+	/>
+</database>

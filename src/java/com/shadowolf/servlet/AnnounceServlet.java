@@ -87,7 +87,7 @@ public class AnnounceServlet extends HttpServlet {
 		}
 
 		//sos.print(TrackerResponse.bencoded(request.getParameterMap().keySet().toString())); 
-		final byte[] infoHash = request.getParameter("info_hash").getBytes("US-ASCII");
+		final String infoHash = request.getParameter("info_hash"); 
 		
 		final String port = request.getParameter("port");
 		final long uploaded = (request.getParameter("uploaded") != null) ? Long.parseLong(request.getParameter("uploaded")) : 0;
@@ -112,6 +112,7 @@ public class AnnounceServlet extends HttpServlet {
 		
 		
 		try {
+			LOGGER.debug("Passkey: " + passkey);
 			//update user and peer lists
 			User u = UserFactory.getUser(peerId, passkey);
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);

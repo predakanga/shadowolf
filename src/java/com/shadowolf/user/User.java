@@ -5,15 +5,18 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.apache.log4j.Logger;
+
 
 /*
  * This class is a multiton around itself.  The class doesn't serve much purpose other than to keep track
  * of all Peers that constitute a user, for statistics and access control.
  */
 public class User { 
+	private static final Logger LOGGER = Logger.getLogger(User.class);
 	
-	protected HashMap<byte[], Peer> peers = 
-		new HashMap<byte[], Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
+	protected HashMap<String, Peer> peers = 
+		new HashMap<String, Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
 	
 	protected final String peerId;// NOPMD by Eddie on 3/6/10 3:32 AM
 	protected String passkey; // NOPMD by Eddie on 3/6/10 3:32 AM
@@ -52,7 +55,7 @@ public class User {
 		}
 	}
 	
-	public void updateStats(byte[] infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
+	public void updateStats(String infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
 		long upDiff; 
 		long downDiff;
 		
@@ -69,13 +72,13 @@ public class User {
 		this.addUploaded(upDiff);
 	}
 	
-	public Peer getPeer(final byte[] infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
+	public Peer getPeer(final String infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
 		synchronized(this.peers){ 
 			if(this.peers.get(infoHash) == null) {
+				LOGGER.debug("Creating new peer with infoHash: " + infoHash);
 				Peer p =  new Peer(0L, 0L, ipAddress, port);
-				synchronized(this.peers) {
-					this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
-				}
+				LOGGER.debug(p.getPort());
+				this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
 			}
 		}
 		
@@ -114,7 +117,7 @@ public class User {
 		return this.passkey;
 	}
 	
-	public HashMap<byte[], Peer> getPeers() {
+	public HashMap<String, Peer> getPeers() {
 		return this.peers;
 	}
 

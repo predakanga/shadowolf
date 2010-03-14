@@ -4,15 +4,19 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.Logger;
+
 import com.shadowolf.tracker.AnnounceException;
 
 final public class UserFactory {
+	private static final Logger LOGGER = Logger.getLogger(UserFactory.class);
 	private static ConcurrentHashMap<String, HashMap<String, User>> users = new ConcurrentHashMap<String, HashMap<String,User>>(1024); 
 
 	private UserFactory() {}
 	
 	public static User getUser(final String peerId, final String passkey) throws AnnounceException {
 		if(users.get(passkey) == null) {
+			LOGGER.debug("No entries for passkey: " + passkey);
 			users.put(passkey, new HashMap<String, User>(1));
 		}
 		
@@ -20,7 +24,8 @@ final public class UserFactory {
 			throw new AnnounceException("You can only be active from 3 locations at once!");
 		} else 	{
 			synchronized (users.get(passkey)) {
-				if (users.get(passkey).get(peerId) == null){
+				if (users.get(passkey).get(peerId) == null) {
+					LOGGER.debug("Creating new User");
 					users.get(passkey).put(peerId, new User(peerId, passkey));;
 				}
 			}
@@ -31,7 +36,6 @@ final public class UserFactory {
 	
 	public User aggregate(String passkey) {
 		UserAggregate user = new UserAggregate(passkey);
-		
 		if(users.get(passkey) == null) {
 			return user;
 		} else if (users.get(passkey).size() == 1) {
@@ -42,7 +46,7 @@ final public class UserFactory {
 				
 				while(iter.hasNext()) {
 					final User u = iter.next();
-					HashMap<byte[], Peer> peers = u.getPeers();
+					HashMap<String, Peer> peers = u.getPeers();
 					synchronized(peers) {
 						user.addPeerlist(u.peers);
 					}

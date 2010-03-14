@@ -12,17 +12,17 @@ public class UserAggregate extends User {
 		this.passkey = passkey;
 	}
 
-	public void addPeerlist(HashMap<byte[], Peer> list) {
+	public void addPeerlist(HashMap<String, Peer> list) {
 		this.peers.putAll(list);
 	}
 	
 	@Override
-	public void updateStats(byte[] infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
+	public void updateStats(String infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
 		throw new IllegalAccessException("Cannot update stats from a UserAggregate instance");
 	}
 	
 	@Override
-	public Peer getPeer(final byte[] infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
+	public Peer getPeer(final String infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
 		throw new IllegalAccessException("Cannot get peer from UserAggregate instance");
 	}
 }

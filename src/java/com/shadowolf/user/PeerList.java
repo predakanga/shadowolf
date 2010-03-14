@@ -15,7 +15,7 @@ public class PeerList {
 	public static final int LEECHER = 1;
 	public static final int NOT_IN_LIST = 2;
 	
-	private static ConcurrentHashMap<byte[], PeerList> lists = new ConcurrentHashMap<byte[], PeerList>();
+	private static ConcurrentHashMap<String, PeerList> lists = new ConcurrentHashMap<String, PeerList>();
 	private final static int SEEDER_START = 64;
 	private final static int LEECHER_START = 16;
 	
@@ -24,9 +24,11 @@ public class PeerList {
 	private ArrayList<Peer> seeders = new ArrayList<Peer>(SEEDER_START);
 	private ArrayList<Peer> leechers = new ArrayList<Peer>(LEECHER_START);
 	
-	public static PeerList getList(byte[] infoHash2) {
-		if(lists.containsKey(infoHash2) == false) {
-			lists.put(infoHash2, new PeerList());
+	public static PeerList getList(String infoHash2) {
+		synchronized(lists) {
+			if(lists.containsKey(infoHash2) == false) {
+				lists.put(infoHash2, new PeerList());
+			}
 		}
 		
 		return lists.get(infoHash2);
@@ -97,7 +99,7 @@ public class PeerList {
 			status = this.leechers.add(p);
 		}
 		
-		LOGGER.debug("Added leecher.  Total: " + this.leechers.size());
+		LOGGER.debug("Added leecher.  Total: " + this.leechers.size() + " " + status);
 		return status;
 	}
 	

@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +23,7 @@ abstract public class SingleColumnScheduledDatabaseFilter extends XMLParsingFilt
 	protected final static String DEFAULT_CONF_PATH = "/WEB-INF/sqlconf.xml";
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static int DEFAULT_UPDATE = 15;
-	protected HashSet<String> hashes = new HashSet<String>();
+	protected ConcurrentSkipListSet<String> hashes = new ConcurrentSkipListSet<String>();
 
 	protected String table;
 	protected String column;
@@ -36,7 +36,7 @@ abstract public class SingleColumnScheduledDatabaseFilter extends XMLParsingFilt
 	public void init(FilterConfig config) throws ServletException {
 		super.init(config);
 
-		this.executor.scheduleAtFixedRate(new SQLReader(), 0, DEFAULT_UPDATE, TimeUnit.MINUTES);
+		this.executor.scheduleAtFixedRate(new SQLReader(), 0, DEFAULT_UPDATE, TimeUnit.SECONDS);
 	}
 	
 	@Override
@@ -87,14 +87,6 @@ abstract public class SingleColumnScheduledDatabaseFilter extends XMLParsingFilt
 			try {
 				this.stmt.execute();
 				parseResults(this.stmt.getResultSet());
-				/*
-				 * LOGGER.debug(getColumn()); while (rs.next()) {
-				 * if(getColumn().equals("info_hash")) { Blob b =
-				 * rs.getBlob(column); byte[] bs = b.getBytes(1l, 20);
-				 * hashes.add(getHexString(bs)); } else {
-				 * hashes.add(rs.getString(column)); } }
-				 */
-
 			} catch (SQLException e) {
 				LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -37,17 +36,15 @@ public class InfoHashEnforcement extends SingleColumnScheduledDatabaseFilter {
 	@Override
 	public void parseResults(ResultSet rs) {
 		try {
-			HashSet<String> temp = new HashSet<String>(rs.getFetchSize());
 			rs.first();
 			while (rs.next()) {
-				Blob b = rs.getBlob(column);
-				byte[] bs = b.getBytes(1l, (int) b.length());
-				temp.add(Data.byteArrayToHexString(bs));
+				final Blob b = rs.getBlob(column);
+				final byte[] bs = b.getBytes(1l, (int) b.length());
+				hashes.add(Data.byteArrayToHexString(bs));
+				b.free();
 			}
 			
-			synchronized(hashes) {
-				hashes = temp;
-			}
+			rs.close();
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}

@@ -9,4 +9,9 @@
 		table="users_main"
 		column="torrent_pass"
 	/>
+	<source name="user_stats"
+		table="users_main"
+		upload_column="Uploaded"
+		download_column="Downloaded"
+	/>
 </database>

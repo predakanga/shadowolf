@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -26,7 +28,14 @@ public class InfoHashEnforcement extends SingleColumnScheduledDatabaseFilter {
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-		if (hashes.contains(Data.byteArrayToHexString(request.getParameter("info_hash").getBytes("ISO-8859-1")))) {
+		String encoding = request.getCharacterEncoding() == null ? "ISO-8859-1" : request.getCharacterEncoding();
+		
+		if (hashes.contains(
+					Data.byteArrayToHexString(
+						request.getParameter("info_hash").getBytes(encoding)
+					)
+			)
+		) {
 			chain.doFilter(request, response);
 		} else {
 			response.getWriter().write(TrackerResponse.Errors.TORRENT_NOT_REGISTERED.toString());
@@ -49,4 +58,5 @@ public class InfoHashEnforcement extends SingleColumnScheduledDatabaseFilter {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
 	}
+	
 }

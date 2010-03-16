@@ -5,8 +5,6 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
-
 
 /*
  * This class is a multiton around itself.  The class doesn't serve much purpose other than to keep track
@@ -129,4 +127,13 @@ public class User {
 		}
 	}
 
+	public void resetStats() {
+		synchronized(this.downLock) {
+			this.downloaded = 0;
+		}
+		
+		synchronized(this.upLock) {
+			this.uploaded = 0;
+		}
+	}
 }

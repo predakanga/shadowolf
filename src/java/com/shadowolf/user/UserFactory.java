@@ -36,7 +36,7 @@ final public class UserFactory {
 		return users.get(passkey).get(peerId);
 	}
 	
-	public User aggregate(String passkey) {
+	public static User aggregate(String passkey) {
 		UserAggregate user = new UserAggregate(passkey);
 		if(users.get(passkey) == null) {
 			return user;
@@ -54,6 +54,7 @@ final public class UserFactory {
 					}
 					user.addDownloaded(u.getDownloaded());
 					user.addUploaded(u.getUploaded());
+					u.resetStats();
 				}
 			}
 		}

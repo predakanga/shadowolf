@@ -2,7 +2,10 @@ package com.shadowolf.servlet;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
@@ -21,20 +24,35 @@ import com.shadowolf.user.PeerList;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 import com.shadowolf.util.Data;
+import com.shadowolf.util.UserStatsUpdater;
 
 @SuppressWarnings("serial")
 public class AnnounceServlet extends HttpServlet {
 	private static final Logger LOGGER = Logger.getLogger(AnnounceServlet.class);
 	private static final int DEFAULT_NUMWANT = 200;
+	private static UserStatsUpdater updater;
+	private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 	
 	public AnnounceServlet() {
 		super();
 		PropertyConfigurator.configure(Loader.getResource("log4j.properties"));
 	}
 
-	public void init() throws ServletException {
+	@Override
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+		
+		updater = new UserStatsUpdater(config.getServletContext());
+		executor.scheduleAtFixedRate(updater, 10, 10, TimeUnit.SECONDS);
+		
 	}
 
+	@Override
+	public void destroy() {
+		super.destroy();
+		executor.shutdown();
+	}
+	
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
@@ -79,7 +97,7 @@ public class AnnounceServlet extends HttpServlet {
 				event = Event.STARTED;
 			}
 		}
-		
+		LOGGER.debug("Blah");
 		//pre-validated fields
 		final String peerId = request.getParameter("peer_id");
 		final String infoHash = request.getParameter("info_hash"); 
@@ -102,6 +120,11 @@ public class AnnounceServlet extends HttpServlet {
 		try {
 			User u = UserFactory.getUser(peerId, passkey);
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);
+			
+			if(uploaded > 0 || downloaded > 0) {
+				LOGGER.debug("Queuing ... " + passkey + " for update");
+				updater.addToUpdateQueue(passkey);
+			}
 			
 			Peer p = u.getPeer(infoHash, request.getRemoteAddr(), port);
 			PeerList peerlist = PeerList.getList(infoHash);
@@ -158,5 +181,9 @@ public class AnnounceServlet extends HttpServlet {
 			sos.flush();
 		}
 	}
+
+
+
+	
     
 }

@@ -30,7 +30,7 @@ abstract public class SingleColumnScheduledDatabaseFilter extends XMLParsingFilt
 	protected ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
 	protected abstract void parseResults(ResultSet rs);
-	protected abstract String getSourceName();
+	protected abstract String[] getSourceName();
 	
 	@Override
 	public void init(FilterConfig config) throws ServletException {
@@ -60,9 +60,9 @@ abstract public class SingleColumnScheduledDatabaseFilter extends XMLParsingFilt
 
 	protected class SQLConfParser extends XMLParser {
 		public void startElement(String uri, String localName, String qName, Attributes attributes) {
-			if (qName.equalsIgnoreCase("source") && attributes.getValue("name").equals(getSourceName())) {
+			if (qName.equalsIgnoreCase("source") && attributes.getValue("name").equals(getSourceName()[0])) {
 				table = attributes.getValue("table");
-				column = attributes.getValue("column");
+				column = attributes.getValue(getSourceName()[1]);
 			}
 		}
 	}

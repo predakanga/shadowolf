@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <database>
-	<source name="info_hash"
+	<source name="torrents"
 		table="torrents"
-		column="info_hash"
+		info_hash_column="info_hash"
+		freeleech_column="FreeTorrent"
 	/>
-	<source name="passkeys"
-		table="users_main"
-		column="torrent_pass"
-	/>
-	<source name="user_stats"
+	
+	<source name="users"
 		table="users_main"
 		upload_column="Uploaded"
 		download_column="Downloaded"
+		passkey_column="torrent_pass"
 	/>
+	
 </database>

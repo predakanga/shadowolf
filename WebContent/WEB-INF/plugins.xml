@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugins>
+	<plugin
+		class="com.shadowolf.plugins.UserStatsUpdater"
+		type="periodic_thread"
+		repeat_interval="15"
+		start_delay="15"
+	/>	
+</plugins>

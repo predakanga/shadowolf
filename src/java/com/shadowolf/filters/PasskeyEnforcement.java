@@ -17,8 +17,8 @@ import com.shadowolf.tracker.TrackerResponse;
 public class PasskeyEnforcement extends SingleColumnScheduledDatabaseFilter {
 	private static final Logger LOGGER = Logger.getLogger(PasskeyEnforcement.class);
 
-	public String getSourceName() {
-		return "passkeys";
+	public String[] getSourceName() {
+		return new String[] {"users", "passkey_column"};
 	}
 
 	@Override

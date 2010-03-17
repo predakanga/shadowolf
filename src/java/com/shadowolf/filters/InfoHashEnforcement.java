@@ -22,8 +22,8 @@ public class InfoHashEnforcement extends SingleColumnScheduledDatabaseFilter {
 	private static final Logger LOGGER = Logger.getLogger(InfoHashEnforcement.class);
 
 	@Override
-	public String getSourceName() {
-		return "info_hash";
+	public String[] getSourceName() {
+		return new String[] { "torrents", "info_hash_column" };
 	}
 
 	@Override

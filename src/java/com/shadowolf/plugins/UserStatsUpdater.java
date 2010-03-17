@@ -1,4 +1,4 @@
-package com.shadowolf.util;
+package com.shadowolf.plugins;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -25,7 +25,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
-public class UserStatsUpdater implements Runnable {
+public class UserStatsUpdater implements Plugin {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(UserStatsUpdater.class);
 	protected final static String CONF_KEY = "com.shadowolf.sqlconf.path";
@@ -41,6 +41,7 @@ public class UserStatsUpdater implements Runnable {
 	protected Connection conn;
 	
 	public UserStatsUpdater(ServletContext context) {
+		LOGGER.debug("Instatiated UserStatsUpdater plugin.");
 		this.updates = Collections.synchronizedSet(this.updates);
 		
 		try {
@@ -87,6 +88,7 @@ public class UserStatsUpdater implements Runnable {
 	
 	@Override
 	public void run() {
+		LOGGER.debug("UserStatsUpdater plugin running.");
 		if(this.running) {
 			return;
 		} else {

@@ -1,21 +1,33 @@
 package com.shadowolf.servlet;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
+import org.xml.sax.Attributes;
+import org.xml.sax.helpers.DefaultHandler;
 
+import com.shadowolf.plugins.Plugin;
+import com.shadowolf.plugins.PluginBean;
+import com.shadowolf.plugins.UserStatsUpdater;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.tracker.TrackerRequest.Event;
@@ -24,14 +36,15 @@ import com.shadowolf.user.PeerList;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 import com.shadowolf.util.Data;
-import com.shadowolf.util.UserStatsUpdater;
 
 @SuppressWarnings("serial")
 public class AnnounceServlet extends HttpServlet {
+	public static final String DEFAULT_PLUGIN_PATH = "/WEB-INF/plugins.xml";
 	private static final Logger LOGGER = Logger.getLogger(AnnounceServlet.class);
 	private static final int DEFAULT_NUMWANT = 200;
 	private static UserStatsUpdater updater;
-	private static ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+	private ScheduledThreadPoolExecutor executor; 
+	private final ArrayList<PluginBean> repeatingPlugins = new ArrayList<PluginBean>();
 	
 	public AnnounceServlet() {
 		super();
@@ -41,10 +54,58 @@ public class AnnounceServlet extends HttpServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+
+		ServletContext context = config.getServletContext();
+		try {
+			SAXParser sp = SAXParserFactory.newInstance().newSAXParser();
+			String path = "";
+			
+			if(System.getenv("com.shadowolf.plugins.path") != null) {
+				path = System.getenv("com.shadowolf.plugins.path");
+			} else {
+				path = context.getRealPath(DEFAULT_PLUGIN_PATH);
+			}
+			
+			sp.parse(path, new DefaultHandler() {
+				@SuppressWarnings("unchecked")
+				public void startElement(String uri, String localName, String qName, Attributes attributes) {
+					if (qName.equalsIgnoreCase("plugin")) {
+						String className = attributes.getValue("class");
+						try {
+							if(attributes.getValue("type").equals("periodic_thread")) {
+								PluginBean pb = new PluginBean();
+								Constructor<Plugin> r = (Constructor<Plugin>)(Class.forName(className).getConstructor(new Class[] {ServletContext.class}));
+								
+								pb.setConstructor(r);
+								pb.setType("periodic_thread");
+								pb.setRepeatInterval(Integer.parseInt(attributes.getValue("repeat_interval")));
+								pb.setStartDelay(Integer.parseInt(attributes.getValue("start_delay")));
+								repeatingPlugins.add(pb);
+							}
+						} catch (Exception e) {
+							LOGGER.error("Error parsing plugin!");
+							System.exit(1);
+						}
+					}
+				}
+			});
+		} catch (Exception e) {
+			LOGGER.error("Could not parse plugins.xml! Exiting...");
+			System.exit(1);
+		}
 		
-		updater = new UserStatsUpdater(config.getServletContext());
-		executor.scheduleAtFixedRate(updater, 10, 10, TimeUnit.SECONDS);
+		executor = new ScheduledThreadPoolExecutor(repeatingPlugins.size());
+		Iterator<PluginBean> i = repeatingPlugins.iterator();
 		
+		while(i.hasNext()) {
+			PluginBean pb = i.next();
+			try {
+				executor.scheduleAtFixedRate(pb.getConstructor().newInstance(context), pb.getStartDelay(), pb.getRepeatInterval(), TimeUnit.SECONDS);
+			} catch (Exception e) {
+				LOGGER.error("Error instantiating plugin!");
+				System.exit(1);
+			}
+		}
 	}
 
 	@Override

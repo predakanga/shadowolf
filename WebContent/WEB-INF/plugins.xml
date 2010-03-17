@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugins>
+	<!-- Optional attributes "delay", "period", "unit" disabled -->
 	<plugin
-		class="com.shadowolf.plugins.UserStatsUpdater"
-		type="periodic_thread"
-		repeat_interval="15"
-		start_delay="15"
+		class="com.shadowolf.plugins.scheduled.UserStatsUpdater"
+		table="users_main"
+		down_column="Downloaded"
+		up_column="Uploaded"
+		passkey_column="torrent_pass"
+		unit="seconds"
 	/>	
 </plugins>

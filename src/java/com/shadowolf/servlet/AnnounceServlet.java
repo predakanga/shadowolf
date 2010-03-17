@@ -1,33 +1,21 @@
 package com.shadowolf.servlet;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
-import org.xml.sax.Attributes;
-import org.xml.sax.helpers.DefaultHandler;
 
-import com.shadowolf.plugins.Plugin;
-import com.shadowolf.plugins.PluginBean;
-import com.shadowolf.plugins.UserStatsUpdater;
+import com.shadowolf.plugins.PluginEngine;
+import com.shadowolf.plugins.PluginException;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.tracker.TrackerRequest.Event;
@@ -42,10 +30,7 @@ public class AnnounceServlet extends HttpServlet {
 	public static final String DEFAULT_PLUGIN_PATH = "/WEB-INF/plugins.xml";
 	private static final Logger LOGGER = Logger.getLogger(AnnounceServlet.class);
 	private static final int DEFAULT_NUMWANT = 200;
-	private static UserStatsUpdater updater;
-	private ScheduledThreadPoolExecutor executor; 
-	private final ArrayList<PluginBean> repeatingPlugins = new ArrayList<PluginBean>();
-	
+	private PluginEngine engine;
 	public AnnounceServlet() {
 		super();
 		PropertyConfigurator.configure(Loader.getResource("log4j.properties"));
@@ -55,63 +40,27 @@ public class AnnounceServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 
-		ServletContext context = config.getServletContext();
+		String path = config.getServletContext().getRealPath(DEFAULT_PLUGIN_PATH);
+		
+		if(System.getenv("com.shadowolf.plugins.path") != null) {
+			path = System.getenv("com.shadowolf.plugins.path");
+		}
+		
 		try {
-			SAXParser sp = SAXParserFactory.newInstance().newSAXParser();
-			String path = "";
-			
-			if(System.getenv("com.shadowolf.plugins.path") != null) {
-				path = System.getenv("com.shadowolf.plugins.path");
-			} else {
-				path = context.getRealPath(DEFAULT_PLUGIN_PATH);
-			}
-			
-			sp.parse(path, new DefaultHandler() {
-				@SuppressWarnings("unchecked")
-				public void startElement(String uri, String localName, String qName, Attributes attributes) {
-					if (qName.equalsIgnoreCase("plugin")) {
-						String className = attributes.getValue("class");
-						try {
-							if(attributes.getValue("type").equals("periodic_thread")) {
-								PluginBean pb = new PluginBean();
-								Constructor<Plugin> r = (Constructor<Plugin>)(Class.forName(className).getConstructor(new Class[] {ServletContext.class}));
-								
-								pb.setConstructor(r);
-								pb.setType("periodic_thread");
-								pb.setRepeatInterval(Integer.parseInt(attributes.getValue("repeat_interval")));
-								pb.setStartDelay(Integer.parseInt(attributes.getValue("start_delay")));
-								repeatingPlugins.add(pb);
-							}
-						} catch (Exception e) {
-							LOGGER.error("Error parsing plugin!");
-							System.exit(1);
-						}
-					}
-				}
-			});
-		} catch (Exception e) {
-			LOGGER.error("Could not parse plugins.xml! Exiting...");
+			this.engine = new PluginEngine(path);
+			this.engine.execute();
+		} catch (PluginException e) {
+			LOGGER.error("Unexpected plugin error... " + e.getCause().getMessage());
+			LOGGER.error("Exiting due to plugin exceptions.");
 			System.exit(1);
 		}
 		
-		executor = new ScheduledThreadPoolExecutor(repeatingPlugins.size());
-		Iterator<PluginBean> i = repeatingPlugins.iterator();
-		
-		while(i.hasNext()) {
-			PluginBean pb = i.next();
-			try {
-				executor.scheduleAtFixedRate(pb.getConstructor().newInstance(context), pb.getStartDelay(), pb.getRepeatInterval(), TimeUnit.SECONDS);
-			} catch (Exception e) {
-				LOGGER.error("Error instantiating plugin!");
-				System.exit(1);
-			}
-		}
 	}
 
 	@Override
 	public void destroy() {
 		super.destroy();
-		executor.shutdown();
+		this.engine.destroy();
 	}
 	
 	/**
@@ -179,13 +128,10 @@ public class AnnounceServlet extends HttpServlet {
 		//full response... and no_peer_id too
 		
 		try {
+			this.engine.doAnnounce(event, uploaded, downloaded, passkey);
+			
 			User u = UserFactory.getUser(peerId, passkey);
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);
-			
-			if(uploaded > 0 || downloaded > 0) {
-				LOGGER.debug("Queuing ... " + passkey + " for update");
-				updater.addToUpdateQueue(passkey);
-			}
 			
 			Peer p = u.getPeer(infoHash, request.getRemoteAddr(), port);
 			PeerList peerlist = PeerList.getList(infoHash);

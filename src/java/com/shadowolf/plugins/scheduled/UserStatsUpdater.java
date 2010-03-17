@@ -1,6 +1,5 @@
-package com.shadowolf.plugins;
+package com.shadowolf.plugins.scheduled;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -11,65 +10,41 @@ import java.util.Set;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.servlet.ServletContext;
 import javax.sql.DataSource;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
+import com.shadowolf.plugins.ScheduledPlugin;
+import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
-public class UserStatsUpdater implements Plugin {
+public class UserStatsUpdater extends ScheduledPlugin {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(UserStatsUpdater.class);
-	protected final static String CONF_KEY = "com.shadowolf.sqlconf.path";
-	protected final static String DEFAULT_CONF_PATH = "/WEB-INF/sqlconf.xml";
 	
 	protected boolean running = false;
 	protected PreparedStatement stmt;
-	protected String table;
-	protected String downColumn;
-	protected String upColumn;
-	protected String passkeyColumn;
 	protected Set<String> updates = new HashSet<String>();
 	protected Connection conn;
 	
-	public UserStatsUpdater(ServletContext context) {
+	public UserStatsUpdater(Attributes attributes) {
+		super(attributes);
+		
+		String table = attributes.getValue("table");
+		String downColumn = attributes.getValue("down_column");
+		String upColumn = attributes.getValue("up_column");
+		String passkeyColumn =  attributes.getValue("passkey_column");
+		
 		LOGGER.debug("Instatiated UserStatsUpdater plugin.");
 		this.updates = Collections.synchronizedSet(this.updates);
-		
-		try {
-			String path;
-			
-			if (System.getenv(CONF_KEY) != null) {
-				path = System.getenv(CONF_KEY);
-			} else {
-				path = context.getRealPath(DEFAULT_CONF_PATH);
-			}
-			
-			SAXParser sp = SAXParserFactory.newInstance().newSAXParser();
-			sp.parse(path, new XMLParser());
-		} catch (ParserConfigurationException e) {
-			LOGGER.error("Holy shit, nearly impossible ParserConfigurationException.");
-			//this shouldn't ever happen
-		} catch (SAXException e) {
-			LOGGER.error("Holy shit, nearly impossible SAXException.");
-			//neither should this
-		} catch (IOException e) {
-			LOGGER.error("Holy shit, nearly impossible IOException.");
-			System.exit(69); //tee-hee
-		}
 		
 		try {
 			DataSource source = (DataSource) (new InitialContext().lookup(DATABASE_NAME));
 			this.conn = source.getConnection();
 			conn.setAutoCommit(false);
+			
 			this.stmt = conn.prepareStatement(
 				"UPDATE " + table + " SET " + downColumn + "= " + downColumn + "+ ?, " 
 				+ upColumn + "= " + upColumn + " + ? WHERE " + passkeyColumn + "=?");
@@ -77,6 +52,18 @@ public class UserStatsUpdater implements Plugin {
 			LOGGER.error("Unexpected NamingException...");
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
+		}
+	}
+	
+	@Override
+	public boolean needsAnnounce() { 
+		return true;
+	}
+	
+	public void doAnnounce(Event event, long uploaded, long downloaded, String passkey) {
+		if(uploaded > 0 || downloaded > 0) {
+			LOGGER.debug("Queuing ... " + passkey + " for update");
+			this.addToUpdateQueue(passkey);
 		}
 	}
 	
@@ -88,7 +75,6 @@ public class UserStatsUpdater implements Plugin {
 	
 	@Override
 	public void run() {
-		LOGGER.debug("UserStatsUpdater plugin running.");
 		if(this.running) {
 			return;
 		} else {
@@ -142,17 +128,5 @@ public class UserStatsUpdater implements Plugin {
 		}
 
 		this.running = false;
-	}
-
-	protected class XMLParser extends DefaultHandler {
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
-			if (qName.equalsIgnoreCase("source") && attributes.getValue("name").equals("user_stats")) {
-				table = attributes.getValue("table");
-				upColumn = attributes.getValue("upload_column");
-				downColumn = attributes.getValue("download_column");
-			} else if (qName.equalsIgnoreCase("source") && attributes.getValue("name").equals("passkeys")) {
-				passkeyColumn = attributes.getValue("column");
-			}
-		}
 	}
 }

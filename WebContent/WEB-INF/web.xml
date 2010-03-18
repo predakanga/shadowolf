@@ -45,20 +45,6 @@ version="2.5">
 		<dispatcher>FORWARD</dispatcher>
 	</filter-mapping>
 	
-	<filter>
-		<filter-name>PasskeyEnforcement</filter-name>
-		<filter-class>com.shadowolf.filters.PasskeyEnforcement</filter-class>
-		<init-param>
-			<param-name>logLevel</param-name>
-			<param-value>DEBUG</param-value>
-		</init-param>
-	</filter>
-	<filter-mapping>
-		<filter-name>PasskeyEnforcement</filter-name>
-		<servlet-name>AnnounceServlet</servlet-name>
-		<dispatcher>FORWARD</dispatcher>
-	</filter-mapping>
-	
 	<servlet>
     	<servlet-name>AnnounceServlet</servlet-name>
     	<servlet-class>com.shadowolf.servlet.AnnounceServlet</servlet-class>

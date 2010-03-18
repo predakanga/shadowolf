@@ -1,6 +1,5 @@
 package com.shadowolf.plugins.scheduled;
 
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,11 +17,10 @@ import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.tracker.TrackerRequest.Event;
-import com.shadowolf.util.Data;
 
-public class InfoHashEnforcer extends ScheduledPlugin {
+public class PasskeyEnforcer extends ScheduledPlugin {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
-	protected final static Logger LOGGER = Logger.getLogger(InfoHashEnforcer.class);
+	protected final static Logger LOGGER = Logger.getLogger(PasskeyEnforcer.class);
 	protected final Object hashLock = new Object();
 	private final String column;
 	
@@ -30,11 +28,11 @@ public class InfoHashEnforcer extends ScheduledPlugin {
 	private PreparedStatement stmt;
 	private Connection conn;
 	
-	public InfoHashEnforcer(Attributes attributes) {
+	public PasskeyEnforcer(Attributes attributes) {
 		super(attributes);
 		
 		String table = attributes.getValue("table");
-		this.column = attributes.getValue("info_hash_column");
+		this.column = attributes.getValue("passkey_column");
 		
 		
 		try {
@@ -70,15 +68,10 @@ public class InfoHashEnforcer extends ScheduledPlugin {
 			ResultSet rs = this.stmt.getResultSet();
 			rs.first();
 			while(rs.next()) {
-				final Blob b = rs.getBlob(this.column);
-				final byte[] bs = b.getBytes(1l, (int) b.length());
-			
-				hashes.add(Data.byteArrayToHexString(bs));
-				b.free();
+				hashes.add(rs.getString(this.column));
 			}
 			
 			rs.close();
-			LOGGER.debug("Read " + this.hashes.size() + " info_hashes");
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
@@ -88,9 +81,8 @@ public class InfoHashEnforcer extends ScheduledPlugin {
 	
 	@Override
 	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash) throws AnnounceException{
-		if(this.hashes.contains(infoHash) == false) {
-			throw new AnnounceException(TrackerResponse.Errors.TORRENT_NOT_REGISTERED.toString());
+		if(this.hashes.contains(passkey) == false) {
+			throw new AnnounceException(TrackerResponse.Errors.INVALID_PASSKEY.toString());
 		}
 	}
 }
-

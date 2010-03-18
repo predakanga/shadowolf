@@ -14,4 +14,11 @@
 		table="torrents"
 		info_hash_column="info_hash"
 	/>
+	
+	<plugin
+		class="com.shadowolf.plugins.scheduled.PasskeyEnforcer"
+		table="users_main"
+		passkey_column="torrent_pass"
+	/>
+	
 </plugins>

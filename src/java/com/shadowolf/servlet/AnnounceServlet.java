@@ -130,7 +130,7 @@ public class AnnounceServlet extends HttpServlet {
 		//full response... and no_peer_id too
 		
 		try {
-			this.engine.doAnnounce(event, uploaded, downloaded, passkey, infoHash);
+			this.engine.doAnnounce(event, uploaded, downloaded, passkey, infoHash, peerId);
 			
 			User u = UserFactory.getUser(peerId, passkey);
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);

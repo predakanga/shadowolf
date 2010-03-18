@@ -44,11 +44,11 @@ public class PluginEngine {
 		}
 	}
 	
-	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash) throws AnnounceException {
+	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException {
 		Iterator<Plugin> i = announcers.iterator();
 		
 		while(i.hasNext()) {
-			i.next().doAnnounce(e, uploaded, downloaded, passkey, infoHash);
+			i.next().doAnnounce(e, uploaded, downloaded, passkey, infoHash, peerId);
 		}
 	}
 	

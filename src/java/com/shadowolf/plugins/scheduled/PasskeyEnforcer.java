@@ -21,7 +21,6 @@ import com.shadowolf.tracker.TrackerRequest.Event;
 public class PasskeyEnforcer extends ScheduledPlugin {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(PasskeyEnforcer.class);
-	protected final Object hashLock = new Object();
 	private final String column;
 	
 	protected ConcurrentSkipListSet<String> hashes = new ConcurrentSkipListSet<String>();
@@ -79,7 +78,7 @@ public class PasskeyEnforcer extends ScheduledPlugin {
 	}
 	
 	@Override
-	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash) throws AnnounceException{
+	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException{
 		if(this.hashes.contains(passkey) == false) {
 			throw new AnnounceException(TrackerResponse.Errors.INVALID_PASSKEY.toString());
 		}

@@ -26,5 +26,5 @@ abstract class Plugin implements Runnable {
 		return false;
 	}
 	
-	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash) throws AnnounceException {}
+	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException{}
 }

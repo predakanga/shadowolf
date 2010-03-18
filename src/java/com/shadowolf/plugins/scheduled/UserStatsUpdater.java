@@ -62,7 +62,7 @@ public class UserStatsUpdater extends ScheduledPlugin {
 	}
 	
 	@Override
-	public void doAnnounce(Event event, long uploaded, long downloaded, String passkey, String infoHash) throws AnnounceException {
+	public void doAnnounce(Event event, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException {
 		if(uploaded > 0 || downloaded > 0) {
 			LOGGER.debug("Queuing ... " + passkey + " for update");
 			this.addToUpdateQueue(passkey);

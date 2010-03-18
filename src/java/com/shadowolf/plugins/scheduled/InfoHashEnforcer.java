@@ -68,7 +68,6 @@ public class InfoHashEnforcer extends ScheduledPlugin {
 		try {
 			this.stmt.execute();
 			ResultSet rs = this.stmt.getResultSet();
-			rs.first();
 			while(rs.next()) {
 				final Blob b = rs.getBlob(this.column);
 				final byte[] bs = b.getBytes(1l, (int) b.length());

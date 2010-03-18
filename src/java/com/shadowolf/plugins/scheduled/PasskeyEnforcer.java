@@ -66,7 +66,6 @@ public class PasskeyEnforcer extends ScheduledPlugin {
 		try {
 			this.stmt.execute();
 			ResultSet rs = this.stmt.getResultSet();
-			rs.first();
 			while(rs.next()) {
 				hashes.add(rs.getString(this.column));
 			}

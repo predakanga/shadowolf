@@ -10,8 +10,8 @@
 -->
 <urlrewrite>
 	<rule>
-		<from>/(.*?)/announce</from>
-		<to>/announce?passkey=$1</to>
+		<from>/(.*?)/announce?(.*?)$</from>
+		<to>/announce$2&amp;passkey=$1</to>
 	</rule>
 </urlrewrite>
 

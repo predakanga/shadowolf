@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 
 import com.shadowolf.plugins.ScheduledPlugin;
+import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
@@ -60,7 +61,8 @@ public class UserStatsUpdater extends ScheduledPlugin {
 		return true;
 	}
 	
-	public void doAnnounce(Event event, long uploaded, long downloaded, String passkey) {
+	@Override
+	public void doAnnounce(Event event, long uploaded, long downloaded, String passkey, String infoHash) throws AnnounceException {
 		if(uploaded > 0 || downloaded > 0) {
 			LOGGER.debug("Queuing ... " + passkey + " for update");
 			this.addToUpdateQueue(passkey);

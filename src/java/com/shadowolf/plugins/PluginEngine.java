@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerRequest.Event;
 
 public class PluginEngine {
@@ -43,11 +44,11 @@ public class PluginEngine {
 		}
 	}
 	
-	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey) {
+	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash) throws AnnounceException {
 		Iterator<Plugin> i = announcers.iterator();
 		
 		while(i.hasNext()) {
-			i.next().doAnnounce(e, uploaded, downloaded, passkey);
+			i.next().doAnnounce(e, uploaded, downloaded, passkey, infoHash);
 		}
 	}
 	

@@ -110,7 +110,9 @@ public class AnnounceServlet extends HttpServlet {
 		LOGGER.debug("Blah");
 		//pre-validated fields
 		final String peerId = request.getParameter("peer_id");
-		final String infoHash = request.getParameter("info_hash"); 
+		
+		final String encoding = request.getCharacterEncoding() == null ? "ISO-8859-1" : request.getCharacterEncoding();
+		final String infoHash = Data.byteArrayToHexString(request.getParameter("info_hash").getBytes(encoding)); 
 		final String port = request.getParameter("port");
 		final String passkey = request.getParameter("passkey");
 		
@@ -128,7 +130,7 @@ public class AnnounceServlet extends HttpServlet {
 		//full response... and no_peer_id too
 		
 		try {
-			this.engine.doAnnounce(event, uploaded, downloaded, passkey);
+			this.engine.doAnnounce(event, uploaded, downloaded, passkey, infoHash);
 			
 			User u = UserFactory.getUser(peerId, passkey);
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);

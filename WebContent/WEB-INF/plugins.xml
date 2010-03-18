@@ -7,6 +7,11 @@
 		down_column="Downloaded"
 		up_column="Uploaded"
 		passkey_column="torrent_pass"
-		unit="seconds"
 	/>	
+	
+	<plugin
+		class="com.shadowolf.plugins.scheduled.InfoHashEnforcer"
+		table="torrents"
+		info_hash_column="info_hash"
+	/>
 </plugins>

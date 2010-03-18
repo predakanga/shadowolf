@@ -22,8 +22,10 @@
 	/>
 	
 	<plugin
-		class="com.shadowolf.plugins.scheduled.WhitelistEnforcer"
+		class="com.shadowolf.plugins.scheduled.Whitelist"
 		table="xbt_client_whitelist"
 		peer_id_column="peer_id"
+		unit="seconds"
 	/>
+	
 </plugins>

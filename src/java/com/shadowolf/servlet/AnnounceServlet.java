@@ -184,7 +184,11 @@ public class AnnounceServlet extends HttpServlet {
 			sos.print(e.getMessage());
 			return; 
 		} catch (Exception e) {
-			sos.print(TrackerResponse.bencoded("Something went catastrophically wrong, please contact your site administrator."));
+			LOGGER.error(e.getClass());
+			LOGGER.error(e.getCause());
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
+			sos.print(TrackerResponse.bencoded("Something went catastrophically wrong, please contact your site administrator." + e.getClass()));
 			return;
 		} finally {
 			sos.flush();

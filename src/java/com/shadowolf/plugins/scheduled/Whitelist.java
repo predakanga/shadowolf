@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -22,7 +23,7 @@ public class Whitelist extends ScheduledPlugin {
 	protected final static Logger LOGGER = Logger.getLogger(Whitelist.class);
 	private final String column;
 	
-	private String[] peerIds;
+	private String[] peerIds = new String[0];
 	
 	private PreparedStatement stmt;
 	private Connection conn;
@@ -37,7 +38,7 @@ public class Whitelist extends ScheduledPlugin {
 		try {
 			DataSource source = (DataSource) (new InitialContext().lookup(DATABASE_NAME));
 			this.conn = source.getConnection();
-			conn.setAutoCommit(false);
+			conn.setAutoCommit(true);
 			
 			this.stmt = conn.prepareStatement("SELECT " + column + " FROM " + table);
 		} catch (NamingException n) {
@@ -61,18 +62,18 @@ public class Whitelist extends ScheduledPlugin {
 	
 	@Override
 	public void run() {
-		
 		try {
 			this.stmt.execute();
 			ResultSet rs = this.stmt.getResultSet();
+			ArrayList<String> tempIds = new ArrayList<String>();
 			
+			LOGGER.debug(rs.getStatement());
+			while(rs.next()) {
+				tempIds.add(rs.getString(this.column));
+			}
+				
 			synchronized(this.peerIds) {
-				this.peerIds = new String[rs.getFetchSize()];
-				int i = 0;
-				while(rs.next()) {
-					this.peerIds[i] = rs.getString(this.column);
-					i++;
-				}
+				this.peerIds = tempIds.toArray(new String[tempIds.size()]);	
 			}
 			
 			rs.close();
@@ -86,7 +87,7 @@ public class Whitelist extends ScheduledPlugin {
 	@Override
 	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException{
 		for(String s : this.peerIds) {
-			if(infoHash.startsWith(s)) {
+			if(peerId.startsWith(s)) {
 				return;
 			}
 		}

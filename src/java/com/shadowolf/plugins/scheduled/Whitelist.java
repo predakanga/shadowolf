@@ -65,11 +65,14 @@ public class Whitelist extends ScheduledPlugin {
 		try {
 			this.stmt.execute();
 			ResultSet rs = this.stmt.getResultSet();
-			this.peerIds = new String[rs.getFetchSize()];
-			int i = 0;
-			while(rs.next()) {
-				this.peerIds[i] = rs.getString(this.column);
-				i++;
+			
+			synchronized(this.peerIds) {
+				this.peerIds = new String[rs.getFetchSize()];
+				int i = 0;
+				while(rs.next()) {
+					this.peerIds[i] = rs.getString(this.column);
+					i++;
+				}
 			}
 			
 			rs.close();

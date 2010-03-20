@@ -7,14 +7,13 @@ import com.shadowolf.tracker.TrackerRequest;
 
 //import org.apache.log4j.Logger;
 
-//PMD 0 errors
 public class Peer {
 	//private static final Logger LOGGER = Logger.getLogger(Peer.class);
 	private long lastAnnounce;
-	final private long uploaded;
-	final private long downloaded;
-	final private byte[] ipAddress;
-	final private byte[] port;
+	final private long uploaded; //NOPMD
+	final private long downloaded; //NOPMD
+	final private byte[] ipAddress; //NOPMD
+	final private byte[] port; //NOPMD
 	
 	public Peer(final long uploaded,final long downloaded, final String ipAddress, 
 			final String port) throws UnknownHostException  {
@@ -40,9 +39,9 @@ public class Peer {
 		return downloaded;
 	}
 	public byte[] getIpAddress() {
-		return this.ipAddress;
+		return this.ipAddress.clone();
 	}
 	public byte[] getPort() {
-		return this.port;
+		return this.port.clone();
 	}
 }

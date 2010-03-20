@@ -12,6 +12,9 @@ import org.apache.log4j.Logger;
  * This class is a multiton around itself.  The class doesn't serve much purpose other than to keep track
  * of all Peers that constitute a user, for statistics and access control.
  */
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//TODO: FIX LOGICAL ERROR IN RESETSTATS() AND THE WAY WE PUSH STATS TO THE DATABASE!!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 public class User { 
 	private static final Logger LOGGER = Logger.getLogger(User.class);
 	

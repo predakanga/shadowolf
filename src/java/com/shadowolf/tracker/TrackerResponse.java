@@ -1,7 +1,6 @@
 package com.shadowolf.tracker;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 import com.shadowolf.user.Peer;
 import com.shadowolf.user.UserFactory;
@@ -22,7 +21,11 @@ import com.shadowolf.util.Data;
   * peers: (binary model) Instead of using the dictionary model described above, the peers value may be a string consisting of multiples of 6 bytes. First 4 bytes are the IP address and last 2 bytes are the port number. All in network (big endian) notation.
  */
 
-final public class TrackerResponse {
+final public class TrackerResponse { //NOPMD ... not too many methods when they're overloaded!
+	private TrackerResponse() {
+		
+	}
+	
 	public enum Errors {
 		TORRENT_NOT_REGISTERED {
 			public String toString() { 
@@ -86,37 +89,35 @@ final public class TrackerResponse {
 		}
 	};
 	
-	public static final int DEFAULT_MIN_INTERVAL = 600;
+	public static final int DEFAULT_MIN_INTERVAL = 600; //NOPMD ... too long my ass
 	public static final int DEFAULT_INTERVAL = 1800;
 	
-	public final static String bencoded(final String failure) {
+	public static String bencoded(final String failure) {
 		return "d14:failure reason" + failure.length() + ":" + failure + "e\r\n";
 	}
 		
-	public static final byte[] bencoded(final int seeders, final int leechers, final Peer[] peers) throws AnnounceException {
+	public static byte[] bencoded(final int seeders, final int leechers, final Peer[] peers) throws AnnounceException {
 		return bencoded(seeders, leechers, peers, DEFAULT_INTERVAL, DEFAULT_MIN_INTERVAL);
 	}
 	
-	public static final byte[] bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval) throws AnnounceException {
+	public static byte[] bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval) throws AnnounceException {
 		return bencoded(seeders, leechers, peers, interval, DEFAULT_MIN_INTERVAL);
 	}
 	
-	public static final byte[] bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval, final int minInterval) throws AnnounceException {
+	public static byte[] bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval, final int minInterval) throws AnnounceException {
 		try {
-			final byte[] enc = compact(peers);
 			final byte[] start = ("d8:intervali" + interval + "e" + "12:min intervali" + minInterval + 
 				"e10:incompletei" + leechers + "e8:completei" + seeders + "e").getBytes("UTF-8");
-			final byte[] end = "e\r\n".getBytes("UTF-8");
 			
-			byte[] temp = Data.addByteArrays(start, enc);
-			return Data.addByteArrays(temp, end);
+			final byte[] temp = Data.addByteArrays(start, compact(peers));
+			return Data.addByteArrays(temp, "e\r\n".getBytes("UTF-8"));
 		} catch (UnsupportedEncodingException e) {
-			throw new AnnounceException("Epic failure");
+			throw new AnnounceException("Epic failure", e);
 		}
 	}
 	
-	public final static byte[] compact(Peer[] peers) throws AnnounceException, UnsupportedEncodingException {
-		CompactPeerEncoder cpb = new CompactPeerEncoder();
+	public static byte[] compact(final Peer[] peers) throws AnnounceException, UnsupportedEncodingException {
+		final CompactPeerEncoder cpb = new CompactPeerEncoder();
 		
 		for(Peer p : peers) {
 			if(p.getIpAddress().length > 4) {
@@ -129,25 +130,20 @@ final public class TrackerResponse {
 		return cpb.encode();
 	}
 	
-	public final static byte[] compactEncoding(Peer p) {
-		byte[] portArr = p.getPort();
-		byte[] IPArr = p.getIpAddress();
+	public static byte[] compactEncoding(final Peer peer) {
+		final byte[] portArr = peer.getPort();
+		final byte[] IPArr = peer.getIpAddress();
 
 		if(IPArr.length == 4) {
-			byte[] address = new byte[6];
+			final byte[] address = new byte[6];
 			System.arraycopy(IPArr, 0, address, 0, 4);
 			System.arraycopy(portArr, 0, address, 4, 2);
-			return address;
+			return address; //NOPMD
 		} else {
-			byte[] address = new byte[18];
+			final byte[] address = new byte[18];
 			System.arraycopy(IPArr, 0, address, 0, 16);
 			System.arraycopy(portArr, 0, address, 16, 2);
 			return address;
 		}
-	}
-	
-
-	public static void main(String[] args) throws UnsupportedEncodingException {
-		URLEncoder.encode(null, "UTF-8");
 	}
 }

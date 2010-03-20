@@ -7,21 +7,25 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class UserAggregate extends User {
 
-	public UserAggregate(String passkey) {
+	public UserAggregate(final String passkey) {
 		super(null, passkey);
 	}
 
-	public void addPeerlist(ConcurrentHashMap<String, WeakReference<Peer>> list) {
+	public void addPeerlist(final ConcurrentHashMap<String, WeakReference<Peer>> list) {
 		this.peers.putAll(list);
 	}
 	
 	@Override
-	public void updateStats(String infoHash, long uploaded, long downloaded, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
+	public void updateStats(final String infoHash, final long uploaded, final long downloaded, 
+			final String ipAddress, final String port) throws IllegalAccessException, UnknownHostException {
+		
 		throw new IllegalAccessException("Cannot update stats from a UserAggregate instance");
 	}
 	
 	@Override
-	public Peer getPeer(final String infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException {
+	public Peer getPeer(final String infoHash, final String ipAddress, final String port) 
+			throws IllegalAccessException, UnknownHostException {
+		
 		throw new IllegalAccessException("Cannot get peer from UserAggregate instance");
 	}
 }

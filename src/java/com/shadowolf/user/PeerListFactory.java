@@ -4,23 +4,27 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 final public class PeerListFactory {
-	static ConcurrentHashMap<String, PeerList> lists = new ConcurrentHashMap<String, PeerList>();
+	private PeerListFactory() {
+		
+	}
 	
-	public static PeerList getList(String infoHash) {
-		if(lists.get(infoHash) == null) {
-			PeerList p =  new PeerList();
-			lists.put(infoHash, p);
-			return p;
+	private final static ConcurrentHashMap<String, PeerList> LISTS = new ConcurrentHashMap<String, PeerList>();
+	
+	public static PeerList getList(final String infoHash) {
+		if(LISTS.get(infoHash) == null) {
+			final PeerList peers =  new PeerList();
+			LISTS.put(infoHash, peers);
+			return peers; //NOPMD ... the other option is to do a check, no.
 		} else {
-			return lists.get(infoHash);
+			return LISTS.get(infoHash); //NOPDM
 		}
 	}
 	
 	public static void cleanUp() {
-		Iterator<String> i = lists.keySet().iterator();
+		final Iterator<String> iter = LISTS.keySet().iterator();
 		
-		while(i.hasNext()) {
-			lists.get(i.next()).doCleanUp();
+		while(iter.hasNext()) {
+			LISTS.get(iter.next()).doCleanUp();
 		}
 	}
 }

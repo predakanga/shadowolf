@@ -5,24 +5,24 @@ import java.io.UnsupportedEncodingException;
 import com.shadowolf.util.Data;
 
 public class CompactPeerEncoder {
-	private byte[] IPv4 = new byte[0];
-	private byte[] IPv6 = new byte[0];
+	private byte[] IPv4 = new byte[0]; //NOPMD
+	private byte[] IPv6 = new byte[0]; //NOPMD
 	
-	public void addToIPv4(byte[] address) throws AnnounceException {
+	public void addToIPv4(final byte[] address) throws AnnounceException {
 		if(address.length != 6) {
 			throw new AnnounceException(TrackerResponse.Errors.UNEXPECTED_4_PEER_LENGTH.toString());
 		}
 		
-		byte[] temp = Data.addByteArrays(IPv4, address);
+		final byte[] temp = Data.addByteArrays(IPv4, address);
 		IPv4 = temp;
 	}
 	
-	public void addToIPv6(byte[] address) throws AnnounceException {
+	public void addToIPv6(final byte[] address) throws AnnounceException {
 		if(address.length != 18) {
 			throw new AnnounceException(TrackerResponse.Errors.UNEXPECTED_6_PEER_LENGTH.toString());
 		}
 		
-		byte[] temp = Data.addByteArrays(IPv6, address);
+		final byte[] temp = Data.addByteArrays(IPv6, address);
 		IPv6 = temp;
 	}
 	
@@ -35,7 +35,7 @@ public class CompactPeerEncoder {
 			peers6 = Data.addByteArrays(peers6, IPv6); 
 			return Data.addByteArrays(peers, peers6);			
 		} catch (UnsupportedEncodingException e) {
-			throw new AnnounceException("Epic failure.");
+			throw new AnnounceException("Epic failure.", e);
 		}
 	}
 }

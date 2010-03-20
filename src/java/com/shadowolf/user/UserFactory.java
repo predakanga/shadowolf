@@ -19,7 +19,7 @@ final public class UserFactory {
 				new ConcurrentHashMap<String, ConcurrentHashMap<String,WeakReference<User>>>(1024); 
 	private static ConcurrentSkipListMap<Long, User> updates = new ConcurrentSkipListMap<Long,User>();
 	
-	public static final short MAX_LOCATIONS = 3;
+	public static final int MAX_LOCATIONS = 3;
 	
 	private UserFactory() {}
 	
@@ -42,68 +42,68 @@ final public class UserFactory {
 		}
 		
 		if (users.get(passkey).get(peerId) == null) {
-			User u = new User(peerId, passkey);
-			users.get(passkey).put(peerId, new WeakReference<User>(u));
-			updates.put(u.getLastAccessed(), u);
+			final User user = new User(peerId, passkey);
+			users.get(passkey).put(peerId, new WeakReference<User>(user));
+			updates.put(user.getLastAccessed(), user);
 			
-			return u;
+			return user; //NOPMD
 		} else if (users.get(passkey).size() >= MAX_LOCATIONS) {
 			throw new AnnounceException(TrackerResponse.Errors.TOO_MANY_LOCATIONS.toString());
 		} 	
 		
-		User u = users.get(passkey).get(peerId).get();
+		User userRef = users.get(passkey).get(peerId).get();
 		
-		if(u != null) {
-			updates.remove(u.getLastAccessed());
-			u.setLastAccessed(new Date().getTime());
-			updates.put(u.getLastAccessed(), u);
-		} else {
+		if(userRef == null) {
 			if(DEBUG) {
 				LOGGER.debug("Found cleaned up user!");
 			}
 			
-			u = new User(peerId, passkey);
-			users.get(passkey).put(peerId, new WeakReference<User>(u));
-			updates.put(u.getLastAccessed(), u);
+			userRef = new User(peerId, passkey);
+			users.get(passkey).put(peerId, new WeakReference<User>(userRef));
+			updates.put(userRef.getLastAccessed(), userRef);
+		} else {
+			updates.remove(userRef.getLastAccessed());
+			userRef.setLastAccessed(new Date().getTime());
+			updates.put(userRef.getLastAccessed(), userRef);
 		}
 		
-		return u;
+		return userRef;
 	}
 	
-	public static User aggregate(String passkey) {
-		UserAggregate user = new UserAggregate(passkey);
+	public static User aggregate(final String passkey) {
+		final UserAggregate user = new UserAggregate(passkey);
 		
 		if(users.get(passkey) == null) {
-			return user;
+			return user; //NOPMD
 		} else if (users.get(passkey).size() == 1) {
-			User u = users.get(passkey).values().iterator().next().get();
-			if(u == null) {
+			final User userRef = users.get(passkey).values().iterator().next().get();
+			if(userRef == null) {
 				users.put(passkey, new ConcurrentHashMap<String, WeakReference<User>>());
-				return user;
+				return user; //NOPMD
 			}
 		} else {
 			//this isn't necessary but fucked if I'm typing that more than once
-			ConcurrentHashMap<String, WeakReference<User>> set = users.get(passkey); 
-			Iterator<String> iter = set.keySet().iterator();
+			final ConcurrentHashMap<String, WeakReference<User>> set = users.get(passkey); 
+			final Iterator<String> iter = set.keySet().iterator();
 			
 			while(iter.hasNext()) {
-				String nextKey = iter.next();
-				User u = set.get(nextKey).get();
-				if(u == null) {
+				final 	String nextKey = iter.next();
+				final User userRef = set.get(nextKey).get();
+				if(userRef == null) {
 					set.remove(nextKey);
 				} else {
 					
-					ConcurrentHashMap<String, WeakReference<Peer>> peers = u.getPeers();
+					final ConcurrentHashMap<String, WeakReference<Peer>> peers = userRef.getPeers();
 
 					user.addPeerlist(peers);
-					user.addDownloaded(u.getDownloaded());
-					user.addUploaded(u.getUploaded());
+					user.addDownloaded(userRef.getDownloaded());
+					user.addUploaded(userRef.getUploaded());
 					
-					u.resetStats();
+					userRef.resetStats();
 					
-					updates.remove(u.getLastAccessed());
-					u.setLastAccessed(new Date().getTime());
-					updates.put(u.getLastAccessed(), u);
+					updates.remove(userRef.getLastAccessed());
+					userRef.setLastAccessed(new Date().getTime());//NOPMD ... this won't work unless we constantly poll for milliseconds
+					updates.put(userRef.getLastAccessed(), userRef);
 				}
 			}
 		}

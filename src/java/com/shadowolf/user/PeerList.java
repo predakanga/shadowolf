@@ -13,8 +13,8 @@ public class PeerList {
 	private static final boolean DEBUG = true;
 	private static final Logger LOGGER = Logger.getLogger(PeerList.class);
 	
-	private ConcurrentSkipListMap<Long, Peer> seeds = new ConcurrentSkipListMap<Long, Peer>();
-	private ConcurrentSkipListMap<Long, Peer> leechers = new ConcurrentSkipListMap<Long, Peer>();
+	final private ConcurrentSkipListMap<Long, Peer> seeds = new ConcurrentSkipListMap<Long, Peer>(); //NOPMD
+	final private ConcurrentSkipListMap<Long, Peer> leechers = new ConcurrentSkipListMap<Long, Peer>(); //NOPMD
 	
 	public void doCleanUp() {
 		this.cleanUpSeeds();
@@ -47,30 +47,30 @@ public class PeerList {
 		}
 	}
 	
-	public void addSeeder(Peer p) {
-		if(this.seeds.containsValue(p)) {
-			this.seeds.remove(p.getLastAnnounce());
+	public void addSeeder(final Peer peer) {
+		if(this.seeds.containsValue(peer)) {
+			this.seeds.remove(peer.getLastAnnounce());
 		}
 
-		p.setLastAnnounce(new Date());
-		this.seeds.put(p.getLastAnnounce(), p);
+		peer.setLastAnnounce(new Date());
+		this.seeds.put(peer.getLastAnnounce(), peer);
 	}
 	
-	public void addLeecher(Peer p) {
-		if(this.leechers.containsValue(p)) {
-			this.leechers.remove(p.getLastAnnounce());
+	public void addLeecher(final Peer peer) {
+		if(this.leechers.containsValue(peer)) {
+			this.leechers.remove(peer.getLastAnnounce());
 		}
 		
-		p.setLastAnnounce(new Date());
-		this.leechers.put(p.getLastAnnounce(), p);
+		peer.setLastAnnounce(new Date());
+		this.leechers.put(peer.getLastAnnounce(), peer);
 	}
 	
-	public void removeSeeder(Peer p) {
-		this.seeds.remove(p.getLastAnnounce());
+	public void removeSeeder(final Peer peer) {
+		this.seeds.remove(peer.getLastAnnounce());
 	}
 	
-	public void removeLeecher(Peer p) {
-		this.leechers.remove(p.getLastAnnounce());
+	public void removeLeecher(final Peer peer) {
+		this.leechers.remove(peer.getLastAnnounce());
 	}
 	
 	/**
@@ -83,30 +83,30 @@ public class PeerList {
 	 * @param numwant the number of peers (size of the returned array) to return.
 	 * @return Peer[] the array of peers
 	 */
-	public Peer[] getPeers(int numwant) {
+	public Peer[] getPeers(final int numwant) {
 		if(this.leechers.size() == 0 && this.seeds.size() == 0) {
-			return new Peer[0];
+			return new Peer[0]; //NOPMD ... exit shortcut
 		}
 
-		HashSet<Peer> peers = new HashSet<Peer>();
+		final HashSet<Peer> peers = new HashSet<Peer>();
 		
-		Iterator<Peer> leechVals = this.leechers.descendingMap().values().iterator();
+		final Iterator<Peer> leechVals = this.leechers.descendingMap().values().iterator();
 		
 		for(int i = 0; i < numwant && leechVals.hasNext(); i++) {
 			peers.add(leechVals.next());
 			
 			if(peers.size() == numwant) {
-				return peers.toArray(new Peer[peers.size()]);
+				return peers.toArray(new Peer[peers.size()]); //NOPMD
 			}
 		}
 		
-		Iterator<Peer> seedVals = this.seeds.descendingMap().values().iterator();
+		final Iterator<Peer> seedVals = this.seeds.descendingMap().values().iterator();
 		
 		for(int i = peers.size(); i < numwant && seedVals.hasNext(); i++) {
 			peers.add(seedVals.next());
 			
 			if(peers.size() == numwant) {
-				return peers.toArray(new Peer[peers.size()]);
+				return peers.toArray(new Peer[peers.size()]); //NOPMD
 			}
 		}
 		

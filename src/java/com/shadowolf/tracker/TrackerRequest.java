@@ -4,7 +4,10 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.UnknownHostException;
 
-public class TrackerRequest {
+final public class TrackerRequest {
+	private TrackerRequest() {
+		
+	}
 	public enum Event {
 		STARTED {
 			public String toString() {
@@ -28,24 +31,24 @@ public class TrackerRequest {
 		}
 	}
 	
-	public static byte[] portToBytes(String port) {
-		int portI = Integer.parseInt(port);
+	public static byte[] portToBytes(final String port) {
+		final int portI = Integer.parseInt(port);
 		return new byte[] {
 				(byte)(((byte)portI >>> 8) & 0xFF),
 				(byte)((byte)portI & 0xFF),
 		};
 	}
 	
-	public static byte[] IPToBytes(String IP) throws UnknownHostException {
-		if(isIPv6(IP)) {
-			return Inet6Address.getByName(IP).getAddress();
+	public static byte[] IPToBytes(final String ipAddy) throws UnknownHostException { //NOPMD ... IP is fine!
+		if(isIPv6(ipAddy)) {
+			return Inet6Address.getByName(ipAddy).getAddress(); //NOPMD
 		} else {
-			return Inet4Address.getByName(IP).getAddress();
+			return Inet4Address.getByName(ipAddy).getAddress();
 		}
 	}
 	
-	public final static boolean isIPv6(final String IP) {
-    	return IP != null && IP.contains(":");
+	public static boolean isIPv6(final String ipAddy) {
+    	return ipAddy != null && ipAddy.contains(":");
     }
 	
 }

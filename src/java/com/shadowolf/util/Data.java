@@ -3,8 +3,16 @@ package com.shadowolf.util;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 
-public class Data {
-	static final byte[] HEX_CHAR_TABLE = { 
+import org.apache.log4j.Logger;
+
+final public class Data {
+	private static final Logger LOGGER = Logger.getLogger(Data.class);
+	
+	private Data() {
+		
+	}
+	
+	static final private byte[] HEX_CHAR_TABLE = { 
 		(byte) '0', 
 		(byte) '1', 
 		(byte) '2', 
@@ -23,29 +31,31 @@ public class Data {
 		(byte) 'f' 
 	};
 	
-	public static String byteArrayToHexString(byte[] raw) {
+	public static String byteArrayToHexString(final byte[] raw) {
 		final byte[] hex = new byte[2 * raw.length];
 		int index = 0;
 
-		for (byte b : raw) {
-			final int v = b & 0xFF;
-			hex[index++] = HEX_CHAR_TABLE[v >>> 4];
-			hex[index++] = HEX_CHAR_TABLE[v & 0xF];
+		for (byte bite : raw) {
+			final int vector = bite & 0xFF;
+			hex[index++] = HEX_CHAR_TABLE[vector >>> 4];
+			hex[index++] = HEX_CHAR_TABLE[vector & 0xF];
 		}
-
+		
+		String finalRes = "";
 		try {
-			return new String(hex, "ASCII");
+			finalRes = new String(hex, "ASCII");
 		} catch (UnsupportedEncodingException e) {
-			// this will never really happen
-			return "";
+			LOGGER.error("Impossible exception thrown!");
 		}
+		
+		return finalRes;
 	}
 
-	public static byte[] addByteArrays(byte[] array1, byte[] array2) {
+	public static byte[] addByteArrays(final byte[] array1, final byte[] array2) {
 		if (array1 == null) {
-			return array2.clone();
+			return array2.clone(); //NOPMD ... single exit point makes no sense
 		} else if (array2 == null) {
-			return array1.clone();
+			return array1.clone(); //NOPMD ... see above
 		}
 
 		final byte[] joinedArray = new byte[array1.length + array2.length];
@@ -54,14 +64,14 @@ public class Data {
 		return joinedArray;
 	}
 
-	public static Object[] addObjectArrays(Object[] array1, Object[] array2) {
+	public static Object[] addObjectArrays(final Object[] array1, final Object[] array2) {
 		if (array1 == null) {
-			return array2.clone();
+			return array2.clone(); //NOPMD ... see above
 		} else if (array2 == null) {
-			return array1.clone();
+			return array1.clone(); //NOPMD ... see above
 		}
 
-		Object[] joinedArray = (Object[]) Array.newInstance(array1.getClass().getComponentType(), array1.length + array2.length);
+		final Object[] joinedArray = (Object[]) Array.newInstance(array1.getClass().getComponentType(), array1.length + array2.length);
 		System.arraycopy(array1, 0, joinedArray, 0, array1.length);
 		System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
 		

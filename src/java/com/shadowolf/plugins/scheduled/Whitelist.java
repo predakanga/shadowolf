@@ -13,12 +13,13 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 
+import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.tracker.TrackerResponse.Errors;
 
-public class Whitelist extends ScheduledPlugin {
+public class Whitelist extends ScheduledPlugin implements AnnounceFilter {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(Whitelist.class);
 	private final String column;
@@ -56,18 +57,12 @@ public class Whitelist extends ScheduledPlugin {
 	}
 	
 	@Override
-	public boolean needsAnnounce() {
-		return true;
-	}
-	
-	@Override
 	public void run() {
 		try {
 			this.stmt.execute();
 			ResultSet rs = this.stmt.getResultSet();
 			ArrayList<String> tempIds = new ArrayList<String>();
 			
-			LOGGER.debug(rs.getStatement());
 			while(rs.next()) {
 				tempIds.add(rs.getString(this.column));
 			}
@@ -80,8 +75,6 @@ public class Whitelist extends ScheduledPlugin {
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
-		
-		LOGGER.debug("Read " + this.peerIds.length);
 	}
 	
 	@Override

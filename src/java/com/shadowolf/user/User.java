@@ -1,9 +1,11 @@
 package com.shadowolf.user;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.log4j.Logger;
 
 
 /*
@@ -11,10 +13,10 @@ import java.util.Iterator;
  * of all Peers that constitute a user, for statistics and access control.
  */
 public class User { 
-	//private static final Logger LOGGER = Logger.getLogger(User.class);
+	private static final Logger LOGGER = Logger.getLogger(User.class);
 	
-	protected HashMap<String, Peer> peers = 
-		new HashMap<String, Peer>(); // NOPMD by Eddie on 3/6/10 3:32 AM
+	protected ConcurrentHashMap<String, WeakReference<Peer>> peers = 
+		new ConcurrentHashMap<String, WeakReference<Peer>>(); // NOPMD by Eddie on 3/6/10 3:32 AM
 	
 	protected final String peerId;// NOPMD by Eddie on 3/6/10 3:32 AM
 	protected String passkey; // NOPMD by Eddie on 3/6/10 3:32 AM
@@ -22,6 +24,7 @@ public class User {
 	protected long downloaded = 0L;
 	protected final Object upLock = new Object();
 	protected final Object downLock = new Object();
+	protected long lastAccessed;
 	
 	protected User() {
 		//this exists for our child class.
@@ -69,49 +72,26 @@ public class User {
 	}
 	
 	public Peer getPeer(final String infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
-		synchronized(this.peers){ 
-			if(this.peers.get(infoHash) == null) {
-				Peer p =  new Peer(0L, 0L, ipAddress, port);
-				this.peers.put(infoHash, p);  // NOPMD by Eddie on 3/6/10 3:32 AM
-			}
+		if(this.peers.get(infoHash) != null && this.peers.get(infoHash).get() == null) {
+			LOGGER.debug("Found weak reference pointing to null!");
+			this.peers.remove(infoHash);
 		}
 		
-		synchronized(this.peers) { 
-			return this.peers.get(infoHash);
+		if(this.peers.get(infoHash) == null) {
+			Peer p =  new Peer(0L, 0L, ipAddress, port);
+			this.peers.put(infoHash, new WeakReference<Peer>(p));  // NOPMD by Eddie on 3/6/10 3:32 AM
+			return p;
 		}
+
+		return this.peers.get(infoHash).get();
 	}	
 	
-	
-	public long iterateGetDownloaded() {
-		long d = 0;
-		synchronized(this.peers) {
-			Iterator<Peer> iter = this.peers.values().iterator();
-			
-			while(iter.hasNext()) {
-				d += iter.next().getDownloaded();
-			}
-		}
-		
-		return d;
-	}
-	
-	public long iterateGetUploaded() {
-		long d = 0;
-		synchronized(this.peers) {
-			Iterator<Peer> iter = this.peers.values().iterator();
-			
-			while(iter.hasNext()) {
-				d += iter.next().getUploaded();
-			}
-		}	
-		return d;
-	}
 	
 	public String getPasskey() {
 		return this.passkey;
 	}
 	
-	public HashMap<String, Peer> getPeers() {
+	public ConcurrentHashMap<String, WeakReference<Peer>> getPeers() {
 		return this.peers;
 	}
 
@@ -135,5 +115,13 @@ public class User {
 		synchronized(this.upLock) {
 			this.uploaded = 0;
 		}
+	}
+
+	public long getLastAccessed() {
+		return lastAccessed;
+	}
+
+	public void setLastAccessed(long lastAccessed) {
+		this.lastAccessed = lastAccessed;
 	}
 }

@@ -20,7 +20,7 @@ public class PluginEngine {
 	private static final Logger LOGGER = Logger.getLogger(PluginEngine.class);
 	private final HashMap<Plugin.Type, ArrayList<Plugin>> plugins = new HashMap<Plugin.Type, ArrayList<Plugin>>();
 	private final ScheduledThreadPoolExecutor schedExecutor;
-	private final HashSet<Plugin> announcers = new HashSet<Plugin>();
+	private final HashSet<AnnounceFilter> announcers = new HashSet<AnnounceFilter>();
 	
 	public PluginEngine(String pathToXML) throws PluginException {
 		try {
@@ -45,7 +45,7 @@ public class PluginEngine {
 	}
 	
 	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException {
-		Iterator<Plugin> i = announcers.iterator();
+		Iterator<AnnounceFilter> i = announcers.iterator();
 		
 		while(i.hasNext()) {
 			i.next().doAnnounce(e, uploaded, downloaded, passkey, infoHash, peerId);
@@ -64,18 +64,24 @@ public class PluginEngine {
 			if (qName.equalsIgnoreCase("plugin")) {
 				try {
 					Class<Plugin> pluginClass = (Class<Plugin>) Class.forName(attributes.getValue("class"));
-					Plugin plugin = pluginClass.getConstructor(new Class[] { Attributes.class }).newInstance(attributes);
+					
+                   	Plugin plugin = pluginClass.getConstructor(new Class[] { Attributes.class }).newInstance(attributes);
+					
+                   	//check if implements AnnounceFilter
+                   	for(Class<?> c : pluginClass.getInterfaces()) {
+						if(c.getCanonicalName() == "com.shadowolf.plugins.AnnounceFilter") {
+							announcers.add((AnnounceFilter)plugin);
+						}
+					}
+                   	
 					if(plugins.get(plugin.getType()) == null) {
 						plugins.put(plugin.getType(), new ArrayList<Plugin>());
 					}
 					
-					if(plugin.needsAnnounce()) {
-						announcers.add(plugin);
-					}
 					plugins.get(plugin.getType()).add(plugin);
 				} catch (Exception e) {
-					LOGGER.error("Error parsing plugin!");
-					//System.exit(1);
+					LOGGER.error("Error parsing plugin!\t" + e.getMessage());
+					System.exit(1);
 				}
 			}
 		}

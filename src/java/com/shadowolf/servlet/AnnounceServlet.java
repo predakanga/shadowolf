@@ -21,6 +21,7 @@ import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.user.Peer;
 import com.shadowolf.user.PeerList;
+import com.shadowolf.user.PeerListFactory;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 import com.shadowolf.util.Data;
@@ -71,7 +72,6 @@ public class AnnounceServlet extends HttpServlet {
 		 * Required fields.
 		 */
 		ServletOutputStream sos = response.getOutputStream();
-		LOGGER.debug("Received announce with qs: " + request.getQueryString());
 		
 		if(request.getParameter("info_hash") == null) {
 			sos.print(TrackerResponse.Errors.MISSING_INFO_HASH.toString());
@@ -84,6 +84,7 @@ public class AnnounceServlet extends HttpServlet {
 			return;
 		} else if (request.getParameter("port") == null) {
 			sos.print(TrackerResponse.Errors.MISSING_PORT.toString());
+			return;
 		}
 		
 		/*
@@ -95,8 +96,6 @@ public class AnnounceServlet extends HttpServlet {
 		if (paramEvent == null)  {
 			event = Event.ANNOUNCE;
 		} else {
-			LOGGER.debug("Parameter for event: %%%" + paramEvent + "%%%");
-			
 			if(paramEvent.equals("")) {
 				event = Event.ANNOUNCE;
 			} else if(paramEvent.equals("completed")) {
@@ -107,7 +106,7 @@ public class AnnounceServlet extends HttpServlet {
 				event = Event.STARTED;
 			}
 		}
-		LOGGER.debug("Blah");
+
 		//pre-validated fields
 		final String peerId = request.getParameter("peer_id");
 		
@@ -123,7 +122,7 @@ public class AnnounceServlet extends HttpServlet {
 		
 		int numwant = 0;
 		if(request.getParameter("numwant") != null) {
-			numwant = Integer.parseInt(request.getParameter("numwant")) < DEFAULT_NUMWANT ? Integer.parseInt(request.getParameter("numwant")) : 0; 
+			numwant = Integer.parseInt(request.getParameter("numwant")) < DEFAULT_NUMWANT ? Integer.parseInt(request.getParameter("numwant")) : DEFAULT_NUMWANT; 
 		} 		
 		
 		//we're ignoring compact because we don't _need_ to implement the (now useless)
@@ -136,7 +135,7 @@ public class AnnounceServlet extends HttpServlet {
 			u.updateStats(infoHash, uploaded, downloaded, request.getRemoteAddr(), port);
 			
 			Peer p = u.getPeer(infoHash, request.getRemoteAddr(), port);
-			PeerList peerlist = PeerList.getList(infoHash);
+			PeerList peerlist = PeerListFactory.getList(infoHash);
 			
 			if(event != Event.STOPPED) {
 				if(left > 0) {
@@ -147,31 +146,21 @@ public class AnnounceServlet extends HttpServlet {
 			} else {
 				if(left > 0) { 	
 					peerlist.removeLeecher(p); 
-					return;
 				} else {
 					peerlist.removeSeeder(p);
-					return;
 				}
 			}
 			
 			//prepare return
-			int seeders = peerlist.getSeeders().length;
-			int leechers =  peerlist.getLeechers().length;
+			int seeders = peerlist.getSeederCount();
+			int leechers =  peerlist.getLeecherCount();
 			
-			Peer[] peers = null;
-			
-			if(left > 0) {
-				peers = peerlist.getSeeders(numwant);
+			if(event == Event.STOPPED){
+				sos.write(TrackerResponse.bencoded(seeders, leechers, new Peer[0]));
+				return;
 			}
 			
-			if(left > 0 && peers.length < DEFAULT_NUMWANT) {
-				numwant = DEFAULT_NUMWANT - peers.length; 
-				Peer[] tempL = peerlist.getLeechers(DEFAULT_NUMWANT - peers.length);
-				peers = (Peer[]) Data.addObjectArrays(peers, tempL);
-			} else {
-				peers = peerlist.getLeechers(numwant);
-			}
-			
+			Peer[] peers = peerlist.getPeers(numwant);
 			
 			sos.write(TrackerResponse.bencoded(seeders, leechers, peers, 1, 1));
 		} catch (UnknownHostException e) {
@@ -194,9 +183,4 @@ public class AnnounceServlet extends HttpServlet {
 			sos.flush();
 		}
 	}
-
-
-
-	
-    
 }

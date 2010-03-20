@@ -13,12 +13,13 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 
+import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.tracker.TrackerRequest.Event;
 
-public class PasskeyEnforcer extends ScheduledPlugin {
+public class PasskeyEnforcer extends ScheduledPlugin implements AnnounceFilter {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(PasskeyEnforcer.class);
 	private final String column;
@@ -42,6 +43,10 @@ public class PasskeyEnforcer extends ScheduledPlugin {
 			this.stmt = conn.prepareStatement("SELECT " + column + " FROM " + table);
 		} catch (NamingException n) {
 			LOGGER.error("Unexpected NamingException...");
+			n.printStackTrace();
+			LOGGER.error(n.getCause());
+			LOGGER.error(n.getMessage());
+			LOGGER.error(n.getExplanation());
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
@@ -52,11 +57,6 @@ public class PasskeyEnforcer extends ScheduledPlugin {
 	@Override
 	public int getInitialDelay() {
 		return 0;
-	}
-	
-	@Override
-	public boolean needsAnnounce() {
-		return true;
 	}
 	
 	@Override

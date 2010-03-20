@@ -15,13 +15,14 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 
+import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
-public class UserStatsUpdater extends ScheduledPlugin {
+public class UserStatsUpdater extends ScheduledPlugin implements AnnounceFilter {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(UserStatsUpdater.class);
 	
@@ -57,14 +58,9 @@ public class UserStatsUpdater extends ScheduledPlugin {
 	}
 	
 	@Override
-	public boolean needsAnnounce() { 
-		return true;
-	}
-	
-	@Override
 	public void doAnnounce(Event event, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException {
 		if(uploaded > 0 || downloaded > 0) {
-			LOGGER.debug("Queuing ... " + passkey + " for update");
+		//	LOGGER.debug("Queuing ... " + passkey + " for update");
 			this.addToUpdateQueue(passkey);
 		}
 	}

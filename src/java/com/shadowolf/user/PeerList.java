@@ -1,190 +1,123 @@
 package com.shadowolf.user;
 
-import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.log4j.Logger;
 
 
 public class PeerList {
+	private static final int PEER_TIMEOUT = 30;
+	private static final boolean DEBUG = true;
 	private static final Logger LOGGER = Logger.getLogger(PeerList.class);
 	
-	public static final int SEEDER = 0;
-	public static final int LEECHER = 1;
-	public static final int NOT_IN_LIST = 2;
+	private ConcurrentSkipListMap<Long, Peer> seeds = new ConcurrentSkipListMap<Long, Peer>();
+	private ConcurrentSkipListMap<Long, Peer> leechers = new ConcurrentSkipListMap<Long, Peer>();
 	
-	private static ConcurrentHashMap<String, PeerList> lists = new ConcurrentHashMap<String, PeerList>();
-	private final static int SEEDER_START = 64;
-	private final static int LEECHER_START = 16;
-	
-	private final static int DEFAULT_NUM_PEERS = 30;
-	
-	private ArrayList<Peer> seeders = new ArrayList<Peer>(SEEDER_START);
-	private ArrayList<Peer> leechers = new ArrayList<Peer>(LEECHER_START);
-	
-	public static PeerList getList(String infoHash2) {
-		synchronized(lists) {
-			if(lists.containsKey(infoHash2) == false) {
-				lists.put(infoHash2, new PeerList());
-			}
-		}
-		
-		return lists.get(infoHash2);
+	public void doCleanUp() {
+		this.cleanUpSeeds();
+		this.cleanUpLeechers();
 	}
 	
-	public static long collectUploaded(Iterator<Peer> iter) {
-		long uploaded = 0;
-		
-		while(iter.hasNext()) {
-			uploaded += iter.next().getUploaded();
+	private void cleanUpLeechers() {
+		if(DEBUG) {
+			LOGGER.debug("Cleaning up leechers...");
+			LOGGER.debug("Old count: " + this.leechers.size());
 		}
 		
-		return uploaded;
-	}
-	
-	public static long collectDownloaded(Iterator<Peer> iter) {
-		long downloaded = 0;
+		this.leechers.headMap(new Date().getTime() - PEER_TIMEOUT * 1000).clear();
 		
-		while(iter.hasNext()) {
-			downloaded += iter.next().getDownloaded();
-		}
-		
-		return downloaded; 
-	}
-	
-	private static Peer[] getPeers(final ArrayList<Peer> list, final int num) {
-		if(list.size() == 0) {
-			return new Peer[0];
-		} else if (list.size() < num) {
-			synchronized (list) {
-				return list.toArray(new Peer[list.size()]);
-			}
-		}
-		
-		final int size = list.size();
-		
-		synchronized(list) {
-			int rand = (new Random()).nextInt(size - num);
-			return list.subList(rand, rand+num).toArray(new Peer[num]);
+		if(DEBUG) {
+			LOGGER.debug("New count: " + this.leechers.size());
 		}
 	}
 	
-	private PeerList() {
-	}
-		
-	public boolean addSeeder(Peer p) {
-		if(this.seeders.contains(p)) {
-			return true;
+	private void cleanUpSeeds() {
+		if(DEBUG) {
+			LOGGER.debug("Cleaning up seeds...");
+			LOGGER.debug("Old count: " + this.seeds.size());
 		}
 		
-		boolean status = false;
-		synchronized (this.seeders) {
-			status = this.seeders.add(p);
-		}
+		this.seeds.headMap(new Date().getTime() - PEER_TIMEOUT * 1000).clear();
 		
-		LOGGER.debug("Added seeder.  Total: " + this.seeders.size());
-		return status;
+		if(DEBUG) {
+			LOGGER.debug("New count: " + this.seeds.size());
+		}
 	}
 	
-	public boolean addLeecher(Peer p) {
-		if(this.leechers.contains(p)) {
-			return true;
+	public void addSeeder(Peer p) {
+		if(this.seeds.containsValue(p)) {
+			this.seeds.remove(p.getLastAnnounce());
 		}
-		
-		boolean status = false;
 
-		synchronized (this.leechers) {
-			status = this.leechers.add(p);
-		}
-		
-		LOGGER.debug("Added leecher.  Total: " + this.leechers.size() + " " + status);
-		return status;
+		p.setLastAnnounce(new Date());
+		this.seeds.put(p.getLastAnnounce(), p);
 	}
 	
-	public boolean removeLeecher(Peer p) {
-		if(this.leechers.contains(p) == false) {
-			return true;
+	public void addLeecher(Peer p) {
+		if(this.leechers.containsValue(p)) {
+			this.leechers.remove(p.getLastAnnounce());
 		}
 		
-		boolean status = false;
-		synchronized (this.leechers) {
-			status = this.leechers.remove(p);
-		}
-		
-		return status;
+		p.setLastAnnounce(new Date());
+		this.leechers.put(p.getLastAnnounce(), p);
 	}
 	
-	public boolean removeSeeder(Peer p) {
-		if(this.seeders.contains(p) == false) {
-			return true;
-		}
-		
-		boolean status = false;
-		synchronized (this.seeders) {
-			status = this.seeders.remove(p);
-		}
-		
-		return status;
+	public void removeSeeder(Peer p) {
+		this.seeds.remove(p.getLastAnnounce());
 	}
 	
-	public Peer[] getLeechers() {
-		return getPeers(this.leechers, DEFAULT_NUM_PEERS);
+	public void removeLeecher(Peer p) {
+		this.leechers.remove(p.getLastAnnounce());
 	}
 	
-	public Peer[] getLeechers(final int num) {
-		return getPeers(this.leechers, num);
-	}
-	
-	public Peer[] getSeeders() {
-		return getPeers(this.seeders, DEFAULT_NUM_PEERS);
-	}
-	
-	public Peer[] getSeeders(final int num) {
-		return getPeers(this.seeders, num);
-	}
-	
-	public long getTotalUpload() {
-		long up = 0;
+	/**
+	 * Returns an array of peers with the given size.  Since we store the peers (both leechers and seeders)
+	 * internally as a sorted map based on their announce time, the ordering of the peers is constantly changing.
+	 * Because of this, and Java's limitations on sane ways to randomly retrieve values from ConcurrentSkipListMap,
+	 * we just return the first numwant leechers if there are enough, otherwise, we start pushing seeders onto the
+	 * returned array until it's large enough.
+	 * 
+	 * @param numwant the number of peers (size of the returned array) to return.
+	 * @return Peer[] the array of peers
+	 */
+	public Peer[] getPeers(int numwant) {
+		if(this.leechers.size() == 0 && this.seeds.size() == 0) {
+			return new Peer[0];
+		}
+
+		HashSet<Peer> peers = new HashSet<Peer>();
 		
-		synchronized(this.seeders) {
-			up += collectUploaded(this.seeders.iterator()); 
+		Iterator<Peer> leechVals = this.leechers.descendingMap().values().iterator();
+		
+		for(int i = 0; i < numwant && leechVals.hasNext(); i++) {
+			peers.add(leechVals.next());
+			
+			if(peers.size() == numwant) {
+				return peers.toArray(new Peer[peers.size()]);
+			}
 		}
 		
-		synchronized(this.leechers) {
-			up += collectUploaded(this.leechers.iterator());
+		Iterator<Peer> seedVals = this.seeds.descendingMap().values().iterator();
+		
+		for(int i = peers.size(); i < numwant && seedVals.hasNext(); i++) {
+			peers.add(seedVals.next());
+			
+			if(peers.size() == numwant) {
+				return peers.toArray(new Peer[peers.size()]);
+			}
 		}
 		
-		return up;
+		return peers.toArray(new Peer[peers.size()]);
 	}
+
+	public int getSeederCount() {
+		return this.seeds.size();
+	}	
 	
-	public synchronized long getTotalDownload() {
-		long down = 0;
-		
-		synchronized(this.seeders) {
-			down += collectDownloaded(this.seeders.iterator()); 
-		}
-		
-		synchronized(this.leechers) {
-			down += collectDownloaded(this.leechers.iterator());
-		}
-		
-		return down;
+	public int getLeecherCount() {
+		return this.leechers.size();
 	}
-	
-	public int contains(Peer p) {
-		if(this.seeders.contains(p)) {
-			return SEEDER;
-		}
-		
-		if(this.leechers.contains(p)) {
-			return LEECHER;
-		}
-		
-		return NOT_IN_LIST;
-	}
-	
-	
-	
 }

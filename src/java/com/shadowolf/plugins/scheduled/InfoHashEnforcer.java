@@ -14,13 +14,14 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 
+import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.util.Data;
 
-public class InfoHashEnforcer extends ScheduledPlugin {
+public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(InfoHashEnforcer.class);
 	private final String column;
@@ -54,11 +55,6 @@ public class InfoHashEnforcer extends ScheduledPlugin {
 	@Override
 	public int getInitialDelay() {
 		return 0;
-	}
-	
-	@Override
-	public boolean needsAnnounce() {
-		return true;
 	}
 	
 	@Override

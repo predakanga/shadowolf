@@ -1,18 +1,17 @@
 package com.shadowolf.user;
 
+import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class UserAggregate extends User {
 
 	public UserAggregate(String passkey) {
-		super();
-		
-		this.passkey = passkey;
+		super(null, passkey);
 	}
 
-	public void addPeerlist(HashMap<String, Peer> list) {
+	public void addPeerlist(ConcurrentHashMap<String, WeakReference<Peer>> list) {
 		this.peers.putAll(list);
 	}
 	

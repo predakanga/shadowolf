@@ -16,7 +16,9 @@ public class Peer {
 	final private byte[] ipAddress;
 	final private byte[] port;
 	
-	public Peer(final long uploaded,final long downloaded, final String ipAddress, final String port) throws UnknownHostException  {
+	public Peer(final long uploaded,final long downloaded, final String ipAddress, 
+			final String port) throws UnknownHostException  {
+
 		this.uploaded = uploaded;
 		this.downloaded = downloaded;
 		this.lastAnnounce = new Date().getTime();

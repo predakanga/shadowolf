@@ -2,10 +2,6 @@ package com.shadowolf.plugins;
 
 import org.xml.sax.Attributes;
 
-import com.shadowolf.tracker.AnnounceException;
-import com.shadowolf.tracker.TrackerRequest.Event;
-
-
 abstract class Plugin implements Runnable {
 	public static enum Type {
 		periodicThread,
@@ -22,9 +18,4 @@ abstract class Plugin implements Runnable {
 		return this.type;
 	}
 	
-	public boolean needsAnnounce() {
-		return false;
-	}
-	
-	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException{}
 }

@@ -4,7 +4,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.xml.sax.Attributes;
 
-abstract public class ScheduledPlugin extends Plugin {
+//PMD wants abstract classes to be called AbstractXXX... rubbish.
+abstract public class ScheduledPlugin extends Plugin { // NOPMD by Eddie on 3/20/10 3:11 AM
 	public final static int DEFAULT_DELAY = 15;
 	public final static int DEFAULT_PERIOD = 15;
 	public final static TimeUnit DEFAULT_UNIT = TimeUnit.MINUTES;
@@ -13,19 +14,19 @@ abstract public class ScheduledPlugin extends Plugin {
 	private int period = DEFAULT_PERIOD;
 	private TimeUnit unit = DEFAULT_UNIT;
 	
-	public ScheduledPlugin(Attributes attributes) {
+	public ScheduledPlugin(final Attributes attributes) {
 		super(Type.periodicThread, attributes);
 		
 		if(attributes.getValue("unit") != null) {
-			String unit = attributes.getValue("unit");
+			final String unit = attributes.getValue("unit");
 			
-			if(unit.equals("minutes")) {
+			if("minutes".equals(unit)) {
 				this.setUnit(TimeUnit.MINUTES);
-			} else if (unit.equals("seconds")) {
+			} else if ("seconds".equals(unit)) {
 				this.setUnit(TimeUnit.SECONDS);
-			} else if (unit.equals("hours")) {
+			} else if ("hours".equals(unit)) {
 				this.setUnit(TimeUnit.HOURS);
-			} else if (unit.equals("days")) {
+			} else if ("days".equals(unit)) {
 				this.setUnit(TimeUnit.DAYS);
 			}
 		}
@@ -51,15 +52,15 @@ abstract public class ScheduledPlugin extends Plugin {
 		return unit;
 	}
 
-	public void setInitialDelay(int initialDelay) {
+	final public void setInitialDelay(final int initialDelay) {
 		this.initialDelay = initialDelay;
 	}
 
-	public void setPeriod(int period) {
+	final public void setPeriod(final int period) {
 		this.period = period;
 	}
 
-	public void setUnit(TimeUnit unit) {
+	final public void setUnit(final TimeUnit unit) {
 		this.unit = unit;
 	}
 }

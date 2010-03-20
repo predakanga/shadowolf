@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.xml.parsers.SAXParser;
@@ -18,15 +20,15 @@ import com.shadowolf.tracker.TrackerRequest.Event;
 
 public class PluginEngine {
 	private static final Logger LOGGER = Logger.getLogger(PluginEngine.class);
-	private final HashMap<Plugin.Type, ArrayList<Plugin>> plugins = new HashMap<Plugin.Type, ArrayList<Plugin>>();
-	private final ScheduledThreadPoolExecutor schedExecutor;
-	private final HashSet<AnnounceFilter> announcers = new HashSet<AnnounceFilter>();
+	private final Map<Plugin.Type, ArrayList<Plugin>> plugins = new HashMap<Plugin.Type, ArrayList<Plugin>>(); //NOPMD ... not a bean
+	private final ScheduledThreadPoolExecutor schedExecutor; //NOPMD ... not a bean
+	private final Set<AnnounceFilter> announcers = new HashSet<AnnounceFilter>(); //NOPMD ... not a bean
 	
-	public PluginEngine(String pathToXML) throws PluginException {
+	public PluginEngine(final String pathToXML) throws PluginException {
 		try {
-			SAXParser sp = SAXParserFactory.newInstance().newSAXParser();
-			sp.parse(pathToXML, new PluginParser());
-		} catch (Exception e) {
+			final SAXParser sparser = SAXParserFactory.newInstance().newSAXParser();
+			sparser.parse(pathToXML, new PluginParser());
+		} catch (final Exception e) {
 			//we so lazy
 			throw new PluginException(e);
 		}
@@ -36,19 +38,21 @@ public class PluginEngine {
 	
 	public void execute() {
 		//deal with scheduler plugins
-		Iterator<Plugin> i = this.plugins.get(Plugin.Type.periodicThread).iterator();
+		final Iterator<Plugin> iter = this.plugins.get(Plugin.Type.periodicThread).iterator();
 		
-		while(i.hasNext()) {
-			ScheduledPlugin p = (ScheduledPlugin)i.next();
-			this.schedExecutor.scheduleAtFixedRate(p, p.getInitialDelay(), p.getPeriod(), p.getUnit());
+		while(iter.hasNext()) {
+			final ScheduledPlugin plugin = (ScheduledPlugin)iter.next();
+			this.schedExecutor.scheduleAtFixedRate(plugin, plugin.getInitialDelay(), plugin.getPeriod(), plugin.getUnit());
 		}
 	}
 	
-	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException {
-		Iterator<AnnounceFilter> i = announcers.iterator();
+	public void doAnnounce(final Event event, final long uploaded, final long downloaded, 
+			final String passkey, final String infoHash, final String peerId) throws AnnounceException {
 		
-		while(i.hasNext()) {
-			i.next().doAnnounce(e, uploaded, downloaded, passkey, infoHash, peerId);
+		final Iterator<AnnounceFilter> iter = announcers.iterator();
+		
+		while(iter.hasNext()) {
+			iter.next().doAnnounce(event, uploaded, downloaded, passkey, infoHash, peerId);
 		}
 	}
 	
@@ -60,16 +64,16 @@ public class PluginEngine {
 		
 		@SuppressWarnings("unchecked")
 		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+		public void startElement(final String uri, final String localName, final String qName, final Attributes attributes) {
 			if (qName.equalsIgnoreCase("plugin")) {
 				try {
-					Class<Plugin> pluginClass = (Class<Plugin>) Class.forName(attributes.getValue("class"));
+					final Class<Plugin> pluginClass = (Class<Plugin>) Class.forName(attributes.getValue("class"));
 					
-                   	Plugin plugin = pluginClass.getConstructor(new Class[] { Attributes.class }).newInstance(attributes);
+					final 	Plugin plugin = pluginClass.getConstructor(new Class[] { Attributes.class }).newInstance(attributes);
 					
                    	//check if implements AnnounceFilter
                    	for(Class<?> c : pluginClass.getInterfaces()) {
-						if(c.getCanonicalName() == "com.shadowolf.plugins.AnnounceFilter") {
+						if("com.shadowolf.plugins.AnnounceFilter".equals(c.getCanonicalName())) {
 							announcers.add((AnnounceFilter)plugin);
 						}
 					}
@@ -81,7 +85,6 @@ public class PluginEngine {
 					plugins.get(plugin.getType()).add(plugin);
 				} catch (Exception e) {
 					LOGGER.error("Error parsing plugin!\t" + e.getMessage());
-					System.exit(1);
 				}
 			}
 		}

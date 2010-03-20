@@ -10,7 +10,7 @@ import com.shadowolf.user.UserFactory;
 public class Cleanup extends ScheduledPlugin  {
 	private static final Logger LOGGER = Logger.getLogger(Cleanup.class);
 	
-	public Cleanup(Attributes attributes) {
+	public Cleanup(final Attributes attributes) {
 		super(attributes);
 		LOGGER.debug("Instantiating sweeping!");
 	}

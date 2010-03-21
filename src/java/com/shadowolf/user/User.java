@@ -67,6 +67,9 @@ public class User {
 			downDiff = downloaded - peer.getDownloaded();
 		}
 		
+		peer.setDownloaded(downloaded);
+		peer.setUploaded(uploaded);
+		
 		this.addDownloaded(downDiff);
 		this.addUploaded(upDiff);
 	}

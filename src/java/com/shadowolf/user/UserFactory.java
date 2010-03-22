@@ -12,7 +12,7 @@ import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
 
 final public class UserFactory {
-	private static final int USER_TIMEOUT = 30;
+	private static final int USER_TIMEOUT = 7200; //two hours
 	private static final boolean DEBUG = true;
 	private static final Logger LOGGER = Logger.getLogger(UserFactory.class);
 	private static ConcurrentHashMap<String, ConcurrentHashMap<String, WeakReference<User>>> users =
@@ -74,16 +74,26 @@ final public class UserFactory {
 		final UserAggregate user = new UserAggregate(passkey);
 		
 		if(users.get(passkey) == null) {
+			LOGGER.debug("Returning default UA instance.");
 			return user; //NOPMD
 		} else if (users.get(passkey).size() == 1) {
 			final User userRef = users.get(passkey).values().iterator().next().get();
 			if(userRef == null) {
 				users.put(passkey, new ConcurrentHashMap<String, WeakReference<User>>());
+				LOGGER.debug("Returning default UA instance because of null WR instance.");
 				return user; //NOPMD
+			} else {
+				if(DEBUG) {
+					LOGGER.debug("Only found one user instance, directly returning it.");
+				}
+				
+				return userRef;
 			}
 		} else {
 			//this isn't necessary but fucked if I'm typing that more than once
 			final ConcurrentHashMap<String, WeakReference<User>> set = users.get(passkey); 
+			LOGGER.debug("Found " + set.size() + " user instances for passkey: " + passkey);
+			
 			final Iterator<String> iter = set.keySet().iterator();
 			
 			while(iter.hasNext()) {

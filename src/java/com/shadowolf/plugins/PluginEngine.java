@@ -15,8 +15,8 @@ import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.shadowolf.announce.Announce;
 import com.shadowolf.tracker.AnnounceException;
-import com.shadowolf.tracker.TrackerRequest.Event;
 
 public class PluginEngine {
 	private static final Logger LOGGER = Logger.getLogger(PluginEngine.class);
@@ -46,13 +46,12 @@ public class PluginEngine {
 		}
 	}
 	
-	public void doAnnounce(final Event event, final long uploaded, final long downloaded, 
-			final String passkey, final String infoHash, final String peerId) throws AnnounceException {
+	public void doAnnounce(final Announce announce) throws AnnounceException {
 		
 		final Iterator<AnnounceFilter> iter = announcers.iterator();
 		
 		while(iter.hasNext()) {
-			iter.next().doAnnounce(event, uploaded, downloaded, passkey, infoHash, peerId);
+			iter.next().doAnnounce(announce);
 		}
 	}
 	

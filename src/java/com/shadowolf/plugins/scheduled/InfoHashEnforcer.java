@@ -14,11 +14,11 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 
+import com.shadowolf.announce.Announce;
 import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
-import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.util.Data;
 
 public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter {
@@ -89,10 +89,9 @@ public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter 
 	}
 	
 	@Override
-	public void doAnnounce(final Event event, final long uploaded, final long downloaded, final String passkey, 
-			final String infoHash, final String peerId) throws AnnounceException{
+	public void doAnnounce(final Announce announce) throws AnnounceException {
 		
-		if(!this.hashes.contains(infoHash)) {
+		if(!this.hashes.contains(announce.getInfoHash())) {
 			throw new AnnounceException(TrackerResponse.Errors.TORRENT_NOT_REGISTERED.toString());
 		}
 	}

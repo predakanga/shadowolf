@@ -3,6 +3,7 @@ package com.shadowolf.user;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
@@ -34,6 +35,8 @@ public class User {
 	public User(final String peerId, final String passkey) {
 		this.peerId = peerId;
 		this.passkey = passkey;
+		
+		this.lastAccessed = new Date().getTime();
 	}
 	
 	public void addUploaded(String uploaded) {
@@ -63,7 +66,11 @@ public class User {
 		Peer peer = this.getPeer(infoHash, ipAddress, port);
 		
 		synchronized (peer) {
+			LOGGER.debug("Old upload: " + peer.getUploaded());
 			upDiff = uploaded - peer.getUploaded();
+			LOGGER.debug("Announce upload: " + uploaded);
+			LOGGER.debug("Difference: " + upDiff);
+			
 			downDiff = downloaded - peer.getDownloaded();
 		}
 		

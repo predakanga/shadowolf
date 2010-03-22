@@ -13,37 +13,35 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 
+import com.shadowolf.announce.Announce;
 import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
-import com.shadowolf.tracker.TrackerRequest.Event;
 
 public class PasskeyEnforcer extends ScheduledPlugin implements AnnounceFilter {
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(PasskeyEnforcer.class);
-	private final String column;
 	
-	protected ConcurrentSkipListSet<String> hashes = new ConcurrentSkipListSet<String>();
-	private PreparedStatement stmt;
-	private Connection conn;
+	private transient final String column;
+	protected transient ConcurrentSkipListSet<String> hashes = new ConcurrentSkipListSet<String>();
+	private transient PreparedStatement stmt;
 	
-	public PasskeyEnforcer(Attributes attributes) {
+	public PasskeyEnforcer(final Attributes attributes) {
 		super(attributes);
 		
-		String table = attributes.getValue("table");
+		final String table = attributes.getValue("table");
 		this.column = attributes.getValue("passkey_column");
 		
 		
 		try {
-			DataSource source = (DataSource) (new InitialContext().lookup(DATABASE_NAME));
-			this.conn = source.getConnection();
+			final DataSource source = (DataSource) (new InitialContext().lookup(DATABASE_NAME));
+			final Connection conn = source.getConnection();
 			conn.setAutoCommit(false);
 			
 			this.stmt = conn.prepareStatement("SELECT " + column + " FROM " + table);
 		} catch (NamingException n) {
 			LOGGER.error("Unexpected NamingException...");
-			n.printStackTrace();
 			LOGGER.error(n.getCause());
 			LOGGER.error(n.getMessage());
 			LOGGER.error(n.getExplanation());
@@ -64,12 +62,15 @@ public class PasskeyEnforcer extends ScheduledPlugin implements AnnounceFilter {
 		
 		try {
 			this.stmt.execute();
-			ResultSet rs = this.stmt.getResultSet();
-			while(rs.next()) {
-				hashes.add(rs.getString(this.column));
-			}
+			final ResultSet results = this.stmt.getResultSet();
 			
-			rs.close();
+			try {
+				while(results.next()) {
+					hashes.add(results.getString(this.column));
+				}
+			} finally { 
+				results.close();
+			}
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
@@ -78,8 +79,9 @@ public class PasskeyEnforcer extends ScheduledPlugin implements AnnounceFilter {
 	}
 	
 	@Override
-	public void doAnnounce(Event e, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException{
-		if(this.hashes.contains(passkey) == false) {
+	public void doAnnounce(final Announce announce) throws AnnounceException {
+		
+		if(!this.hashes.contains(announce.getPasskey())) {
 			throw new AnnounceException(TrackerResponse.Errors.INVALID_PASSKEY.toString());
 		}
 	}

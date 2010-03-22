@@ -15,10 +15,10 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 
+import com.shadowolf.announce.Announce;
 import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
-import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
@@ -26,24 +26,24 @@ public class UserStatsUpdater extends ScheduledPlugin implements AnnounceFilter 
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(UserStatsUpdater.class);
 	
-	protected boolean running = false;
-	protected PreparedStatement stmt;
-	protected Set<String> updates = new HashSet<String>();
-	protected Connection conn;
+	protected transient boolean running = false;
+	protected transient PreparedStatement stmt;
+	protected transient Set<String> updates = new HashSet<String>();
+	protected transient Connection conn;
 	
-	public UserStatsUpdater(Attributes attributes) {
+	public UserStatsUpdater(final Attributes attributes) {
 		super(attributes);
 		
-		String table = attributes.getValue("table");
-		String downColumn = attributes.getValue("down_column");
-		String upColumn = attributes.getValue("up_column");
-		String passkeyColumn =  attributes.getValue("passkey_column");
+		final String table = attributes.getValue("table");
+		final String downColumn = attributes.getValue("down_column");
+		final String upColumn = attributes.getValue("up_column");
+		final String passkeyColumn =  attributes.getValue("passkey_column");
 		
 		LOGGER.debug("Instatiated UserStatsUpdater plugin.");
 		this.updates = Collections.synchronizedSet(this.updates);
 		
 		try {
-			DataSource source = (DataSource) (new InitialContext().lookup(DATABASE_NAME));
+			final DataSource source = (DataSource) (new InitialContext().lookup(DATABASE_NAME));
 			this.conn = source.getConnection();
 			conn.setAutoCommit(false);
 			
@@ -58,55 +58,49 @@ public class UserStatsUpdater extends ScheduledPlugin implements AnnounceFilter 
 	}
 	
 	@Override
-	public void doAnnounce(Event event, long uploaded, long downloaded, String passkey, String infoHash, String peerId) throws AnnounceException {
-		if(uploaded > 0 || downloaded > 0) {
+	public void doAnnounce(final Announce announce) throws AnnounceException {
+		if(announce.getUploaded() > 0 || announce.getDownloaded() > 0) {
 		//	LOGGER.debug("Queuing ... " + passkey + " for update");
-			this.addToUpdateQueue(passkey);
+			this.addToUpdateQueue(announce.getPasskey());
 		}
 	}
 	
-	public void addToUpdateQueue(String passkey) {
+	public void addToUpdateQueue(final String passkey) {
 		synchronized(this.updates) {
+			LOGGER.debug("Adding " + passkey + " to update queue.");
 			this.updates.add(passkey);
 		}
 	}
 	
 	@Override
 	public void run() {
-		if(this.running) {
-			return;
-		} else {
-			this.running = true;
-		}
-		
-		
 		boolean failed = false;
 		synchronized(this.updates) {
-			int total = 0;
-			
-			if(this.updates.size() > 0) {
-				total = (this.updates.size() > 6) ? this.updates.size() / 6 : this.updates.size();
-			}
+			LOGGER.debug("Running updates...");
+			final int total = this.updates.size();
 			
 			if(total == 0) {
 				this.running = false;
 				return;
 			}
 			
-			Iterator<String> iter = this.updates.iterator();
+			final Iterator<String> iter = this.updates.iterator();
 		
-			for(int i = 0; failed == false && iter.hasNext() && i < total; i++) {
-				String passkey = iter.next();
+			for(int i = 0; !failed && iter.hasNext() && i < total; i++) {
+				final String passkey = iter.next();
+				LOGGER.debug("Updating... " + passkey);
 				
-				User u = UserFactory.aggregate(passkey);
+				final User userAggregate = UserFactory.aggregate(passkey);
 				this.updates.remove(passkey);
 				
-				Long down = u.getDownloaded();
-				Long up = u.getUploaded();
+				userAggregate.resetStats(); //this is necessary in cases where stats do NOT get aggregated
 				
+				LOGGER.debug("Adding down: " + userAggregate.getDownloaded());
+				LOGGER.debug("Adding up: " +  userAggregate.getUploaded());
+
 				try {
-					this.stmt.setLong(1, down);
-					this.stmt.setLong(2, up);
+					this.stmt.setLong(1, userAggregate.getDownloaded());
+					this.stmt.setLong(2,  userAggregate.getUploaded());
 					this.stmt.setString(3, passkey);
 					this.stmt.executeUpdate();
 				} catch (SQLException e) {

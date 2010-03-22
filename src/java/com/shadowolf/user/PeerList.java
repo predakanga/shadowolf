@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 
 public class PeerList {
 	private static final int PEER_TIMEOUT = 30;
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final Logger LOGGER = Logger.getLogger(PeerList.class);
 	
 	final private ConcurrentSkipListMap<Long, Peer> seeds = new ConcurrentSkipListMap<Long, Peer>(); //NOPMD

@@ -15,7 +15,7 @@ abstract public class ScheduledPlugin extends Plugin { // NOPMD by Eddie on 3/20
 	private TimeUnit unit = DEFAULT_UNIT;
 	
 	public ScheduledPlugin(final Attributes attributes) {
-		super(Type.periodicThread, attributes);
+		super(Type.periodicThread);
 		
 		if(attributes.getValue("unit") != null) {
 			final String unit = attributes.getValue("unit");

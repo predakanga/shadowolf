@@ -10,8 +10,8 @@ import com.shadowolf.tracker.TrackerRequest;
 public class Peer {
 	//private static final Logger LOGGER = Logger.getLogger(Peer.class);
 	private long lastAnnounce;
-	final private long uploaded; //NOPMD
-	final private long downloaded; //NOPMD
+	private long uploaded; //NOPMD
+	private long downloaded; //NOPMD
 	final private byte[] ipAddress; //NOPMD
 	final private byte[] port; //NOPMD
 	
@@ -43,5 +43,13 @@ public class Peer {
 	}
 	public byte[] getPort() {
 		return this.port.clone();
+	}
+
+	public void setUploaded(long uploaded) {
+		this.uploaded = uploaded;
+	}
+
+	public void setDownloaded(long downloaded) {
+		this.downloaded = downloaded;
 	}
 }

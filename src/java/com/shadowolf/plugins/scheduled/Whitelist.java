@@ -19,9 +19,11 @@ import com.shadowolf.announce.Announce;
 import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
+import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.tracker.TrackerResponse.Errors;
 
 public class Whitelist extends ScheduledPlugin implements AnnounceFilter {
+	private final boolean DEBUG = false;
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(Whitelist.class);
 	private transient final String column;
@@ -43,6 +45,10 @@ public class Whitelist extends ScheduledPlugin implements AnnounceFilter {
 			conn.setAutoCommit(true);
 			
 			this.stmt = conn.prepareStatement("SELECT " + column + " FROM " + table);
+			
+			if(DEBUG) {
+				LOGGER.debug(this.stmt);
+			}
 		} catch (NamingException n) {
 			LOGGER.error("Unexpected NamingException...");
 		} catch (SQLException e) {
@@ -54,6 +60,10 @@ public class Whitelist extends ScheduledPlugin implements AnnounceFilter {
 	
 	@Override
 	public void run() {
+		if(DEBUG) {
+			LOGGER.debug("Reading whitelist out of the database...");
+		}
+		
 		try {
 			this.stmt.execute();
 			final ResultSet results = this.stmt.getResultSet();
@@ -77,8 +87,14 @@ public class Whitelist extends ScheduledPlugin implements AnnounceFilter {
 	
 	@Override
 	public void doAnnounce(final Announce announce) throws AnnounceException {
+		if(announce.getEvent() == Event.STOPPED) {
+			return;
+		}
 		
 		for(String s : this.peerIds) {
+			if(DEBUG) {
+				LOGGER.debug(announce.getPeerId() + "\t" + s);
+			}
 			if(announce.getPeerId().startsWith(s)) {
 				return;
 			}

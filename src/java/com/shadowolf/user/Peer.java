@@ -7,6 +7,9 @@ import com.shadowolf.tracker.TrackerRequest;
 
 //import org.apache.log4j.Logger;
 
+/**
+ * Data class that encapsulates the data for a peer.
+ */
 public class Peer {
 	//private static final Logger LOGGER = Logger.getLogger(Peer.class);
 	private long lastAnnounce;
@@ -39,10 +42,10 @@ public class Peer {
 		return downloaded;
 	}
 	public byte[] getIpAddress() {
-		return this.ipAddress.clone();
+		return this.ipAddress;
 	}
 	public byte[] getPort() {
-		return this.port.clone();
+		return this.port;
 	}
 
 	public void setUploaded(long uploaded) {

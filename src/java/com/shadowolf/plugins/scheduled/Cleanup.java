@@ -9,18 +9,27 @@ import com.shadowolf.user.UserFactory;
 
 public class Cleanup extends ScheduledPlugin  {
 	private static final Logger LOGGER = Logger.getLogger(Cleanup.class);
+	private static final boolean DEBUG = false;
 	
 	public Cleanup(final Attributes attributes) {
 		super(attributes);
-		LOGGER.debug("Instantiating sweeping!");
+		if(DEBUG) { 
+			LOGGER.debug("Instantiating sweeping!");
+		}
 	}
 
 	@Override
 	public void run() {
-		LOGGER.debug("Sweeping...");
+		if(DEBUG) {
+			LOGGER.debug("Sweeping...");
+		}
+		
 		PeerListFactory.cleanUp();
 		UserFactory.cleanUp();
-		LOGGER.debug("Swept");
+		
+		if(DEBUG) {
+			LOGGER.debug("Swept");
+		}
 	}
 
 }

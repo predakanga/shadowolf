@@ -24,16 +24,29 @@ import com.shadowolf.user.PeerListFactory;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
-@SuppressWarnings("serial")
+/**
+ * Announce servlet class.  Processes announces.  You should never need to edit this class, nor call its methods.
+ */
 public class AnnounceServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
 	public static final String DEFAULT_PLUGIN_PATH = "/WEB-INF/plugins.xml"; //NOPMD
 	private static final Logger LOGGER = Logger.getLogger(AnnounceServlet.class);
 	private PluginEngine engine;
+	
+	/**
+	 * Default constructor.  Doesn't do anything but configure logging properties.
+	 */
 	public AnnounceServlet() {
 		super();
 		PropertyConfigurator.configure(Loader.getResource("log4j.properties"));
 	}
 
+	/**
+	 * The initializor.  Creates the plugin engine.
+	 * 
+	 * @see <a href="http://java.sun.com/products/servlet/2.5/docs/servlet-2_5-mr2/javax/servlet/GenericServlet.html">javax.servlet.GenericServlet#init(javax.servlet.ServletConfig)</a>
+	 * @see com.shadowolf.plugins.PluginEngine
+	 */
 	@Override
 	public void init(final ServletConfig config) throws ServletException {
 		super.init(config);
@@ -53,6 +66,12 @@ public class AnnounceServlet extends HttpServlet {
 		
 	}
 
+	/**
+	 * Servlet destructor.  Shuts down the plugin engine.
+	 * 
+	 * @see <a href="http://java.sun.com/products/servlet/2.5/docs/servlet-2_5-mr2/javax/servlet/GenericServlet.html#destroy()">javax.servlet.GenericServlet#destroy()</a>
+	 * @see com.shadowolf.plugins.PluginEngine
+	 */
 	@Override
 	public void destroy() {
 		super.destroy();
@@ -60,9 +79,11 @@ public class AnnounceServlet extends HttpServlet {
 	}
 	
 	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 * Performs the GET request and parses the announce.
+	 * @see <a href="http://java.sun.com/products/servlet/2.5/docs/servlet-2_5-mr2/javax/servlet/http/HttpServlet.html#doGet%28javax.servlet.http.HttpServletRequest,%20javax.servlet.http.HttpServletResponse%29">HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)</a>
 	 */
-	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+	@Override
+	public void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		final ServletOutputStream sos = response.getOutputStream();
 		
 		try {
@@ -73,7 +94,7 @@ public class AnnounceServlet extends HttpServlet {
 			final User user = UserFactory.getUser(announce.getPeerId(), announce.getPasskey());
 			
 			user.updateStats(announce.getInfoHash(), announce.getUploaded(), 
-						announce.getDownloaded(), request.getRemoteAddr(), announce.getPort());
+						announce.getDownloaded(), announce.getIP(), announce.getPort());
 			
 			final Peer peer = user.getPeer(announce.getInfoHash(), announce.getIP(), announce.getPort());
 			final PeerList peerlist = PeerListFactory.getList(announce.getInfoHash());

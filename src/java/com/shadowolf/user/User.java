@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
  */
 public class User { 
 	private static final Logger LOGGER = Logger.getLogger(User.class);
+	private static final boolean DEBUG = false;
 	
 	protected ConcurrentHashMap<String, WeakReference<Peer>> peers = 
 		new ConcurrentHashMap<String, WeakReference<Peer>>(); // NOPMD by Eddie on 3/6/10 3:32 AM
@@ -66,10 +67,12 @@ public class User {
 		Peer peer = this.getPeer(infoHash, ipAddress, port);
 		
 		synchronized (peer) {
-			LOGGER.debug("Old upload: " + peer.getUploaded());
 			upDiff = uploaded - peer.getUploaded();
-			LOGGER.debug("Announce upload: " + uploaded);
-			LOGGER.debug("Difference: " + upDiff);
+			if(DEBUG) {
+				LOGGER.debug("Old upload: " + peer.getUploaded());
+				LOGGER.debug("Announce upload: " + uploaded);
+				LOGGER.debug("Difference: " + upDiff);
+			}
 			
 			downDiff = downloaded - peer.getDownloaded();
 		}
@@ -83,7 +86,7 @@ public class User {
 	
 	public Peer getPeer(final String infoHash, String ipAddress, String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
 		if(this.peers.get(infoHash) != null && this.peers.get(infoHash).get() == null) {
-			LOGGER.debug("Found weak reference pointing to null!");
+			//LOGGER.debug("Found weak reference pointing to null!");
 			this.peers.remove(infoHash);
 		}
 		

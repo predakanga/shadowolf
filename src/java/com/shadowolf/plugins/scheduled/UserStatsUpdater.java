@@ -23,6 +23,8 @@ import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
 public class UserStatsUpdater extends ScheduledPlugin implements AnnounceFilter {
+	private final static boolean DEBUG = false;
+	
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(UserStatsUpdater.class);
 	
@@ -67,7 +69,9 @@ public class UserStatsUpdater extends ScheduledPlugin implements AnnounceFilter 
 	
 	public void addToUpdateQueue(final String passkey) {
 		synchronized(this.updates) {
-			LOGGER.debug("Adding " + passkey + " to update queue.");
+			if(DEBUG) { 
+				LOGGER.debug("Adding " + passkey + " to update queue.");
+			}
 			this.updates.add(passkey);
 		}
 	}

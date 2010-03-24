@@ -2,10 +2,14 @@ package com.shadowolf.plugins;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
+
 
 //PMD wants abstract classes to be called AbstractXXX... rubbish.
 abstract public class ScheduledPlugin extends Plugin { // NOPMD by Eddie on 3/20/10 3:11 AM
+	public final static boolean DEBUG = true;
+	public final static Logger LOGGER = Logger.getLogger(ScheduledPlugin.class);
 	public final static int DEFAULT_DELAY = 15;
 	public final static int DEFAULT_PERIOD = 15;
 	public final static TimeUnit DEFAULT_UNIT = TimeUnit.MINUTES;
@@ -28,15 +32,22 @@ abstract public class ScheduledPlugin extends Plugin { // NOPMD by Eddie on 3/20
 				this.setUnit(TimeUnit.HOURS);
 			} else if ("days".equals(unit)) {
 				this.setUnit(TimeUnit.DAYS);
+			} else {
+				this.setUnit(TimeUnit.MINUTES);
 			}
 		}
 		
 		if(attributes.getValue("delay") != null) {
-			this.setInitialDelay(Integer.parseInt(attributes.getValue("delay")));
+			this.initialDelay = Integer.parseInt(attributes.getValue("delay"));
+			
+			if(DEBUG) {
+				LOGGER.debug("Setting initial delay of " + attributes.getValue("delay"));
+			}
+			
 		}
 		
 		if(attributes.getValue("period") != null) {
-			this.setInitialDelay(Integer.parseInt(attributes.getValue("period")));
+			this.period = Integer.parseInt(attributes.getValue("period"));
 		}
 	}
 

@@ -101,7 +101,7 @@ public class AnnounceServlet extends HttpServlet {
 			
 			if(announce.getEvent() != Event.STOPPED && announce.getLeft() > 0) {
 				peerlist.addLeecher(peer);
-			} else if (announce.getEvent() == Event.STOPPED) {
+			} else if (announce.getEvent() != Event.STOPPED) {
 				peerlist.addSeeder(peer);
 			} else if (announce.getLeft() > 0) {
 				peerlist.removeLeecher(peer); 

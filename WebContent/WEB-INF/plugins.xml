@@ -7,25 +7,60 @@
 		down_column="Downloaded"
 		up_column="Uploaded"
 		passkey_column="torrent_pass"
+		unit="minutes"
+		period="15"
+		delay="0"
+	/>	
+	
+	<plugin
+		class="com.shadowolf.plugins.scheduled.PeerCountsUpdater"
+		table="torrents"
+		seeder_column="seeders"
+		leecher_column="leechers"
+		info_hash_column="info_hash"
+		unit="seconds"
+		period="15"
+		delay="0"
 	/>	
 	
 	<plugin
 		class="com.shadowolf.plugins.scheduled.InfoHashEnforcer"
 		table="torrents"
 		info_hash_column="info_hash"
+		unit="minutes"
+		period="15"
+		delay="0"
 	/>
 	
 	<plugin
 		class="com.shadowolf.plugins.scheduled.PasskeyEnforcer"
 		table="users_main"
 		passkey_column="torrent_pass"
+		unit="minutes"
+		period="15"
+		delay="0"
 	/>
 	
 	<plugin
 		class="com.shadowolf.plugins.scheduled.Whitelist"
 		table="xbt_client_whitelist"
 		peer_id_column="peer_id"
-		unit="seconds"
+		unit="minutes"
+		period="15"
+		delay="0"
 	/>
 	
+	<plugin
+		class="com.shadowolf.plugins.scheduled.Cleanup"
+		unit="minutes"
+		period="15"
+		delay="0"
+	/>
+	
+	<plugin
+		class="com.shadowolf.plugins.scheduled.freeleech.Simple"
+		table="torrents"
+		info_hash_column="info_hash"
+		torrent_freeleech_flag="freetorrent"
+	/>
 </plugins>

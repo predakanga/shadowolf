@@ -36,6 +36,22 @@ final public class Data {
 	};
 	
 	/**
+	 * Converts a hex-encoded string to a byte array
+	 * @param hexString the hex-encoded string to conver
+	 * @return the resultant byte array
+	 */
+	public static byte[] hexStringToByteArray(final String hexString) {
+		final int NumberChars = hexString.length();
+		final byte[] bytes = new byte[NumberChars / 2];
+		for (int i = 0; i < NumberChars; i += 2)
+			bytes[i / 2] =
+				(byte) ((Character.digit(hexString.charAt(i), 16) << 4)
+                    + Character.digit(hexString.charAt(i+1), 16));
+
+				//Byte.valueOf("0x" + hexString.substring(i, 2), 16);
+		return bytes;
+	}
+	/**
 	 * Converts a byte array to a hex-encoded string.
 	 * @param raw the byte array to convert.
 	 * @return the hex-encoded resultant string.

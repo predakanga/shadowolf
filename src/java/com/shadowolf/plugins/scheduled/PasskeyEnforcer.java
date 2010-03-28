@@ -20,6 +20,7 @@ import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
 
 public class PasskeyEnforcer extends ScheduledPlugin implements AnnounceFilter {
+	private final static boolean DEBUG = true;
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(PasskeyEnforcer.class);
 	
@@ -49,7 +50,7 @@ public class PasskeyEnforcer extends ScheduledPlugin implements AnnounceFilter {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
 		
-		
+		this.run();
 	}
 	
 	@Override
@@ -75,12 +76,14 @@ public class PasskeyEnforcer extends ScheduledPlugin implements AnnounceFilter {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
 		
-		LOGGER.debug("Read " + this.hashes.size());
+		if(DEBUG) { 
+			LOGGER.debug("Read " + this.hashes.size());
+		}
 	}
 	
 	@Override
 	public void doAnnounce(final Announce announce) throws AnnounceException {
-		
+	
 		if(!this.hashes.contains(announce.getPasskey())) {
 			throw new AnnounceException(TrackerResponse.Errors.INVALID_PASSKEY.toString());
 		}

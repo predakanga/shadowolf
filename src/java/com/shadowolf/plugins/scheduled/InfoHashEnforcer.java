@@ -22,6 +22,7 @@ import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.util.Data;
 
 public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter {
+	private final static boolean DEBUG = true;
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(InfoHashEnforcer.class);
 	private final String column; //NOPMD ... not a bean.
@@ -43,13 +44,17 @@ public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter 
 			conn.setAutoCommit(false);
 			
 			this.stmt = conn.prepareStatement("SELECT " + column + " FROM " + table);
+			
+			if(DEBUG) {
+				LOGGER.debug(this.stmt);
+			}
 		} catch (NamingException n) {
 			LOGGER.error("Unexpected NamingException...");
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
 		}
 		
-		
+		this.run();
 	}
 	
 	@Override
@@ -67,22 +72,21 @@ public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter 
 				while(resultSet.next()) {
 					final Blob infoBlob = resultSet.getBlob(this.column);
 
-					try {
-						final byte[] blobString = infoBlob.getBytes(1l, (int) infoBlob.length());
-				
-						hashes.add(Data.byteArrayToHexString(blobString));
-					} finally {
-						infoBlob.free();
-					}
+					final byte[] blobString = infoBlob.getBytes(1l, (int) infoBlob.length());
+			
+					hashes.add(Data.byteArrayToHexString(blobString));
 				}
 			} finally {
 				resultSet.close();
 			}
 			
-			
-			LOGGER.debug("Read " + this.hashes.size() + " info_hashes");
+			if(DEBUG) {
+				LOGGER.debug("Read " + this.hashes.size() + " info_hashes");
+			}
 		} catch (SQLException e) {
 			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
 		LOGGER.debug("Read " + this.hashes.size());
@@ -90,6 +94,9 @@ public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter 
 	
 	@Override
 	public void doAnnounce(final Announce announce) throws AnnounceException {
+		if(DEBUG) {
+			LOGGER.debug("Checking " + announce.getInfoHash() + " against cache of " + this.hashes.size());
+		}
 		
 		if(!this.hashes.contains(announce.getInfoHash())) {
 			throw new AnnounceException(TrackerResponse.Errors.TORRENT_NOT_REGISTERED.toString());

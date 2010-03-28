@@ -1,6 +1,5 @@
 package com.shadowolf.plugins.scheduled;
 
-import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -18,7 +17,7 @@ import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.user.PeerListFactory;
 
 public class PeerCountsUpdater extends ScheduledPlugin {
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
 	protected final static Logger LOGGER = Logger.getLogger(PeerCountsUpdater.class);
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	
@@ -60,7 +59,6 @@ public class PeerCountsUpdater extends ScheduledPlugin {
 			}
 			
 			Iterator<byte[]> iter = updates.keySet().iterator();
-			LOGGER.debug("LOLWAT");
 			while(iter.hasNext()) {
 				byte[] next = iter.next();
 				if(DEBUG) {

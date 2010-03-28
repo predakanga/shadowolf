@@ -12,7 +12,7 @@ final public class PeerListFactory {
 	private PeerListFactory() {
 		
 	}
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
 	private final static Logger LOGGER = Logger.getLogger(PeerListFactory.class);
 	private final static ConcurrentHashMap<String, PeerList> LISTS = new ConcurrentHashMap<String, PeerList>();
 	

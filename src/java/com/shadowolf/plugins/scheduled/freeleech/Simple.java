@@ -88,7 +88,7 @@ public class Simple extends ScheduledPlugin implements AnnounceFilter {
 				
 						tempIds.add(Data.byteArrayToHexString(blobString));
 					} finally {
-						infoBlob.free();
+						//infoBlob.free();
 					}
 				}
 				

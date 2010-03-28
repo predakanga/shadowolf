@@ -33,7 +33,7 @@ version="2.5">
 	
 	<servlet>
     	<servlet-name>AnnounceServlet</servlet-name>
-    	<servlet-class>com.shadowolf.servlet.AnnounceServlet</servlet-class>
+    	<servlet-class>com.shadowolf.announce.AnnounceServlet</servlet-class>
     	<!-- <description>AnnounceServlet</description>
     	<display-name>AnnounceServlet</display-name> -->
 	</servlet>

@@ -95,9 +95,9 @@ final public class Announce {
 			String hexString;
 			try {
 				hexString = Data.byteArrayToHexString(originalHash.getBytes(this.encoding));
-				byte[] hex = Data.hexStringToByteArray(hexString);
 			} catch (UnsupportedEncodingException e) {
 				hexString = "";
+				return "";
 			}
 
 			return hexString;

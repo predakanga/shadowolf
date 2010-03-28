@@ -27,7 +27,7 @@
 		class="com.shadowolf.plugins.scheduled.InfoHashEnforcer"
 		table="torrents"
 		info_hash_column="info_hash"
-		unit="minutes"
+		unit="seconds"
 		period="15"
 		delay="0"
 	/>

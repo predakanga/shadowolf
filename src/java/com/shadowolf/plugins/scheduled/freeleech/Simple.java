@@ -20,8 +20,6 @@ import com.shadowolf.announce.Announce;
 import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledPlugin;
 import com.shadowolf.tracker.AnnounceException;
-import com.shadowolf.tracker.TrackerRequest.Event;
-import com.shadowolf.tracker.TrackerResponse.Errors;
 import com.shadowolf.util.Data;
 
 public class Simple extends ScheduledPlugin implements AnnounceFilter {

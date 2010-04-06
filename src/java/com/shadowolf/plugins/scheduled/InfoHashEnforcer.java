@@ -22,7 +22,7 @@ import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.util.Data;
 
 public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter {
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 	protected final static Logger LOGGER = Logger.getLogger(InfoHashEnforcer.class);
 	private final String column; //NOPMD ... not a bean.
@@ -89,7 +89,9 @@ public class InfoHashEnforcer extends ScheduledPlugin implements AnnounceFilter 
 			e.printStackTrace();
 		}
 		
-		LOGGER.debug("Read " + this.hashes.size());
+		if(DEBUG) {
+			LOGGER.debug("Read " + this.hashes.size());
+		}
 	}
 	
 	@Override

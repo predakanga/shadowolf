@@ -36,6 +36,10 @@ final public class UserFactory {
 	public static final int MAX_LOCATIONS = 3;
 	
 	private UserFactory() {}
+	public static void main(String[] args) {
+		System.out.println(new Date().getTime());
+		System.out.println(System.nanoTime());
+	}
 	
 	public static void cleanUp() {
 		if(DEBUG) {

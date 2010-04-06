@@ -8,7 +8,7 @@ import org.xml.sax.Attributes;
 
 //PMD wants abstract classes to be called AbstractXXX... rubbish.
 abstract public class ScheduledPlugin extends Plugin { // NOPMD by Eddie on 3/20/10 3:11 AM
-	public final static boolean DEBUG = true;
+	public final static boolean DEBUG = false;
 	public final static Logger LOGGER = Logger.getLogger(ScheduledPlugin.class);
 	public final static int DEFAULT_DELAY = 15;
 	public final static int DEFAULT_PERIOD = 15;

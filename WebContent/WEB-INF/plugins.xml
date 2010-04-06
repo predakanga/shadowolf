@@ -63,4 +63,23 @@
 		info_hash_column="info_hash"
 		torrent_freeleech_flag="freetorrent"
 	/>
+	
+	<plugin
+		class="com.shadowolf.plugins.scheduled.SnatchList"
+		unit="seconds"
+		period="5"
+		
+		torrent_id_column="ID"
+		info_hash_column="info_hash"
+		torrent_table="torrents"
+		
+		passkey_column="torrent_pass"
+		user_id_column="ID"
+		user_table="users_main"
+		
+		snatch_table="xbt_snatched"
+		snatch_user_id="uid"
+		snatch_torrent_id="fid"
+		snatch_timestamp_column="tstamp"
+	/>
 </plugins>

@@ -1,6 +1,5 @@
 package com.shadowolf.plugins.scheduled;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -10,23 +9,18 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import javax.naming.InitialContext;
-import javax.sql.DataSource;
-
 import org.apache.log4j.Logger;
-import org.xml.sax.Attributes;
 
 import com.shadowolf.announce.Announce;
+import com.shadowolf.announce.Event;
 import com.shadowolf.plugins.AnnounceFilter;
-import com.shadowolf.plugins.ScheduledPlugin;
+import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.tracker.AnnounceException;
-import com.shadowolf.tracker.TrackerRequest.Event;
 import com.shadowolf.util.Data;
 
-public class SnatchList extends ScheduledPlugin implements AnnounceFilter {
+public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 	private final static boolean DEBUG = true;
 	private final static Logger LOGGER = Logger.getLogger(SnatchList.class);
-	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
 
 	private final String torrentIDColumn;
 	private final String infoHashColumn;
@@ -44,23 +38,19 @@ public class SnatchList extends ScheduledPlugin implements AnnounceFilter {
 	private final Map<String, Set<String>> snatches =
 		Collections.synchronizedMap(new HashMap<String, Set<String>>());
 
-	private Connection connection;
+	public SnatchList(final Map<String, String> attributes) {
+		this.torrentIDColumn = attributes.get("torrent_id_column");
+		this.infoHashColumn = attributes.get("info_hash_column");
+		this.torrentTable = attributes.get("torrent_table");
 
-	public SnatchList(final Attributes attributes) {
-		super(attributes);
+		this.passkeyColumn = attributes.get("passkey_column");
+		this.userIDColumn = attributes.get("user_id_column");
+		this.userTable = attributes.get("user_table");
 
-		this.torrentIDColumn = attributes.getValue("torrent_id_column");
-		this.infoHashColumn = attributes.getValue("info_hash_column");
-		this.torrentTable = attributes.getValue("torrent_table");
-
-		this.passkeyColumn = attributes.getValue("passkey_column");
-		this.userIDColumn = attributes.getValue("user_id_column");
-		this.userTable = attributes.getValue("user_table");
-
-		this.snatchedTable = attributes.getValue("snatch_table");
-		this.snatchedUserID = attributes.getValue("snatch_user_id");
-		this.snatchedTorrentID = attributes.getValue("snatch_torrent_id");
-		this.snatchTimeStamp = attributes.getValue("snatch_timestamp_column");
+		this.snatchedTable = attributes.get("snatch_table");
+		this.snatchedUserID = attributes.get("snatch_user_id");
+		this.snatchedTorrentID = attributes.get("snatch_torrent_id");
+		this.snatchTimeStamp = attributes.get("snatch_timestamp_column");
 
 	}
 
@@ -70,11 +60,11 @@ public class SnatchList extends ScheduledPlugin implements AnnounceFilter {
 			if(DEBUG) {
 				LOGGER.debug("Found snatch with info_hash: " + announce.getInfoHash() + " and passkey: " + announce.getPasskey());
 			}
-			
+
 			if(this.snatches.get(announce.getPasskey()) == null) {
 				synchronized(this.snatches) {
 					if(this.snatches.get(announce.getPasskey()) == null) {
-						this.snatches.put(announce.getPasskey(), Collections.synchronizedSet(new HashSet<String>()));
+						this.snatches.put(announce.getPasskey(), new HashSet<String>());
 					}
 				}
 			}
@@ -83,7 +73,7 @@ public class SnatchList extends ScheduledPlugin implements AnnounceFilter {
 				LOGGER.debug("Adding snatch for passey: " + announce.getPasskey() + " with info_hash: " + announce.getInfoHash());
 			}
 
-			synchronized(this.snatches.get(announce.getPasskey())) {
+			synchronized(this.snatches) {
 				this.snatches.get(announce.getPasskey()).add(announce.getInfoHash());
 			}
 		}
@@ -94,18 +84,29 @@ public class SnatchList extends ScheduledPlugin implements AnnounceFilter {
 			if(DEBUG) {
 				LOGGER.debug("Preparing statement...");
 			}
-			
-			final PreparedStatement stmt = this.prepareStatement();
+
+			final PreparedStatement stmt = this.prepareStatement(
+					"INSERT INTO " + this.snatchedTable + " (" + this.snatchedUserID + ", " + this.snatchedTorrentID +", " + this.snatchTimeStamp + ")" +
+					"VALUES ((SELECT " + this.userIDColumn + " FROM " + this.userTable + " WHERE " + this.passkeyColumn + "=? LIMIT 1)," +
+					"(SELECT " + this.torrentIDColumn + " FROM " + this.torrentTable + " WHERE " + this.infoHashColumn + "=? LIMIT 1)," +
+					"UNIX_TIMESTAMP())"
+			);
+
+			if(stmt == null) {
+				LOGGER.error("Could not prepare statement!");
+				return;
+			}
 
 			if(DEBUG) {
 				LOGGER.debug("Prepared statement: " + stmt.toString());
 			}
-			
+
 			try {
 				if(DEBUG) {
 					LOGGER.debug("Locking snatches...");
 				}
-				synchronized(this.snatches){
+
+				synchronized(this.snatches) {
 					final Iterator<String> passkeys = this.snatches.keySet().iterator();
 
 					while(passkeys.hasNext()) {
@@ -113,16 +114,14 @@ public class SnatchList extends ScheduledPlugin implements AnnounceFilter {
 						final Set<String> hashes = this.snatches.get(pkey);
 						final Iterator<String> iter = hashes.iterator();
 
-						
-						
 						while(iter.hasNext()) {
 							final String ihString = iter.next();
 							final byte[] infoHash = Data.hexStringToByteArray(ihString);
-							
+
 							if(DEBUG) {
 								LOGGER.debug("Inserting snatch with info_hash: " + ihString + " and passkey: " + pkey);
 							}
-							
+
 							stmt.setString(1, pkey);
 							stmt.setBytes(2, infoHash);
 							stmt.executeUpdate();
@@ -130,60 +129,20 @@ public class SnatchList extends ScheduledPlugin implements AnnounceFilter {
 
 					}
 					this.snatches.clear();
-					
+
 				}
 
-				this.connection.commit();
+				this.commit();
 			} finally {
 				stmt.close();
 			}
 		} catch (final SQLException e) {
 			LOGGER.error(e.getMessage());
+			this.rollback();
 		}
 
 	}
-	private PreparedStatement prepareStatement() {
-		if(DEBUG) {
-			LOGGER.debug("Opening connection...");
-		}
-		
-		
-		this.openConnection();
 
-		if(DEBUG) {
-			LOGGER.debug("Opened connection.");
-		}
-		
-		try {
-			return this.connection.prepareStatement(
-					"INSERT INTO " + this.snatchedTable + " (" + this.snatchedUserID + ", " + this.snatchedTorrentID +", " + this.snatchTimeStamp + ")" +
-					"VALUES ((SELECT " + this.userIDColumn + " FROM " + this.userTable + " WHERE " + this.passkeyColumn + "=? LIMIT 1)," +
-					"(SELECT " + this.torrentIDColumn + " FROM " + this.torrentTable + " WHERE " + this.infoHashColumn + "=? LIMIT 1)," +
-					"UNIX_TIMESTAMP())"
-			);
-		} catch (final SQLException e) {
-			LOGGER.error(e.getMessage());
-			
-			if(e.getCause() != null) {
-				LOGGER.error("Cause error: " + e.getCause().getMessage());
-			}
-			
-			return null;
-		}
-	}
 
-	private void openConnection() {
-		try {
-			if(this.connection == null) {
-				final DataSource source = (DataSource) (new InitialContext().lookup(DATABASE_NAME));
-				this.connection = source.getConnection();
-				this.connection.setAutoCommit(false);
-			}else {
-				LOGGER.error("Connection already established!");
-			}
-		} catch (final Exception e) {
-			LOGGER.error(e.getMessage());
-			e.printStackTrace();
-		}
-	}
+
 }

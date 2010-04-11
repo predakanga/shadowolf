@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!ELEMENT tracker (plugin|parameter)*>
+<!ATTLIST tracker
+    xmlns CDATA #FIXED ''
+    name CDATA #REQUIRED>
+
+<!ELEMENT plugin (option)*>
+<!ATTLIST plugin
+    xmlns CDATA #FIXED ''
+    class CDATA #REQUIRED>
+
+<!ELEMENT parameter (#PCDATA)>
+<!ATTLIST parameter
+    xmlns CDATA #FIXED ''
+    name CDATA #REQUIRED>
+
+<!ELEMENT option (#PCDATA)>
+<!ATTLIST option
+    xmlns CDATA #FIXED ''
+    name CDATA #REQUIRED>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tracker SYSTEM "ConfigurationSchema.dtd">
+
+<tracker name="Shadowolf Example">
+	<!-- **************************
+	*                             *
+	*    Tracker configuration    *
+	*                             *
+	*************************** -->
+	<parameter name="tracker.max_locations">
+		3
+	</parameter>
+		
+	<parameter name="tracker.interval">
+		2400
+	</parameter>
+	
+	<parameter name="tracker.min_interval">
+		600
+	</parameter>
+	
+	<parameter name="user.timeout">
+		14400
+	</parameter>
+	
+	<parameter name="user.max_locations">
+		3
+	</parameter>
+	
+	<parameter name="peer.timeout">
+		14400
+	</parameter>
+	<!-- ************************************
+	*                                       *
+	*    Plugins and their configuration    *
+	*                                       *
+	************************************* -->
+	<!-- 
+		All scheduled plugins have three parameters they inherit by being scheduled plugins:
+		1. unit, string: one of "minutes", "seconds", or "hours"
+		2. period, integer: the period at which the scheduled plugin executes 
+		3. delay, integer: a period of delay before the first iteration is fired
+		
+		For example, this snippet:
+		<option name="unit">
+			<String>minutes</String>
+		</option>
+		
+		<option name="period">
+			<Integer>30</Integer>
+		</option>
+		
+		<option name="delay">
+			<Integer>10</Integer>
+		</option>
+		
+		The plugin will fire every 30 minutes after an initial delay of 10 minutes.
+		
+		You cannot define separate units for the delay and the period.
+		
+		They have default values of 15 period, 0 delay and a unit of minutes.
+	 -->
+	 
+	 
+	<!-- User stats updater plugin. 
+		Takes the following parameters:
+		1. table, string: the name of the table with the user stats
+		2. download_column: the column in the table which holds the download amount, in bytes
+		3. upload_column: same as #2, only for upload
+		4. passkey_column: the column in the table which contains the users' passkey
+	 -->
+	<plugin class="com.shadowolf.plugins.scheduled.UserStatsUpdater">
+		<option name="table">
+			users_main
+		</option>
+		
+		<option name="down_column">
+			Downloaded
+		</option>
+		
+		<option name="up_column">
+			Uploaded
+		</option>
+		
+		<option name="passkey_column">
+			torrent_pass
+		</option>
+		
+		<option name="unit">
+			minutes
+		</option>
+		
+		<option name="period">
+			1004
+		</option>
+		
+		<option name="delay">
+			2004
+		</option>
+	</plugin>
+	
+	<plugin class="com.shadowolf.plugins.scheduled.Whitelist">
+		<option name="table">xbt_client_whitelist</option>
+		<option name="peer_id_column">peer_id</option>
+		
+		<option name="period">
+			1004
+		</option>
+		
+		<option name="delay">
+			2004
+		</option>
+		
+	</plugin>
+
+	<plugin class="com.shadowolf.plugins.scheduled.PeerCountsUpdater">
+		<option name="table">torrents</option>
+		<option name="seeder_column">seeders</option>
+		<option name="leecher_column">leechers</option>
+		<option name="info_hash_column">info_hash</option>
+	</plugin>
+	
+	<plugin class="com.shadowolf.plugins.scheduled.InfoHashEnforcer">
+		<option name="table">torrents</option>
+		<option name="info_hash_column">info_hash</option>
+	</plugin>
+	
+	<plugin class="com.shadowolf.plugins.scheduled.PasskeyEnforcer">
+		<option name="table">users_main</option>
+		<option name="passkey_column">torrent_pass</option>
+	</plugin>
+	
+	<plugin class="com.shadowolf.plugins.scheduled.freeleech.Simple">
+		<option name="table">torrents</option>
+		<option name="torrent_freeleech_flag">freetorrent</option>
+		<option name="info_hash_column">info_hash</option>
+	</plugin>
+	
+	<plugin class="com.shadowolf.plugins.scheduled.SnatchList">
+		<option name="torrent_id_column">ID</option>
+		<option name="info_hash_column">info_hash</option>
+		<option name="torrent_table">torrents</option>
+		
+		<option name="passkey_column">torrent_pass</option>
+		<option name="user_id_column">ID</option>
+		<option name="user_table">users_main</option>
+		
+		<option name="snatch_table">xbt_snatched</option>
+		<option name="snatch_user_id">uid</option>
+		<option name="snatch_torrent_id">fid</option>
+		<option name="snatch_timestamp_column">tstamp</option>
+	</plugin>
+
+	<!-- Periodic cleanup plugin.
+		Takes no parameters, unless you'd like to override the default time values.
+	 -->
+	<plugin class="com.shadowolf.plugins.scheduled.Cleanup" />
+	
+	
+</tracker>

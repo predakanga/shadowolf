@@ -17,8 +17,8 @@ public class Peer {
 	private long downloaded; //NOPMD
 	final private byte[] ipAddress; //NOPMD
 	final private byte[] port; //NOPMD
-	
-	public Peer(final long uploaded,final long downloaded, final String ipAddress, 
+
+	public Peer(final long uploaded,final long downloaded, final String ipAddress,
 			final String port) throws UnknownHostException  {
 
 		this.uploaded = uploaded;
@@ -27,7 +27,7 @@ public class Peer {
 		this.ipAddress = TrackerRequest.IPToBytes(ipAddress);
 		this.port = TrackerRequest.portToBytes(port);
 	}
-	
+
 	public long getLastAnnounce() {
 		return this.lastAnnounce;
 	}
@@ -36,10 +36,10 @@ public class Peer {
 	}
 
 	public long getUploaded() {
-		return uploaded;
+		return this.uploaded;
 	}
 	public long getDownloaded() {
-		return downloaded;
+		return this.downloaded;
 	}
 	public byte[] getIpAddress() {
 		return this.ipAddress;
@@ -48,11 +48,11 @@ public class Peer {
 		return this.port;
 	}
 
-	public void setUploaded(long uploaded) {
+	public void setUploaded(final long uploaded) {
 		this.uploaded = uploaded;
 	}
 
-	public void setDownloaded(long downloaded) {
+	public void setDownloaded(final long downloaded) {
 		this.downloaded = downloaded;
 	}
 }

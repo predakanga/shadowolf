@@ -1,97 +1,80 @@
 package com.shadowolf.plugins.scheduled;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.sql.DataSource;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.xml.sax.Attributes;
 
-import com.shadowolf.plugins.ScheduledPlugin;
+import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.user.PeerListFactory;
 
-public class PeerCountsUpdater extends ScheduledPlugin {
+public class PeerCountsUpdater extends ScheduledDBPlugin {
 	private final static boolean DEBUG = false;
 	protected final static Logger LOGGER = Logger.getLogger(PeerCountsUpdater.class);
 	protected final static String DATABASE_NAME = "java:comp/env/jdbc/database";
-	
-	private Connection conn;
-	private PreparedStatement resetStmt;
-	private PreparedStatement updateStmt;
-	
-	public PeerCountsUpdater(Attributes attributes) {
-		super(attributes);
-		
-		final String table = attributes.getValue("table");
-		final String seederC = attributes.getValue("seeder_column");
-		final String leecherC = attributes.getValue("leecher_column");
-		final String infoC = attributes.getValue("info_hash_column");
-		try {
-			final DataSource source = (DataSource) (new InitialContext().lookup(DATABASE_NAME));
-			this.conn = source.getConnection();
-			conn.setAutoCommit(false);
-			
-			this.resetStmt = this.conn.prepareStatement("UPDATE " + table + " SET " 
-				+ seederC + "=0, " + leecherC + "=0");
-			this.updateStmt = this.conn.prepareStatement("UPDATE " + table + " SET " 
-				+ seederC + "= ? , " + leecherC + "= ? WHERE " + infoC + "= ?");
-		} catch (NamingException n) {
-			LOGGER.error("Unexpected NamingException...");
-		} catch (SQLException e) {
-			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
-		}
+
+	private final String table;
+	private final String seederC;
+	private final String leecherC;
+	private final String infoC;
+
+	public PeerCountsUpdater(final Map<String, String> attributes) {
+		this.table = attributes.get("table");
+		this.seederC = attributes.get("seeder_column");
+		this.leecherC = attributes.get("leecher_column");
+		this.infoC = attributes.get("info_hash_column");
 	}
 
 	@Override
 	public void run() {
-		boolean failed = false;
 		try {
-			HashMap<byte[], int[]> updates = PeerListFactory.getPeerCounts();
-			this.resetStmt.execute();
-			if(DEBUG) {
-				LOGGER.debug("Pushing stats for " + updates.size() + " torrents.");
-			}
-			
-			Iterator<byte[]> iter = updates.keySet().iterator();
-			while(iter.hasNext()) {
-				byte[] next = iter.next();
-				if(DEBUG) {
-					LOGGER.debug("Updating torrent with Seeders: " + updates.get(next)[0]);
-					LOGGER.debug("Updating torrent with Leechers: " + updates.get(next)[1]);
-				}
-				
-				this.updateStmt.setInt(1, updates.get(next)[0]);
-				this.updateStmt.setInt(2, updates.get(next)[1]);
-				this.updateStmt.setBytes(3, next);
-				this.updateStmt.execute();
-				
-				if(DEBUG) {
-					LOGGER.debug("Updated torrent with Seeders: " + updates.get(next)[0]);
-					LOGGER.debug("Updated torrent with Leechers: " + updates.get(next)[1]);
-				}
-			}
-		} catch (SQLException e) {
-			LOGGER.error("Failed query! " + e.getMessage());
-			failed = true;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			final HashMap<byte[], int[]> updates = PeerListFactory.getPeerCounts();
+			this.prepareStatement("UPDATE " + this.table + " SET " + this.seederC + "=0, " + this.leecherC + "=0").execute();
 
-		
-		try {
-			if(failed) {
-				this.conn.rollback();
-			} else {
-				this.conn.commit();
+			final PreparedStatement updateStmt = this.prepareStatement("UPDATE " + this.table + " SET "
+					+ this.seederC + "= ? , " + this.leecherC + "= ? WHERE " + this.infoC + "= ?");
+
+			if(updateStmt == null) {
+				LOGGER.error("Could not prepare statement!");
+				return;
 			}
-		} catch (SQLException e) {
-			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
+
+			try {
+				if(DEBUG) {
+					LOGGER.debug("Pushing stats for " + updates.size() + " torrents.");
+				}
+
+				final Iterator<byte[]> iter = updates.keySet().iterator();
+				while(iter.hasNext()) {
+					final byte[] next = iter.next();
+					if(DEBUG) {
+						LOGGER.debug("Updating torrent with Seeders: " + updates.get(next)[0]);
+						LOGGER.debug("Updating torrent with Leechers: " + updates.get(next)[1]);
+					}
+
+					updateStmt.setInt(1, updates.get(next)[0]);
+					updateStmt.setInt(2, updates.get(next)[1]);
+					updateStmt.setBytes(3, next);
+					updateStmt.execute();
+
+					if(DEBUG) {
+						LOGGER.debug("Updated torrent with Seeders: " + updates.get(next)[0]);
+						LOGGER.debug("Updated torrent with Leechers: " + updates.get(next)[1]);
+					}
+
+					updateStmt.close();
+				}
+
+				this.commit();
+			} finally {
+				updateStmt.close();
+			}
+		} catch (final SQLException e) {
+			LOGGER.error("Failed query! " + e.getMessage());
+			this.rollback();
 		}
 	}
 

@@ -11,7 +11,12 @@
 <urlrewrite>
 	<rule>
 		<from>/(.*?)/announce?(.*?)$</from>
-		<to>/announce$2&amp;passkey=$1</to>
+		<to>/announce?$2&amp;passkey=$1</to>
+	</rule>
+	
+	<rule>
+		<from>/(.*?)/scrape?(.*?)$</from>
+		<to>/scrape?$2&amp;passkey=$1</to>
 	</rule>
 </urlrewrite>
 

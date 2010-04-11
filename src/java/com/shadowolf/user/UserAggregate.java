@@ -14,18 +14,18 @@ public class UserAggregate extends User {
 	public void addPeerlist(final ConcurrentHashMap<String, WeakReference<Peer>> list) {
 		this.peers.putAll(list);
 	}
-	
+
 	@Override
-	public void updateStats(final String infoHash, final long uploaded, final long downloaded, 
+	public void updateStats(final String infoHash, final long uploaded, final long downloaded,
 			final String ipAddress, final String port) throws IllegalAccessException, UnknownHostException {
-		
+
 		throw new IllegalAccessException("Cannot update stats from a UserAggregate instance");
 	}
-	
+
 	@Override
-	public Peer getPeer(final String infoHash, final String ipAddress, final String port) 
-			throws IllegalAccessException, UnknownHostException {
-		
+	public Peer getPeer(final String infoHash, final String ipAddress, final String port)
+	throws IllegalAccessException, UnknownHostException {
+
 		throw new IllegalAccessException("Cannot get peer from UserAggregate instance");
 	}
 }

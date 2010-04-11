@@ -5,9 +5,7 @@ import java.io.UnsupportedEncodingException;
 import javax.servlet.http.HttpServletRequest;
 
 import com.shadowolf.tracker.AnnounceException;
-import com.shadowolf.tracker.TrackerResponse;
-import com.shadowolf.tracker.TrackerRequest.Event;
-import com.shadowolf.tracker.TrackerResponse.Errors;
+import com.shadowolf.tracker.Errors;
 import com.shadowolf.util.Data;
 
 /**
@@ -17,7 +15,7 @@ import com.shadowolf.util.Data;
  */
 final public class Announce {
 	public static final int DEFAULT_NUMWANT = 200;
-	
+
 	private transient final Event event;
 
 	private transient long uploaded;
@@ -46,7 +44,7 @@ final public class Announce {
 	 * Constructor, takes an HttpServletRequest instance and parses the required
 	 * fields and validates them
 	 * 
-	 * @param request the 
+	 * @param request the
 	 * 			  <a href="http://java.sun.com/products/servlet/2.5/docs/servlet-2_5-mr2/javax/servlet/http/HttpServletRequest.html">
 	 *            HttpServletRequest<a> instance to parse
 	 * @throws AnnounceException
@@ -68,7 +66,7 @@ final public class Announce {
 
 		// numwant is the same way
 		this.numwant = this.parseInt(request.getParameter("numwant")) > 0 ? this.parseInt(request.getParameter("numwant")) : DEFAULT_NUMWANT;
-		
+
 		// get the encoding, which we need in a few places
 		this.encoding = this.parseEncoding(request.getCharacterEncoding());
 
@@ -90,12 +88,12 @@ final public class Announce {
 
 	private String parseInfoHash(final String originalHash) throws AnnounceException {
 		if (originalHash == null) {
-			throw new AnnounceException(TrackerResponse.Errors.MISSING_INFO_HASH.toString());
+			throw new AnnounceException(Errors.MISSING_INFO_HASH.toString());
 		} else {
 			String hexString;
 			try {
 				hexString = Data.byteArrayToHexString(originalHash.getBytes(this.encoding));
-			} catch (UnsupportedEncodingException e) {
+			} catch (final UnsupportedEncodingException e) {
 				hexString = "";
 			}
 
@@ -163,12 +161,12 @@ final public class Announce {
 	}
 
 	/**
-	 * Get the event specified for this announce.  
+	 * Get the event specified for this announce.
 	 * @return the event
 	 * @see com.shadowolf.tracker.TrackerRequest.Event
 	 */
 	public Event getEvent() {
-		return event;
+		return this.event;
 	}
 
 	/**
@@ -178,7 +176,7 @@ final public class Announce {
 	 * @return the uploaded amount.
 	 */
 	public long getUploaded() {
-		return uploaded;
+		return this.uploaded;
 	}
 
 	/**
@@ -188,18 +186,18 @@ final public class Announce {
 	 * @return the downloaded amount.
 	 */
 	public long getDownloaded() {
-		return downloaded;
+		return this.downloaded;
 	}
 
 	/**
-	 * Get the left amount for this announce, in bytes.  
+	 * Get the left amount for this announce, in bytes.
 	 * 
-	 * The left amount is sent on every announce as a total sum of what isn't downloaded on the torrent. 
+	 * The left amount is sent on every announce as a total sum of what isn't downloaded on the torrent.
 	 * A value greater than 0 can indicate either a leecher or a partial seeder.
 	 * @return the left amount.
 	 */
 	public long getLeft() {
-		return left;
+		return this.left;
 	}
 
 	/**
@@ -209,18 +207,18 @@ final public class Announce {
 	 * @return the amount of peers requested.
 	 */
 	public int getNumwant() {
-		return numwant;
+		return this.numwant;
 	}
 
 	/**
 	 * Get the info_hash for this torrent.
 	 * 
-	 * According to the protocol, info_hashes are 20-byte sha1 hashes that are sent "raw," for simplification of 
+	 * According to the protocol, info_hashes are 20-byte sha1 hashes that are sent "raw," for simplification of
 	 * debugging and value comparisons, this is translated to a 40-character hexadecimal string.
 	 * @return the hex-encoded info_hash string
 	 */
 	public String getInfoHash() {
-		return infoHash;
+		return this.infoHash;
 	}
 
 	/**
@@ -234,7 +232,7 @@ final public class Announce {
 	 * @see <a href="http://www.bittorrent.org/beps/bep_0020.html">Bep 0020 - the specification for peer_id conventions</a>
 	 */
 	public String getPeerId() {
-		return peerId;
+		return this.peerId;
 	}
 
 	/**
@@ -242,15 +240,15 @@ final public class Announce {
 	 * @return the character encoding.
 	 */
 	public String getEncoding() {
-		return encoding;
+		return this.encoding;
 	}
-	
+
 	/**
 	 * Get the port that the client is listening on, as specified in the announce.
 	 * @return the port the client is listening on.
 	 */
 	public String getPort() {
-		return port;
+		return this.port;
 	}
 
 	/**
@@ -259,7 +257,7 @@ final public class Announce {
 	 * @return the client's IP
 	 */
 	public String getIP() {
-		return IP;
+		return this.IP;
 	}
 
 	/**
@@ -267,11 +265,11 @@ final public class Announce {
 	 * @return the client's passkey
 	 */
 	public String getPasskey() {
-		return passkey;
+		return this.passkey;
 	}
 
 	/**
-	 * Sets the upload to the specified amount.  The original amount is overwritten, not added.  
+	 * Sets the upload to the specified amount.  The original amount is overwritten, not added.
 	 * 
 	 * THIS SHOULD BE USED WITH CAUTION.
 	 * @param uploaded the new amount of upload
@@ -279,9 +277,9 @@ final public class Announce {
 	public void setUploaded(final long uploaded) {
 		this.uploaded = uploaded;
 	}
-	
+
 	/**
-	 * Sets the download to the specified amount.  The original amount is overwritten, not added.  
+	 * Sets the download to the specified amount.  The original amount is overwritten, not added.
 	 * 
 	 * THIS SHOULD BE USED WITH CAUTION.
 	 * @param downloaded the new amount of download

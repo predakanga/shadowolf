@@ -7,46 +7,47 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.log4j.Logger;
 
+import com.shadowolf.config.Config;
+
 
 public class PeerList {
-	private static final int PEER_TIMEOUT = 30;
 	private static final boolean DEBUG = false;
 	private static final Logger LOGGER = Logger.getLogger(PeerList.class);
-	
+
 	final private ConcurrentSkipListMap<Long, Peer> seeds = new ConcurrentSkipListMap<Long, Peer>(); //NOPMD
 	final private ConcurrentSkipListMap<Long, Peer> leechers = new ConcurrentSkipListMap<Long, Peer>(); //NOPMD
-	
+
 	public void doCleanUp() {
 		this.cleanUpSeeds();
 		this.cleanUpLeechers();
 	}
-	
+
 	private void cleanUpLeechers() {
 		if(DEBUG) {
 			LOGGER.debug("Cleaning up leechers...");
 			LOGGER.debug("Old count: " + this.leechers.size());
 		}
-		
-		this.leechers.headMap(new Date().getTime() - PEER_TIMEOUT * 1000).clear();
-		
+
+		this.leechers.headMap(new Date().getTime() - Integer.parseInt(Config.getParameter("peer.timeout")) * 1000).clear();
+
 		if(DEBUG) {
 			LOGGER.debug("New count: " + this.leechers.size());
 		}
 	}
-	
+
 	private void cleanUpSeeds() {
 		if(DEBUG) {
 			LOGGER.debug("Cleaning up seeds...");
 			LOGGER.debug("Old count: " + this.seeds.size());
 		}
-		
-		this.seeds.headMap(new Date().getTime() - PEER_TIMEOUT * 1000).clear();
-		
+
+		this.seeds.headMap(new Date().getTime() - Integer.parseInt(Config.getParameter("peer.timeout")) * 1000).clear();
+
 		if(DEBUG) {
 			LOGGER.debug("New count: " + this.seeds.size());
 		}
 	}
-	
+
 	public void addSeeder(final Peer peer) {
 		if(this.seeds.containsValue(peer)) {
 			this.seeds.remove(peer.getLastAnnounce());
@@ -55,24 +56,24 @@ public class PeerList {
 		peer.setLastAnnounce(new Date());
 		this.seeds.put(peer.getLastAnnounce(), peer);
 	}
-	
+
 	public void addLeecher(final Peer peer) {
 		if(this.leechers.containsValue(peer)) {
 			this.leechers.remove(peer.getLastAnnounce());
 		}
-		
+
 		peer.setLastAnnounce(new Date());
 		this.leechers.put(peer.getLastAnnounce(), peer);
 	}
-	
+
 	public void removeSeeder(final Peer peer) {
 		this.seeds.remove(peer.getLastAnnounce());
 	}
-	
+
 	public void removeLeecher(final Peer peer) {
 		this.leechers.remove(peer.getLastAnnounce());
 	}
-	
+
 	/**
 	 * Returns an array of peers with the given size.  Since we store the peers (both leechers and seeders)
 	 * internally as a sorted map based on their announce time, the ordering of the peers is constantly changing.
@@ -84,39 +85,39 @@ public class PeerList {
 	 * @return Peer[] the array of peers
 	 */
 	public Peer[] getPeers(final int numwant) {
-		if(this.leechers.size() == 0 && this.seeds.size() == 0) {
+		if((this.leechers.size() == 0) && (this.seeds.size() == 0)) {
 			return new Peer[0]; //NOPMD ... exit shortcut
 		}
 
 		final HashSet<Peer> peers = new HashSet<Peer>();
-		
+
 		final Iterator<Peer> leechVals = this.leechers.descendingMap().values().iterator();
-		
-		for(int i = 0; i < numwant && leechVals.hasNext(); i++) {
+
+		for(int i = 0; (i < numwant) && leechVals.hasNext(); i++) {
 			peers.add(leechVals.next());
-			
+
 			if(peers.size() == numwant) {
 				return peers.toArray(new Peer[peers.size()]); //NOPMD
 			}
 		}
-		
+
 		final Iterator<Peer> seedVals = this.seeds.descendingMap().values().iterator();
-		
-		for(int i = peers.size(); i < numwant && seedVals.hasNext(); i++) {
+
+		for(int i = peers.size(); (i < numwant) && seedVals.hasNext(); i++) {
 			peers.add(seedVals.next());
-			
+
 			if(peers.size() == numwant) {
 				return peers.toArray(new Peer[peers.size()]); //NOPMD
 			}
 		}
-		
+
 		return peers.toArray(new Peer[peers.size()]);
 	}
 
 	public int getSeederCount() {
 		return this.seeds.size();
-	}	
-	
+	}
+
 	public int getLeecherCount() {
 		return this.leechers.size();
 	}

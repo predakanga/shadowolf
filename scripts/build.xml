@@ -20,6 +20,7 @@
 	<property name="webapp.name" value="${project.name}"/>
 	<property name="webapp.build.dir" value="${build.dir}/webapp/${webapp.name}"/>
 	<property name="webapp.build.classes.dir" value="${build.dir}/webapp/${webapp.name}/WEB-INF"/>
+	<property name="webapp.metainf" value="${build.dir}/webapp/${webapp.name}/META-INF"/>
 	<property name="webapp.war" value="${build.dir}/webapp/${webapp.name}.war"/>
 	
 	<path id="java.classpath">
@@ -91,7 +92,7 @@
 		<jar jarfile="${java.src.jar}">
 			<fileset dir="${java.build.src.dir}"/>
 		</jar>
-		
+
 		<mkdir dir="${webapp.build.dir}/WEB-INF/classes"/>
 		<copy todir="${webapp.build.dir}/WEB-INF/classes">
 			<path refid="webapp.classes.path"/>

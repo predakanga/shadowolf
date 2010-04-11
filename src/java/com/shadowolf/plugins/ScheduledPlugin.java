@@ -2,65 +2,23 @@ package com.shadowolf.plugins;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
-import org.xml.sax.Attributes;
-
 
 //PMD wants abstract classes to be called AbstractXXX... rubbish.
-abstract public class ScheduledPlugin extends Plugin { // NOPMD by Eddie on 3/20/10 3:11 AM
-	public final static boolean DEBUG = false;
-	public final static Logger LOGGER = Logger.getLogger(ScheduledPlugin.class);
-	public final static int DEFAULT_DELAY = 15;
-	public final static int DEFAULT_PERIOD = 15;
-	public final static TimeUnit DEFAULT_UNIT = TimeUnit.MINUTES;
-	
-	private int initialDelay = DEFAULT_DELAY;
-	private int period = DEFAULT_PERIOD;
-	private TimeUnit unit = DEFAULT_UNIT;
-	
-	public ScheduledPlugin(final Attributes attributes) {
-		super(Type.periodicThread);
-		
-		if(attributes.getValue("unit") != null) {
-			final String unit = attributes.getValue("unit");
-			
-			if("minutes".equals(unit)) {
-				this.setUnit(TimeUnit.MINUTES);
-			} else if ("seconds".equals(unit)) {
-				this.setUnit(TimeUnit.SECONDS);
-			} else if ("hours".equals(unit)) {
-				this.setUnit(TimeUnit.HOURS);
-			} else if ("days".equals(unit)) {
-				this.setUnit(TimeUnit.DAYS);
-			} else {
-				this.setUnit(TimeUnit.MINUTES);
-			}
-		}
-		
-		if(attributes.getValue("delay") != null) {
-			this.initialDelay = Integer.parseInt(attributes.getValue("delay"));
-			
-			if(DEBUG) {
-				LOGGER.debug("Setting initial delay of " + attributes.getValue("delay"));
-			}
-			
-		}
-		
-		if(attributes.getValue("period") != null) {
-			this.period = Integer.parseInt(attributes.getValue("period"));
-		}
-	}
+abstract public class ScheduledPlugin extends Plugin implements Runnable { // NOPMD by Eddie on 3/20/10 3:11 AM
+	private int initialDelay;
+	private int period;
+	private TimeUnit unit;
 
 	public int getInitialDelay() {
-		return initialDelay;
+		return this.initialDelay;
 	}
 
 	public int getPeriod() {
-		return period;
+		return this.period;
 	}
 
 	public TimeUnit getUnit() {
-		return unit;
+		return this.unit;
 	}
 
 	final public void setInitialDelay(final int initialDelay) {

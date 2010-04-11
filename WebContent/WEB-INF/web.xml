@@ -42,4 +42,16 @@ version="2.5">
 		<url-pattern>/Announce</url-pattern>
 		<url-pattern>/announce</url-pattern>
 	</servlet-mapping>
+	
+	<servlet>
+    	<servlet-name>ScrapeServlet</servlet-name>
+    	<servlet-class>com.shadowolf.announce.ScrapeServlet</servlet-class>
+    	<!-- <description>AnnounceServlet</description>
+    	<display-name>AnnounceServlet</display-name> -->
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ScrapeServlet</servlet-name>
+		<url-pattern>/scrape</url-pattern>
+		<url-pattern>/Scrape</url-pattern>
+	</servlet-mapping>
 </web-app>

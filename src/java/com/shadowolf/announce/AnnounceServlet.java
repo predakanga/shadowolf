@@ -1,6 +1,9 @@
 package com.shadowolf.announce;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
@@ -162,6 +165,10 @@ public class AnnounceServlet extends HttpServlet {
 			sos.print(e.getMessage());
 		} catch (final Exception e) {
 			sos.print(TrackerResponse.bencoded("Something went catastrophically wrong, please contact your site administrator." + e.getClass()));
+			final Writer result = new StringWriter();
+			final PrintWriter printWriter = new PrintWriter(result);
+			e.printStackTrace(printWriter);
+			LOGGER.error(result.toString());
 			return;
 		} finally {
 			sos.flush();

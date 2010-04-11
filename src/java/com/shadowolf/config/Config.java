@@ -18,7 +18,7 @@ public class Config {
 	private static Map<String, String> parameters = new HashMap<String, String>();
 
 	public static String getParameter(final String param) {
-		return parameters.get(param);
+		return parameters.get(param).trim();
 	}
 
 	public static void parseConfigElement(final Element rootElement) {

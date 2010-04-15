@@ -1,12 +1,10 @@
 package com.shadowolf.scrape;
 
-import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.shadowolf.tracker.Errors;
 import com.shadowolf.tracker.ScrapeException;
 import com.shadowolf.tracker.TrackerResponse;
-import com.shadowolf.util.Data;
 
 final public class ScrapeResponseFactory {
 	private static ConcurrentHashMap<String, ScrapeResponse> cache = new ConcurrentHashMap<String, ScrapeResponse>();
@@ -15,30 +13,13 @@ final public class ScrapeResponseFactory {
 		
 	}
 	
-	public static String scrape(final String requestEncoding, final String[] parameterValues) throws ScrapeException {
+	public static String scrape(final String[] parameterValues) throws ScrapeException {
 		if (parameterValues == null) {
 			throw new ScrapeException(Errors.MISSING_INFO_HASH.toString());
 		} else {
-			String encoding;
-			
-			if (requestEncoding == null) {
-				encoding = "UTF-8";
-			} else {
-				encoding = requestEncoding;
-			}
-			
 			StringBuilder builder = new StringBuilder();
 			
-			String[] infohashes = parameterValues.clone();
-			final int length = infohashes.length;
-			
-			try {
-				for (int i = 0; i  < length; i++) {
-					infohashes[i] = Data.byteArrayToHexString(infohashes[i].getBytes(encoding));
-				}
-			} catch (UnsupportedEncodingException e) {
-				throw new ScrapeException(Errors.UNPARSEABLE_INFO_HASH.toString(), e);
-			}
+			final String[] infohashes = parameterValues.clone();
 			
 			for (String infohash : infohashes) {
 				final ScrapeResponse scrapeResponse = ScrapeResponseFactory.getScrapeResponse(infohash);
@@ -55,7 +36,7 @@ final public class ScrapeResponseFactory {
 		cache.remove(infohash);
 	}
 
-	private static ScrapeResponse getScrapeResponse(final String infohash) {
+	public static ScrapeResponse getScrapeResponse(final String infohash) {
 		ScrapeResponse scrape = cache.get(infohash);
 		
 		if (scrape == null || scrape.isExpired()) {

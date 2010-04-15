@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Context>
-	<Resource name="jdbc/database" 
+	<Resource name="jdbc/shadowolf_db" 
 		auth="Container"
 		type="javax.sql.DataSource"
 		username="shadowolf" 

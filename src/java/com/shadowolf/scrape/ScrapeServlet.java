@@ -81,7 +81,7 @@ public class ScrapeServlet extends HttpServlet {
 		final ServletOutputStream sos = response.getOutputStream();
 		
 		try {
-			final String scrape = ScrapeResponseFactory.scrape(request.getCharacterEncoding(), request.getParameterValues("info_hash"));
+			final String scrape = ScrapeResponseFactory.scrape(request.getParameterValues("info_hash"));
 			sos.print(scrape);
 			
 		

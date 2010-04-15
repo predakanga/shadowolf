@@ -13,16 +13,10 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
-import org.xml.sax.SAXException;
-
 import com.shadowolf.config.Config;
-import com.shadowolf.config.Element;
-import com.shadowolf.config.Parser;
 import com.shadowolf.config.PluginConfig;
 import com.shadowolf.plugins.ConfigConsumer;
 import com.shadowolf.plugins.Plugin;
@@ -88,7 +82,7 @@ public class AnnounceServlet extends HttpServlet {
 		} catch (final IllegalAccessException e) {
 			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
 		} catch (final InvocationTargetException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage(), e);
 			e.printStackTrace();
 		} catch (final NoSuchMethodException e) {
 			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());

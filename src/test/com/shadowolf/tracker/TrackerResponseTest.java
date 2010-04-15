@@ -9,9 +9,11 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.shadowolf.config.Config;
 import com.shadowolf.user.Peer;
 
 public class TrackerResponseTest {
+
 	@Test
 	public void testBencodedString() {
 		String testString = "d14:failure reason4:FAILe\r\n";
@@ -39,7 +41,7 @@ public class TrackerResponseTest {
 		
 		byte[] actual = new byte[0];
 		
-		actual = TrackerResponse.compactEncoding(peer);
+		actual = TrackerResponse.compactEncodingAnnounce(peer);
 		assertTrue(Arrays.equals(expected, actual));
 		
 		assertTrue(Arrays.equals(expected, actual));
@@ -66,7 +68,7 @@ public class TrackerResponseTest {
 		"e10:incompletei" + leechers + "e8:completei" + seeders + "e";
 		
 		try {
-			byte[] peerB = TrackerResponse.compact(peers);
+			byte[] peerB = TrackerResponse.compactAnnounce(peers);
 			byte[] start = resp.getBytes("UTF-8");
 			byte[] end = "e\r\n".getBytes("UTF-8");
 			
@@ -75,7 +77,7 @@ public class TrackerResponseTest {
 			System.arraycopy(peerB, 0, temp, start.length, peerB.length);
 			System.arraycopy(end, 0, temp, start.length + peerB.length, end.length);
 			
-			assertTrue(Arrays.equals(temp, TrackerResponse.bencoded(seeders, leechers, peers, interval, minInterval)));
+			assertTrue(Arrays.equals(temp, TrackerResponse.bencodedAnnounce(seeders, leechers, peers, interval, minInterval)));
 		} catch (AnnounceException e) {
 			fail("Unexpected AnnounceException");
 		} catch (UnsupportedEncodingException e) {
@@ -97,11 +99,11 @@ public class TrackerResponseTest {
 			fail("butts butts butts");
 		}
 		
-		String resp = "d8:intervali" + TrackerResponse.DEFAULT_INTERVAL + "e" + "12:min intervali" + TrackerResponse.DEFAULT_MIN_INTERVAL + 
+		String resp = "d8:intervali" + Config.getParameter("tracker.interval") + "e" + "12:min intervali" + Config.getParameter("tracker.min_interval") + 
 		"e10:incompletei" + leechers + "e8:completei" + seeders + "e";
 		
 		try {
-			byte[] peerB = TrackerResponse.compact(peers);
+			byte[] peerB = TrackerResponse.compactAnnounce(peers);
 			byte[] start = resp.getBytes("UTF-8");
 			byte[] end = "e\r\n".getBytes("UTF-8");
 			
@@ -110,7 +112,7 @@ public class TrackerResponseTest {
 			System.arraycopy(peerB, 0, temp, start.length, peerB.length);
 			System.arraycopy(end, 0, temp, start.length + peerB.length, end.length);
 			
-			assertTrue(Arrays.equals(temp, TrackerResponse.bencoded(seeders, leechers, peers)));
+			assertTrue(Arrays.equals(temp, TrackerResponse.bencodedAnnounce(seeders, leechers, peers)));
 		} catch (AnnounceException e) {
 			fail("Unexpected AnnounceException");
 		} catch (UnsupportedEncodingException e) {
@@ -119,45 +121,9 @@ public class TrackerResponseTest {
 	}
 	
 	@Test
-	public void testBencodedCompactIntIntPeerarrInt() {
-		int interval = 10;
-		int leechers = 100;
-		int seeders = 100;
-		Peer[] peers = null;
-		try {
-			peers = new Peer[] {
-					new Peer(0l, 0l, "255.255.123.123", "65000"),
-					new Peer(0l, 0l, "255.255.123.123", "65001")
-			};
-		} catch (UnknownHostException e1) {
-			fail("butts butts butts");
-		}
-		
-		String resp = "d8:intervali" + interval + "e" + "12:min intervali" + TrackerResponse.DEFAULT_MIN_INTERVAL + 
-		"e10:incompletei" + leechers + "e8:completei" + seeders + "e";
-		
-		try {
-			byte[] peerB = TrackerResponse.compact(peers);
-			byte[] start = resp.getBytes("UTF-8");
-			byte[] end = "e\r\n".getBytes("UTF-8");
-			
-			byte[] temp = new byte[start.length + peerB.length + end.length];
-			System.arraycopy(start, 0, temp, 0, start.length);
-			System.arraycopy(peerB, 0, temp, start.length, peerB.length);
-			System.arraycopy(end, 0, temp, start.length + peerB.length, end.length);
-			
-			assertTrue(Arrays.equals(temp, TrackerResponse.bencoded(seeders, leechers, peers, interval)));
-		} catch (AnnounceException e) {
-			fail("Unexpected AnnounceException");
-		} catch (UnsupportedEncodingException e) {
-			fail("Unexpected CharsetException");
-		}
-	}
-		
-	@Test
 	public void testCompactEncodingIPv6() {
 		try {
-			TrackerResponse.compactEncoding(new Peer(0l, 0l, "::1", "65000"));
+			TrackerResponse.compactEncodingAnnounce(new Peer(0l, 0l, "::1", "65000"));
 			
 		} catch (UnknownHostException e1) {
 			fail("butts butts butts");

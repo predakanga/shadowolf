@@ -38,9 +38,9 @@ final public class ScrapeResponse {
 	public String getResponseString() {
 		return responseString;
 	}
-
+	
 	public long getFetchTime() {
-		return fetchTime;
+		return this.fetchTime;
 	}
 
 	public boolean isExpired() {

@@ -55,7 +55,11 @@ public class PasskeyEnforcer extends ScheduledDBPlugin implements AnnounceFilter
 				stmt.close();
 			}
 		} catch (final SQLException e) {
-			LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
+			if (e.getCause() != null) {
+				LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
+			} else {
+				LOGGER.error("Unexpected SQLException..." + e.getMessage());
+			}
 			this.rollback();
 		}
 

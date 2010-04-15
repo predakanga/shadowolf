@@ -19,6 +19,13 @@ public enum Errors {
 			return TrackerResponse.bencoded("Unrecognized passkey");
 		}
 	},
+	
+	UNPARSEABLE_INFO_HASH {
+		@Override
+		public String toString() {
+			return TrackerResponse.bencoded("Failed to parse the info-hash your client passed.");
+		}
+	},
 
 	BANNED_CLIENT {
 		@Override

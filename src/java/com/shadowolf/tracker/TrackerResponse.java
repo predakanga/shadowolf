@@ -29,38 +29,46 @@ final public class TrackerResponse { //NOPMD ... not too many methods when they'
 	public static String bencoded(final String failure) {
 		return "d14:failure reason" + failure.length() + ":" + failure + "e\r\n";
 	}
-
-	public static byte[] bencoded(final int seeders, final int leechers, final Peer[] peers) throws AnnounceException {
-		return bencoded(seeders, leechers, peers, Integer.parseInt(Config.getParameter("tracker.interval")), Integer.parseInt(Config.getParameter("tracker.min_interval")));
+	
+	public static StringBuilder wrapInDict(final StringBuilder builder, final String key) {
+		return builder.insert(0, "d"+key.length()+":"+key).append("e");
+	}
+	
+	public static StringBuilder bencodedScrape(final int seeders, final int leechers, final int completed, final String infohash, final StringBuilder builder) {
+		return builder.append("d20:" + infohash + "d8:completei" + seeders + "e10:downloadedi" + completed + "e10:incompletei" + leechers + "eee");
 	}
 
-	public static byte[] bencoded(final int seeders, final int leechers, final Peer[] peers, final int interval, final int minInterval) throws AnnounceException {
+	public static byte[] bencodedAnnounce(final int seeders, final int leechers, final Peer[] peers) throws AnnounceException {
+		return bencodedAnnounce(seeders, leechers, peers, Integer.parseInt(Config.getParameter("tracker.interval")), Integer.parseInt(Config.getParameter("tracker.min_interval")));
+	}
+
+	public static byte[] bencodedAnnounce(final int seeders, final int leechers, final Peer[] peers, final int interval, final int minInterval) throws AnnounceException {
 		try {
 			final byte[] start = ("d8:intervali" + interval + "e" + "12:min intervali" + minInterval +
 					"e10:incompletei" + leechers + "e8:completei" + seeders + "e").getBytes("UTF-8");
 
-			final byte[] temp = Data.addByteArrays(start, compact(peers));
+			final byte[] temp = Data.addByteArrays(start, compactAnnounce(peers));
 			return Data.addByteArrays(temp, "e\r\n".getBytes("UTF-8"));
 		} catch (final UnsupportedEncodingException e) {
 			throw new AnnounceException("Epic failure", e);
 		}
 	}
 
-	public static byte[] compact(final Peer[] peers) throws AnnounceException, UnsupportedEncodingException {
+	public static byte[] compactAnnounce(final Peer[] peers) throws AnnounceException, UnsupportedEncodingException {
 		final CompactPeerEncoder cpb = new CompactPeerEncoder();
 
 		for(final Peer p : peers) {
 			if(p.getIpAddress().length > 4) {
-				cpb.addToIPv6(compactEncoding(p));
+				cpb.addToIPv6(compactEncodingAnnounce(p));
 			} else {
-				cpb.addToIPv4(compactEncoding(p));
+				cpb.addToIPv4(compactEncodingAnnounce(p));
 			}
 		}
 
 		return cpb.encode();
 	}
 
-	public static byte[] compactEncoding(final Peer peer) {
+	public static byte[] compactEncodingAnnounce(final Peer peer) {
 		final byte[] portArr = peer.getPort();
 		final byte[] IPArr = peer.getIpAddress();
 

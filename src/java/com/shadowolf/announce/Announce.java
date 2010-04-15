@@ -94,7 +94,7 @@ final public class Announce {
 			try {
 				hexString = Data.byteArrayToHexString(originalHash.getBytes(this.encoding));
 			} catch (final UnsupportedEncodingException e) {
-				hexString = "";
+				throw new AnnounceException(Errors.UNPARSEABLE_INFO_HASH.toString(), e);
 			}
 
 			return hexString;

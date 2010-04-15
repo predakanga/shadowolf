@@ -30,6 +30,31 @@
 	<parameter name="peer.timeout">
 		14400
 	</parameter>
+	
+	<parameter name="scrape.torrent_table">
+		torrents
+	</parameter>
+	
+	<parameter name="scrape.torrent_id_column">
+		ID
+	</parameter>
+	
+	<parameter name="scrape.info_hash_column">
+		info_hash
+	</parameter>
+	
+	<parameter name="scrape.snatched_table">
+		xbt_snatched
+	</parameter>
+	
+	<parameter name="scrape.snatched_torrent_id_column">
+		fid
+	</parameter>
+	
+	<parameter name="scrape.snatched_user_id_column">
+		uid
+	</parameter>
+	
 	<!-- ************************************
 	*                                       *
 	*    Plugins and their configuration    *

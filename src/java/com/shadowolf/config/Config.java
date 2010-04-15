@@ -1,11 +1,16 @@
 package com.shadowolf.config;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
 
 
 public class Config {
@@ -16,11 +21,48 @@ public class Config {
 
 	private static List<PluginConfig> plugins = new ArrayList<PluginConfig>();
 	private static Map<String, String> parameters = new HashMap<String, String>();
+	
+	private static boolean init = false;
+	private static Object boolLock = new Object();
 
 	public static String getParameter(final String param) {
 		return parameters.get(param).trim();
 	}
+	
+	public static boolean isInitialized() {
+		synchronized(boolLock) {
+			return init;
+		}
+	}
 
+	public static void init(final ServletContext context) {
+		if (init == false) {
+			synchronized(boolLock) {
+				String path = context.getRealPath(DEFAULT_CONF_PATH);
+
+				//convert XML to an object
+				if(System.getProperty("com.shadowolf.config.path") != null) {
+					path = System.getProperty("com.shadowolf.config.path");
+				}
+
+				Parser configParser;
+				try {
+					configParser = new Parser(path);
+					//parse config object
+					final Element configRoot = configParser.getRootElement();
+					Config.parseConfigElement(configRoot);
+					init = true;
+				} catch (ParserConfigurationException e) {
+					LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+				} catch (SAXException e) {
+					LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+				} catch (IOException e) {
+					LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+				}
+			}
+		}
+	}
+	
 	public static void parseConfigElement(final Element rootElement) {
 		if(!rootElement.hasChildren()) {
 			return;

@@ -63,19 +63,9 @@ public class AnnounceServlet extends HttpServlet {
 		super.init(config);
 
 		try {
-			String path =config.getServletContext().getRealPath(Config.DEFAULT_CONF_PATH);
-
-			//convert XML to an object
-			if(System.getProperty("com.shadowolf.config.path") != null) {
-				path = System.getProperty("com.shadowolf.config.path");
+			if (!Config.isInitialized()) {
+				Config.init(config.getServletContext());
 			}
-
-			final Parser configParser = new Parser(path);
-
-			//parse config object
-			final Element configRoot = configParser.getRootElement();
-			Config.parseConfigElement(configRoot);
-
 			//convert parsed plugin conf into instances
 			final ArrayList<Plugin> plugins = new ArrayList<Plugin>();
 
@@ -88,12 +78,6 @@ public class AnnounceServlet extends HttpServlet {
 					plugins.toArray(new Plugin[plugins.size()])
 			);
 			this.engine.execute();
-		} catch(final IOException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-		} catch (final ParserConfigurationException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-		} catch (final SAXException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
 		} catch (final IllegalArgumentException e) {
 			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
 			e.printStackTrace();
@@ -157,9 +141,9 @@ public class AnnounceServlet extends HttpServlet {
 			}
 
 			if(announce.getEvent() == Event.STOPPED) {
-				sos.write(TrackerResponse.bencoded(peerlist.getSeederCount(), peerlist.getLeecherCount(), new Peer[0]));
+				sos.write(TrackerResponse.bencodedAnnounce(peerlist.getSeederCount(), peerlist.getLeecherCount(), new Peer[0]));
 			} else {
-				sos.write(TrackerResponse.bencoded(peerlist.getSeederCount(), peerlist.getLeecherCount(), peerlist.getPeers(announce.getNumwant()), 1, 1));
+				sos.write(TrackerResponse.bencodedAnnounce(peerlist.getSeederCount(), peerlist.getLeecherCount(), peerlist.getPeers(announce.getNumwant()), 1, 1));
 			}
 		} catch (final AnnounceException e) {
 			sos.print(e.getMessage());

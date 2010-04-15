@@ -45,7 +45,7 @@ version="2.5">
 	
 	<servlet>
     	<servlet-name>ScrapeServlet</servlet-name>
-    	<servlet-class>com.shadowolf.announce.ScrapeServlet</servlet-class>
+    	<servlet-class>com.shadowolf.scrape.ScrapeServlet</servlet-class>
     	<!-- <description>AnnounceServlet</description>
     	<display-name>AnnounceServlet</display-name> -->
 	</servlet>

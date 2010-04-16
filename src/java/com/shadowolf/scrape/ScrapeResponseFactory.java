@@ -13,7 +13,7 @@ final public class ScrapeResponseFactory {
 		
 	}
 	
-	public static String scrape(final String[] parameterValues) throws ScrapeException {
+	public static String scrape(final String encoding, final String[] parameterValues) throws ScrapeException {
 		if (parameterValues == null) {
 			throw new ScrapeException(Errors.MISSING_INFO_HASH.toString());
 		} else {
@@ -22,7 +22,7 @@ final public class ScrapeResponseFactory {
 			final String[] infohashes = parameterValues.clone();
 			
 			for (String infohash : infohashes) {
-				final ScrapeResponse scrapeResponse = ScrapeResponseFactory.getScrapeResponse(infohash);
+				final ScrapeResponse scrapeResponse = ScrapeResponseFactory.getScrapeResponse(infohash, encoding);
 				builder.append(scrapeResponse.getResponseString());
 			}
 			
@@ -36,15 +36,19 @@ final public class ScrapeResponseFactory {
 		cache.remove(infohash);
 	}
 
-	public static ScrapeResponse getScrapeResponse(final String infohash) {
+	public static ScrapeResponse getScrapeResponse(final String infohash, String encoding) throws ScrapeException {
 		ScrapeResponse scrape = cache.get(infohash);
+		
+		if (encoding == null) {
+			encoding = "UTF-8";
+		}
 		
 		if (scrape == null || scrape.isExpired()) {
 			if (scrape != null && scrape.isExpired()) {
 				cache.remove(infohash);
 			}
 			
-			scrape = new ScrapeResponse(infohash);
+			scrape = new ScrapeResponse(infohash, encoding);
 			
 			if (cache.get(infohash) == null) {
 				cache.put(infohash, scrape);

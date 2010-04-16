@@ -1,6 +1,7 @@
 package com.shadowolf.plugins.scheduled;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,27 +19,32 @@ import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.util.Data;
 
-public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
+/*
+ * See the comments on SnatchList.run() for a reason we have this thing NOPMD'd
+ */
+public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter { //NOPMD
 	private final static boolean DEBUG = true;
 	private final static Logger LOGGER = Logger.getLogger(SnatchList.class);
 
-	private final String torrentIDColumn;
-	private final String infoHashColumn;
-	private final String torrentTable;
+	private final String torrentIDColumn; //NOPMD - not a bean
+	private final String infoHashColumn;//NOPMD - not a bean
+	private final String torrentTable;//NOPMD - not a bean
 
-	private final String passkeyColumn;
-	private final String userIDColumn;
-	private final String userTable;
+	private final String passkeyColumn;//NOPMD - not a bean
+	private final String userIDColumn;//NOPMD - not a bean
+	private final String userTable;//NOPMD - not a bean
 
-	private final String snatchedTable;
-	private final String snatchedUserID;
-	private final String snatchedTorrentID;
-	private final String snatchTimeStamp;
+	private final String snatchedTable;//NOPMD - not a bean
+	private final String snatchedUserID;//NOPMD - not a bean
+	private final String snatchedTorrentID;//NOPMD - not a bean
+	private final String snatchTimeStamp;//NOPMD - not a bean
 
-	private final Map<String, Set<String>> snatches =
+	private final Map<String, Set<String>> snatches = //NOPMD - not a bean
 		Collections.synchronizedMap(new HashMap<String, Set<String>>());
 
 	public SnatchList(final Map<String, String> attributes) {
+		super();
+		
 		this.torrentIDColumn = attributes.get("torrent_id_column");
 		this.infoHashColumn = attributes.get("info_hash_column");
 		this.torrentTable = attributes.get("torrent_table");
@@ -63,7 +69,7 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 
 			if(this.snatches.get(announce.getPasskey()) == null) {
 				synchronized(this.snatches) {
-					if(this.snatches.get(announce.getPasskey()) == null) {
+					if(this.snatches.get(announce.getPasskey()) == null) { //NOPMD - this is necessary
 						this.snatches.put(announce.getPasskey(), new HashSet<String>());
 					}
 				}
@@ -78,27 +84,103 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 			}
 		}
 	}
+	
+	public int getUserID(final PreparedStatement userLookup, final String passKey) {
+		if (DEBUG) {
+			LOGGER.debug("Looking up userId for passkey " + passKey);
+		}
+		
+		int userID = -1;
+		
+		try {
+			userLookup.setString(1, passKey);
+			final ResultSet result = userLookup.executeQuery(); //NOPMD - it is being checked
+				
+			try {
+				if (result.next()) {
+					userID = result.getInt(1);
+				} else {
+					LOGGER.error("Executed userlookup statement but result had no rows");
+				}
+			} finally {
+				result.close();
+			}
+		} catch (SQLException e) {
+			LOGGER.error("Failed to execute userlookup statement for passkey " + passKey, e);
+		}
+		
+		return userID;
+	}
+	
+	public int getTorrentID(final PreparedStatement torrentLookup, final String ihString, final byte[] infoHash) {
+		if (DEBUG) {
+			LOGGER.debug("Looking up torrent-id for info_hash "+ihString);
+		}
+		
+		int torrentID = -1;
+		
+		try {
+			torrentLookup.setBytes(1, infoHash);
+			final ResultSet result = torrentLookup.executeQuery(); //NOPMD - we are checking .next()
+			
+			try {
+				if (result.next()) {
+					torrentID = result.getInt(1);
+				} else {
+					LOGGER.error("Executed torrentlookup statement but result had no rows");
+				}
+			} finally {
+				result.close();
+			}
+		} catch (SQLException e) {
+			LOGGER.error("Failed to execute torrentlookup statement for infohash " + ihString, e);
+		}
+		
+		return torrentID;
+	}
 
-	public void run() {
+	/*
+	 * PMD complains about the cyclic complexity and the N-Path complexity here.
+	 * However, without the debug clauses, we're under the treshold levels.
+	 * Since those statements would never even get compiled if DEBUG == false;
+	 * which it very much should be in a production environment, we leave it be, and NOPMD it.
+	 */
+	@Override
+	public void run() { //NOPMD
 		try {
 			if(DEBUG) {
-				LOGGER.debug("Preparing statement...");
+				LOGGER.debug("Preparing statements...");
 			}
-
-			final PreparedStatement stmt = this.prepareStatement(
-					"INSERT INTO " + this.snatchedTable + " (" + this.snatchedUserID + ", " + this.snatchedTorrentID +", " + this.snatchTimeStamp + ")" +
-					"VALUES ((SELECT " + this.userIDColumn + " FROM " + this.userTable + " WHERE " + this.passkeyColumn + "=? LIMIT 1)," +
-					"(SELECT " + this.torrentIDColumn + " FROM " + this.torrentTable + " WHERE " + this.infoHashColumn + "=? LIMIT 1)," +
-					"UNIX_TIMESTAMP())"
+			
+			final PreparedStatement userLookup = this.prepareStatement(
+					"SELECT " + this.userIDColumn + " FROM " + this.userTable + " WHERE " + this.passkeyColumn + "=? LIMIT 1"
 			);
-
-			if(stmt == null) {
-				LOGGER.error("Could not prepare statement!");
+			if (userLookup == null) {
+				LOGGER.error("Could not prepare userlookup statement");
+				return; //NOPMD
+			}
+			
+			final PreparedStatement torrentLookup = this.prepareStatement(
+					"SELECT " + this.torrentIDColumn + " FROM " + this.torrentTable + " WHERE " + this.infoHashColumn + "=? LIMIT 1"
+			);
+			if (torrentLookup == null) {
+				LOGGER.error("Could not prepare torrentlookup statement");
+				return; //NOPMD
+			}
+			
+			final PreparedStatement insertStmt = this.prepareStatement(
+					"INSERT INTO " + this.snatchedTable + " (" + this.snatchedUserID + ", " + this.snatchedTorrentID +", " + this.snatchTimeStamp + ")" +
+					"VALUES (?, ?, UNIX_TIMESTAMP())"
+			);
+			if (insertStmt == null) {
+				LOGGER.error("Could not prepare insertion statement");
 				return;
 			}
 
 			if(DEBUG) {
-				LOGGER.debug("Prepared statement: " + stmt.toString());
+				LOGGER.debug("Prepared statement: " + userLookup.toString());
+				LOGGER.debug("Prepared statement: " + torrentLookup.toString());
+				LOGGER.debug("Prepared statement: " + insertStmt.toString());
 			}
 
 			try {
@@ -112,19 +194,23 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 					while(passkeys.hasNext()) {
 						final String pkey = passkeys.next();
 						final Set<String> hashes = this.snatches.get(pkey);
-						final Iterator<String> iter = hashes.iterator();
+						final Iterator<String> iter = hashes.iterator();				
+						final int userID = this.getUserID(userLookup, pkey);
 
-						while(iter.hasNext()) {
+						while(iter.hasNext() && userID >= 0) {
 							final String ihString = iter.next();
 							final byte[] infoHash = Data.hexStringToByteArray(ihString);
-
-							if(DEBUG) {
-								LOGGER.debug("Inserting snatch with info_hash: " + ihString + " and passkey: " + pkey);
+							final int torrentID = this.getTorrentID(torrentLookup, ihString, infoHash);
+							
+							if (torrentID >= 0) {
+								if(DEBUG) {
+									LOGGER.debug("Inserting snatch with torrentID " + torrentID + " and userID " + userID);
+								}
+	
+								insertStmt.setInt(1, userID);
+								insertStmt.setInt(2, torrentID);
+								insertStmt.executeUpdate();
 							}
-
-							stmt.setString(1, pkey);
-							stmt.setBytes(2, infoHash);
-							stmt.executeUpdate();
 						}
 
 					}
@@ -134,7 +220,9 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 
 				this.commit();
 			} finally {
-				stmt.close();
+				userLookup.close();
+				torrentLookup.close();
+				insertStmt.close();
 			}
 		} catch (final SQLException e) {
 			LOGGER.error(e.getMessage());

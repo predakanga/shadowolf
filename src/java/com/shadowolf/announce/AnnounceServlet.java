@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -13,14 +11,12 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.helpers.Loader;
+
 import com.shadowolf.config.Config;
-import com.shadowolf.config.PluginConfig;
-import com.shadowolf.plugins.ConfigConsumer;
-import com.shadowolf.plugins.Plugin;
-import com.shadowolf.plugins.PluginEngine;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.TrackerResponse;
 import com.shadowolf.user.Peer;
@@ -36,7 +32,6 @@ import com.shadowolf.user.UserFactory;
 public class AnnounceServlet extends HttpServlet {
 	public static final String DEFAULT_PLUGIN_PATH = "/WEB-INF/plugins.xml"; //NOPMD
 	private static final Logger LOGGER = Logger.getLogger(AnnounceServlet.class);
-	private PluginEngine engine;
 
 	/**
 	 * Default constructor.  Doesn't do anything but configure logging properties.
@@ -55,39 +50,8 @@ public class AnnounceServlet extends HttpServlet {
 	@Override
 	public void init(final ServletConfig config) throws ServletException {
 		super.init(config);
-
-		try {
-			if (!Config.isInitialized()) {
-				Config.init(config.getServletContext());
-			}
-			//convert parsed plugin conf into instances
-			final ArrayList<Plugin> plugins = new ArrayList<Plugin>();
-
-			for(final PluginConfig pConf : Config.getPlugins()) {
-				plugins.add(ConfigConsumer.consume(pConf));
-			}
-
-			//fire plugin engine up with reflected plugin instances
-			this.engine = new PluginEngine(
-					plugins.toArray(new Plugin[plugins.size()])
-			);
-			this.engine.execute();
-		} catch (final IllegalArgumentException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-			e.printStackTrace();
-		} catch (final SecurityException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-		} catch (final InstantiationException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-		} catch (final IllegalAccessException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-		} catch (final InvocationTargetException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage(), e);
-			e.printStackTrace();
-		} catch (final NoSuchMethodException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-		} catch (final ClassNotFoundException e) {
-			LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+		if (!Config.isInitialized()) {
+			Config.init(config.getServletContext());
 		}
 	}
 
@@ -100,7 +64,7 @@ public class AnnounceServlet extends HttpServlet {
 	@Override
 	public void destroy() {
 		super.destroy();
-		this.engine.destroy();
+		Config.getPluginEngine().destroy();
 	}
 
 	/**
@@ -114,7 +78,7 @@ public class AnnounceServlet extends HttpServlet {
 		try {
 			final Announce announce = new Announce(request);
 
-			this.engine.doAnnounce(announce);
+			Config.getPluginEngine().doAnnounce(announce);
 
 			final User user = UserFactory.getUser(announce.getPeerId(), announce.getPasskey());
 
@@ -137,7 +101,7 @@ public class AnnounceServlet extends HttpServlet {
 			if(announce.getEvent() == Event.STOPPED) {
 				sos.write(TrackerResponse.bencodedAnnounce(peerlist.getSeederCount(), peerlist.getLeecherCount(), new Peer[0]));
 			} else {
-				sos.write(TrackerResponse.bencodedAnnounce(peerlist.getSeederCount(), peerlist.getLeecherCount(), peerlist.getPeers(announce.getNumwant()), 1, 1));
+				sos.write(TrackerResponse.bencodedAnnounce(peerlist.getSeederCount(), peerlist.getLeecherCount(), peerlist.getPeers(announce.getNumwant())));
 			}
 		} catch (final AnnounceException e) {
 			sos.print(e.getMessage());

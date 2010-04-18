@@ -53,8 +53,9 @@ public class PluginEngine {
 		this.schedExecutor = new ScheduledThreadPoolExecutor(this.announcers.size());
 	}
 
-	public Plugin getPlugin(final Class<? extends Plugin> clazz) {
-		final Plugin p = this.registry.get(clazz).get();
+	@SuppressWarnings("unchecked")
+	public <T extends Plugin>T getPlugin(final Class<T> clazz) {
+		final T p = (T)(this.registry.get(clazz).get());
 		if(p == null) {
 			this.registry.remove(clazz);
 		}

@@ -11,7 +11,7 @@ public class ScrapeResponseTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		this.response = new ScrapeResponse(info_hash);
+		this.response = new ScrapeResponse(info_hash, info_hash);
 	}
 
 	@Test

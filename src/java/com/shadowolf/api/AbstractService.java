@@ -3,14 +3,27 @@ package com.shadowolf.api;
 import java.io.BufferedReader;
 import java.io.IOException;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.shadowolf.config.Config;
+
 abstract public class AbstractService extends HttpServlet {
 	private static final long serialVersionUID = -5829686393247129661L;
+
+	
+	@Override
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+		
+		if(!Config.isInitialized()) {
+			Config.init(config.getServletContext());
+		}
+	}
 
 	@Override
 	protected void doDelete(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {

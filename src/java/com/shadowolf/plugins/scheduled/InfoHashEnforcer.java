@@ -32,6 +32,19 @@ public class InfoHashEnforcer extends ScheduledDBPlugin implements AnnounceFilte
 		this.run();
 	}
 
+	public void addHash(final String newHash) {
+		this.hashes.add(newHash);
+	}
+	
+	public boolean removeHash(final String hash) {
+		if(this.hashes.contains(hash)) {
+			this.hashes.remove(hash);
+			return true; 
+		} else {
+			return false;
+		}
+	}
+	
 	@Override
 	public void run() {
 		try {

@@ -72,6 +72,13 @@ public class ScrapeServlet extends HttpServlet {
 		this.executor.scheduleAtFixedRate(totalsUpdater, 15, 15, TimeUnit.MINUTES);
 	}
 	
+	@Override
+	public void destroy() {
+		super.destroy();
+		this.executor.shutdownNow();
+		Config.destroy();
+	}
+	
 	/**
 	 * Performs the GET request and parses the announce.
 	 * @see <a href="http://java.sun.com/products/servlet/2.5/docs/servlet-2_5-mr2/javax/servlet/http/HttpServlet.html#doGet%28javax.servlet.http.HttpServletRequest,%20javax.servlet.http.HttpServletResponse%29">HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)</a>

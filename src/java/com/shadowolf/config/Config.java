@@ -29,20 +29,20 @@ public class Config {
 	private static PluginEngine engine;
 	
 	private static boolean init = false;
-	private static Object boolLock = new Object();
+	private static Object initLock = new Object();
 
 	public static String getParameter(final String param) {
 		return parameters.get(param).trim();
 	}
 
 	public static boolean isInitialized() {
-		synchronized(boolLock) {
+		synchronized(initLock) {
 			return init;
 		}
 	}
 
 	public static void init(final ServletContext context) {
-		synchronized(boolLock) {
+		synchronized(initLock) {
 			if (init == false) {
 				String path = context.getRealPath(DEFAULT_CONF_PATH);
 
@@ -76,19 +76,24 @@ public class Config {
 		return engine;
 	}
 	
+	static public void destroy() {
+		engine.destroy();
+		engine = null;
+	}
+	
 	private static void buildPluginEngine() {
 		final ArrayList<Plugin> plugins = new ArrayList<Plugin>();
 
-		for(final PluginConfig pConf : Config.getPlugins()) {
 			try {
-				plugins.add(ConfigConsumer.consume(pConf));
+				for(final PluginConfig pConf : Config.getPlugins()) {
+					plugins.add(ConfigConsumer.consume(pConf));
+				}
 				
 				//fire plugin engine up with reflected plugin instances
 				engine = new PluginEngine(
 						plugins.toArray(new Plugin[plugins.size()])
 				);
 				engine.execute();
-				
 			} catch (IllegalArgumentException e) {
 				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
 			} catch (SecurityException e) {
@@ -104,9 +109,6 @@ public class Config {
 			} catch (ClassNotFoundException e) {
 				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
 			}
-		}
-
-		
 	}
 
 	public static void parseConfigElement(final Element rootElement) {

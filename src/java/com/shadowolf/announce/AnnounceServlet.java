@@ -64,7 +64,7 @@ public class AnnounceServlet extends HttpServlet {
 	@Override
 	public void destroy() {
 		super.destroy();
-		Config.getPluginEngine().destroy();
+		Config.destroy();
 	}
 
 	/**

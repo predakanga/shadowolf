@@ -93,7 +93,18 @@ public class PluginEngine {
 		}
 	}
 
-	public void destroy() {
-		this.schedExecutor.shutdown();
+	public synchronized void destroy() {
+		if(DEBUG) {
+			LOGGER.debug("Destroying... Current status: " + this.schedExecutor.isShutdown());
+		}
+		
+		if(!this.schedExecutor.isShutdown()) {
+			this.schedExecutor.shutdownNow();
+		}
+		
+		if(DEBUG) {
+			LOGGER.debug("Destroying... Current status: " + this.schedExecutor.isShutdown());
+		}
+		
 	}
 }

@@ -45,12 +45,4 @@ public class TorrentService extends AbstractService {
 		}
 		return inputLine.length() == 40 && inputLine.matches("[a-zA-Z0-9]+");
 	}
-	
-	@Override
-	protected boolean getVerify(String inputLine) {
-		if(DEBUG) {
-			LOGGER.debug("Verifying PUT request for: " + inputLine);
-		}
-		return inputLine.length() == 40 && inputLine.matches("[a-zA-Z0-9]+");
-	}
 }

@@ -4,10 +4,9 @@ import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+
+import javolution.util.FastSet;
 
 import org.apache.log4j.Logger;
 
@@ -20,7 +19,7 @@ import com.shadowolf.util.Data;
 public class Simple extends ScheduledDBPlugin implements AnnounceFilter {
 	private final boolean DEBUG = true;
 	protected final static Logger LOGGER = Logger.getLogger(Simple.class);
-	private Set<String> freeHashes = Collections.synchronizedSet(new HashSet<String>());
+	private FastSet<String> freeHashes;
 
 	private final String column;
 	private final String table;
@@ -31,12 +30,15 @@ public class Simple extends ScheduledDBPlugin implements AnnounceFilter {
 		this.table = attributes.get("table");
 		this.flag = attributes.get("torrent_freeleech_flag");
 		this.column = attributes.get("info_hash_column");
+		
+		this.freeHashes = new FastSet<String>();
+		this.freeHashes.shared();
+		this.run();
 	}
 
 	@Override
 	public void doAnnounce(final Announce announce) throws AnnounceException {
 		if(this.freeHashes.contains(announce.getInfoHash())) {
-			LOGGER.debug("Free announce!");
 			announce.setDownloaded(0);
 		}
 	}
@@ -60,8 +62,9 @@ public class Simple extends ScheduledDBPlugin implements AnnounceFilter {
 			final ResultSet results = stmt.getResultSet();
 
 			try {
-				final Set<String> tempIds = Collections.synchronizedSet(new HashSet<String>());
-
+				final FastSet<String> tempIds = new FastSet<String>();
+				tempIds.shared();
+				
 				while(results.next()) {
 					final Blob infoBlob = results.getBlob(this.column);
 
@@ -78,9 +81,7 @@ public class Simple extends ScheduledDBPlugin implements AnnounceFilter {
 					LOGGER.debug("Found " + tempIds.size() + " free torrents");
 				}
 
-				synchronized(this.freeHashes) {
-					this.freeHashes = tempIds;
-				}
+				this.freeHashes = tempIds;
 			} finally {
 				results.close();
 				stmt.close();

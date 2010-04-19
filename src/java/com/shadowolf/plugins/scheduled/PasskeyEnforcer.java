@@ -2,9 +2,9 @@ package com.shadowolf.plugins.scheduled;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListSet;
+
+import javolution.util.FastSet;
 
 import org.apache.log4j.Logger;
 
@@ -13,6 +13,7 @@ import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.Errors;
+import com.shadowolf.util.Exceptions;
 
 public class PasskeyEnforcer extends ScheduledDBPlugin implements AnnounceFilter {
 	private final static boolean DEBUG = true;
@@ -21,18 +22,20 @@ public class PasskeyEnforcer extends ScheduledDBPlugin implements AnnounceFilter
 	private final String column;
 	private final String table;
 
-	protected transient ConcurrentSkipListSet<String> hashes = new ConcurrentSkipListSet<String>();
+	protected FastSet<String> hashes = new FastSet<String>();
 
 	public PasskeyEnforcer(final Map<String, String> attributes) {
 		this.table = attributes.get("table");
 		this.column = attributes.get("passkey_column");
 
+		this.hashes = new FastSet<String>();
+		this.hashes.shared();
+		
 		this.run();
 	}
 
 	@Override
 	public void run() {
-
 		try {
 			final PreparedStatement stmt = this.prepareStatement("SELECT " + this.column + " FROM " + this.table);
 
@@ -42,24 +45,25 @@ public class PasskeyEnforcer extends ScheduledDBPlugin implements AnnounceFilter
 			}
 
 			stmt.execute();
+			
 			final ResultSet results = stmt.getResultSet();
-
+			final FastSet<String> newHashes = new FastSet<String>(this.hashes.size());
+			
 			try {
 				while(results.next()) {
-					this.hashes.add(results.getString(this.column));
+					newHashes.add(results.getString(this.column));
 				}
-
+				
+				this.hashes = newHashes;
+				this.hashes.shared();
+				
 				this.commit();
 			} finally {
 				results.close();
 				stmt.close();
 			}
-		} catch (final SQLException e) {
-			if (e.getCause() != null) {
-				LOGGER.error("Unexpected SQLException..." + e.getMessage() + "\t Cause: " + e.getCause().getMessage());
-			} else {
-				LOGGER.error("Unexpected SQLException..." + e.getMessage());
-			}
+		} catch (final Exception e) {
+			LOGGER.error(Exceptions.logInfo(e));
 			this.rollback();
 		}
 

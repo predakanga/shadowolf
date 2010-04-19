@@ -5,7 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListSet;
+
+import javolution.util.FastSet;
 
 import org.apache.log4j.Logger;
 
@@ -21,11 +22,13 @@ public class InfoHashEnforcer extends ScheduledDBPlugin implements AnnounceFilte
 	protected final static Logger LOGGER = Logger.getLogger(InfoHashEnforcer.class);
 	private final String column;
 	private final String table;
-
-	protected ConcurrentSkipListSet<String> hashes = new ConcurrentSkipListSet<String>(); //NOPMD ... not a bean.
-
+	    
+	protected FastSet<String> hashes; //NOPMD ... not a bean.
+	
 	public InfoHashEnforcer(final Map<String, String> attributes) {
-
+		this.hashes = new FastSet<String>();
+		this.hashes.shared();
+		
 		this.table = attributes.get("table");
 		this.column = attributes.get("info_hash_column");
 
@@ -49,7 +52,8 @@ public class InfoHashEnforcer extends ScheduledDBPlugin implements AnnounceFilte
 	public void run() {
 		try {
 			final PreparedStatement stmt = this.prepareStatement("SELECT " + this.column + " FROM " + this.table);
-
+			final FastSet<String> newHashes = new FastSet<String>(this.hashes.size());
+			
 			if(stmt == null) {
 				LOGGER.error("Could not prepare statement!");
 				return;
@@ -64,9 +68,12 @@ public class InfoHashEnforcer extends ScheduledDBPlugin implements AnnounceFilte
 
 					final byte[] blobString = infoBlob.getBytes(1l, (int) infoBlob.length());
 
-					this.hashes.add(Data.byteArrayToHexString(blobString));
+					newHashes.add(Data.byteArrayToHexString(blobString));
 				}
-
+				
+				this.hashes = newHashes;
+				this.hashes.shared();
+				
 				this.commit();
 			} finally {
 				stmt.close();

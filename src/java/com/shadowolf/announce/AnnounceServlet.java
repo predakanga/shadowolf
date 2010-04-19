@@ -76,6 +76,7 @@ public class AnnounceServlet extends HttpServlet {
 		final ServletOutputStream sos = response.getOutputStream();
 
 		try {
+			LOGGER.debug(request.getQueryString());
 			final Announce announce = new Announce(request);
 
 			Config.getPluginEngine().doAnnounce(announce);

@@ -2,10 +2,9 @@ package com.shadowolf.plugins.scheduled;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+
+import javolution.util.FastSet;
 
 import org.apache.log4j.Logger;
 
@@ -20,7 +19,7 @@ public class UserStatsUpdater extends ScheduledDBPlugin implements AnnounceFilte
 	private final static boolean DEBUG = false;
 	private final static Logger LOGGER = Logger.getLogger(UserStatsUpdater.class);
 
-	protected transient Set<String> updates = Collections.synchronizedSet(new HashSet<String>());
+	protected FastSet<String> updates;
 
 	private final String table;
 	private final String downColumn;
@@ -33,6 +32,8 @@ public class UserStatsUpdater extends ScheduledDBPlugin implements AnnounceFilte
 		this.upColumn = attributes.get("up_column");
 		this.passkeyColumn =  attributes.get("passkey_column");
 
+		this.updates = new FastSet<String>();
+		this.updates.shared();
 		if(DEBUG) {
 			LOGGER.debug("Instatiated UserStatsUpdater plugin.");
 		}
@@ -46,7 +47,11 @@ public class UserStatsUpdater extends ScheduledDBPlugin implements AnnounceFilte
 			}
 		}
 
-
+		FastSet<String> tempUpdates = this.updates;
+		
+		this.updates = new FastSet<String>();
+		this.updates.shared();
+		
 		final PreparedStatement stmt = this.prepareStatement("UPDATE " + this.table + " SET " + this.downColumn + "= " + this.downColumn + "+ ?, "
 				+ this.upColumn + "= " + this.upColumn + " + ? WHERE " + this.passkeyColumn + "=?");
 
@@ -56,10 +61,8 @@ public class UserStatsUpdater extends ScheduledDBPlugin implements AnnounceFilte
 		}
 
 		try {
-
-
 			try {
-				for(final String passkey : this.updates) {
+				for(final String passkey : tempUpdates) {
 					if(DEBUG) {
 						LOGGER.debug("Updating... " + passkey);
 					}
@@ -72,7 +75,6 @@ public class UserStatsUpdater extends ScheduledDBPlugin implements AnnounceFilte
 					stmt.executeUpdate();
 
 					userAggregate.resetStats(); //this is necessary in cases where stats do NOT get aggregated
-					this.updates.remove(passkey);
 				}
 			} finally {
 				stmt.close();

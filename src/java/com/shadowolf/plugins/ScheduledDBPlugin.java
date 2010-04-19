@@ -10,6 +10,8 @@ import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 
+import com.shadowolf.util.Exceptions;
+
 abstract public class ScheduledDBPlugin extends ScheduledPlugin {
 	private final static Logger LOGGER = Logger.getLogger(ScheduledDBPlugin.class);
 	private final boolean DEBUG = false;
@@ -75,24 +77,25 @@ abstract public class ScheduledDBPlugin extends ScheduledPlugin {
 
 		}
 	}
+	
 	protected void ensureOpenConnection() {
 		if(this.connection == null) {
 			this.openConnection();
-		} else {
+		} 
+
+		try {
+			this.connection.createStatement().execute("SELECT 1");
+		} catch (final SQLException e) {
 			try {
-				this.connection.createStatement().execute("SELECT 1");
-			} catch (final SQLException e) {
-				try {
-					this.connection.close();
-				} catch(final SQLException ex) {
-				}
-
-				this.connection = null;
-
-				this.openConnection();
+				this.connection.close();
+			} catch(final SQLException ex) {
 			}
 
+			this.connection = null;
+
+			this.openConnection();
 		}
+
 	}
 
 	protected PreparedStatement prepareStatement(final String stmt) {
@@ -113,16 +116,12 @@ abstract public class ScheduledDBPlugin extends ScheduledPlugin {
 			try {
 				this.connection.close();
 			} catch(final SQLException ex) {
+				LOGGER.error(Exceptions.logInfo(ex));
 			}
 
 			this.connection = null;
 
-			LOGGER.error(e.getMessage());
-
-			if(e.getCause() != null) {
-				LOGGER.error("Cause error: " + e.getCause().getMessage());
-			}
-
+			LOGGER.error(Exceptions.logInfo(e));
 			return null;
 		}
 	}

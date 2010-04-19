@@ -3,10 +3,9 @@ package com.shadowolf.plugins.scheduled;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+
+import javolution.util.FastSet;
 
 import org.apache.log4j.Logger;
 
@@ -16,6 +15,7 @@ import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.tracker.Errors;
+import com.shadowolf.util.Exceptions;
 
 public class Whitelist extends ScheduledDBPlugin implements AnnounceFilter {
 	private final boolean DEBUG = false;
@@ -24,13 +24,16 @@ public class Whitelist extends ScheduledDBPlugin implements AnnounceFilter {
 	private final String column;
 	private final String table;
 
-	private Set<String> peerIds = Collections.synchronizedSet(new HashSet<String>());
+	private FastSet<String> peerIds;
 
 
 	public Whitelist(final Map<String, String> attributes) {
 		this.table = attributes.get("table");
 		this.column = attributes.get("peer_id_column");
-
+		
+		this.peerIds = new FastSet<String>();
+		this.peerIds.shared();
+		
 		this.run();
 	}
 
@@ -52,15 +55,14 @@ public class Whitelist extends ScheduledDBPlugin implements AnnounceFilter {
 
 			final ResultSet results = stmt.getResultSet();
 			try {
-				final Set<String> tempIds = Collections.synchronizedSet(new HashSet<String>());
+				final FastSet<String> tempIds = new FastSet<String>();
+				tempIds.shared();
 
 				while(results.next()) {
 					tempIds.add(results.getString(this.column));
 				}
 
-				synchronized(this.peerIds) {
-					this.peerIds = tempIds;
-				}
+				this.peerIds = tempIds;
 
 				this.commit();
 			} finally {
@@ -68,7 +70,7 @@ public class Whitelist extends ScheduledDBPlugin implements AnnounceFilter {
 				stmt.close();
 			}
 		} catch (final SQLException e) {
-			LOGGER.error("Unexpected SQLException..." + e.getMessage());// + "\t Cause: " + e.getCause().getMessage());
+			LOGGER.error(Exceptions.logInfo(e));
 			this.rollback();
 		}
 	}

@@ -54,7 +54,7 @@ version="2.5">
 		<url-pattern>/scrape</url-pattern>
 		<url-pattern>/Scrape</url-pattern>
 	</servlet-mapping>
-	
+		
 	<servlet>
 		<servlet-name>TorrentService</servlet-name>
 		<servlet-class>com.shadowolf.api.torrents.TorrentService</servlet-class>
@@ -62,5 +62,14 @@ version="2.5">
 	<servlet-mapping>
 		<servlet-name>TorrentService</servlet-name>
 		<url-pattern>/api/torrents</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>UserService</servlet-name>
+		<servlet-class>com.shadowolf.api.users.UserService</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>UserService</servlet-name>
+		<url-pattern>/API/users</url-pattern>
 	</servlet-mapping>
 </web-app>

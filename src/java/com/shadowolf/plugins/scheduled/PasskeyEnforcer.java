@@ -78,4 +78,12 @@ public class PasskeyEnforcer extends ScheduledDBPlugin implements AnnounceFilter
 			throw new AnnounceException(Errors.INVALID_PASSKEY.toString());
 		}
 	}
+
+	public boolean addPassKey(String passKey) {
+		return this.hashes.add(passKey);
+	}
+
+	public boolean removePassKey(String passKey) {
+		return this.hashes.remove(passKey);
+	}
 }

@@ -1,6 +1,5 @@
 package com.shadowolf.util;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 
 import org.apache.log4j.Logger;
@@ -16,24 +15,33 @@ final public class Data {
 
 	}
 
-	static final private byte[] HEX_CHAR_TABLE = {
-		(byte) '0',
-		(byte) '1',
-		(byte) '2',
-		(byte) '3',
-		(byte) '4',
-		(byte) '5',
-		(byte) '6',
-		(byte) '7',
-		(byte) '8',
-		(byte) '9',
-		(byte) 'a',
-		(byte) 'b',
-		(byte) 'c',
-		(byte) 'd',
-		(byte) 'e',
-		(byte) 'f'
-	};
+	static final private char[] HEX_CHAR_TABLE_MAJOR = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+		'0', '0', '0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '2',
+		'2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '3', '3', '3', '3', '3', '3',
+		'3', '3', '3', '3', '3', '3', '3', '3', '3', '3', '4', '4', '4', '4', '4', '4', '4', '4', '4', '4', '4',
+		'4', '4', '4', '4', '4', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
+		'6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', '7', '7', '7', '7', '7',
+		'7', '7', '7', '7', '7', '7', '7', '7', '7', '7', '7', '8', '8', '8', '8', '8', '8', '8', '8', '8', '8',
+		'8', '8', '8', '8', '8', '8', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
+		'9', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b',
+		'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'c', 'c', 'c', 'c', 'c', 'c', 'c', 'c', 'c',
+		'c', 'c', 'c', 'c', 'c', 'c', 'c', 'd', 'd', 'd', 'd', 'd', 'd', 'd', 'd', 'd', 'd', 'd', 'd', 'd', 'd',
+		'd', 'd', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'f', 'f', 'f',
+		'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', };
+
+static final private char[] HEX_CHAR_TABLE_MINOR = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
+		'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0',
+		'1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5',
+		'6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',
+		'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
+		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4',
+		'5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+		'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
+		'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3',
+		'4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8',
+		'9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+		'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2',
+		'3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', };
 
 	/**
 	 * Converts a hex-encoded string to a byte array
@@ -58,24 +66,16 @@ final public class Data {
 	 * @return the hex-encoded resultant string.
 	 */
 	public static String byteArrayToHexString(final byte[] raw) {
-		final byte[] hex = new byte[2 * raw.length];
-		int index = 0;
+		char[] hex = new char[2 * raw.length];
 
+		int i = 0;
 		for (final byte bite : raw) {
 			final int vector = bite & 0xFF;
-			hex[index++] = HEX_CHAR_TABLE[vector >>> 4];
-			hex[index++] = HEX_CHAR_TABLE[vector & 0xF];
+			hex[i++] = HEX_CHAR_TABLE_MAJOR[vector];
+			hex[i++] = HEX_CHAR_TABLE_MINOR[vector];
 		}
 
-		String finalRes;
-		try {
-			finalRes = new String(hex, "ASCII");
-		} catch (final UnsupportedEncodingException e) {
-			LOGGER.error("Impossible exception thrown!");
-			finalRes = "";
-		}
-
-		return finalRes;
+		return String.copyValueOf(hex);
 	}
 
 	/**

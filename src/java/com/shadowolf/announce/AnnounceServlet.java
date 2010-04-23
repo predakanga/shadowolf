@@ -1,9 +1,6 @@
 package com.shadowolf.announce;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -24,6 +21,7 @@ import com.shadowolf.user.PeerList;
 import com.shadowolf.user.PeerListFactory;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
+import com.shadowolf.util.Exceptions;
 
 /**
  * Announce servlet class.  Processes announces.  You should never need to edit this class, nor call its methods.
@@ -108,10 +106,7 @@ public class AnnounceServlet extends HttpServlet {
 			sos.print(e.getMessage());
 		} catch (final Exception e) {
 			sos.print(TrackerResponse.bencoded("Something went catastrophically wrong, please contact your site administrator." + e.getClass()));
-			final Writer result = new StringWriter();
-			final PrintWriter printWriter = new PrintWriter(result);
-			e.printStackTrace(printWriter);
-			LOGGER.error(result.toString());
+			LOGGER.error(Exceptions.logInfo(e));
 			return;
 		} finally {
 			sos.flush();

@@ -4,20 +4,33 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 
-public class Exceptions {
-	public static String logInfo(Throwable e) {
+/**
+ * Class which provides a static method for uniform logging of exceptions
+ * @author Shadowolf
+ */
+final public class Exceptions {
+	private Exceptions() {
+	}
+	
+	/**
+	 * Takes a Throwable and turns it into a nicely formatted String containing,
+	 *  recursively, all the info needed to log it.
+	 * @param exception A Throwable to turn into a String for logging purposes
+	 * @return A string fit for logging exceptions with complete information about where it came from, recursively
+	 */
+	public static String logInfo(final Throwable exception) {
 		final StringBuilder info = new StringBuilder();
 		final Writer trace = new StringWriter();
 		final PrintWriter pWriter = new PrintWriter(trace);
-		e.printStackTrace(pWriter);
+		exception.printStackTrace(pWriter);
 		
-		info.append("Exception: " + e.getClass() + "\n");
-		info.append("Message: " + e.getMessage() + "\n");
+		info.append("Exception: " + exception.getClass() + "\n");
+		info.append("Message: " + exception.getMessage() + "\n");
 		info.append("Stack trace: \n" + trace.toString());
 		
-		if(e.getCause() != null) {
+		if(exception.getCause() != null) {
 			info.append("CAUSE: " + "\n");
-			info.append(logInfo(e.getCause()));
+			info.append(logInfo(exception.getCause()));
 		}
 		
 		return info.toString();

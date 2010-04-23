@@ -80,7 +80,8 @@ final public class Announce {
 		this.IP = request.getRemoteAddr();
 
 		// passkey is mandatory
-		this.passkey = this.parseMandatoryString(request.getParameter("passkey"), Errors.MISSING_PASSKEY);
+		//this.passkey = this.parseMandatoryString(request.getParameter("passkey"), Errors.MISSING_PASSKEY);
+		this.passkey = this.parseMandatoryObjectAsString(request.getAttribute("passkey"), Errors.MISSING_PASSKEY);
 
 		// peer_id is mandatory
 		this.peerId = this.parseMandatoryString(request.getParameter("peer_id"), Errors.MISSING_PEER_ID);
@@ -106,6 +107,15 @@ final public class Announce {
 			throw new AnnounceException(error.toString());
 		} else {
 			return param;
+		}
+	}
+	
+	private String parseMandatoryObjectAsString(final Object param, final Errors error) throws AnnounceException {
+		if(param instanceof String) {
+			return (String) param;
+		}
+		else {
+			throw new AnnounceException(error.toString());
 		}
 	}
 

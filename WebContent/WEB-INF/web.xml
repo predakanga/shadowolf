@@ -7,6 +7,26 @@
 	id="Shadowolf" 
 version="2.5">
 
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Shadowolf</web-resource-name>
+			<url-pattern>/api/*</url-pattern>	
+		</web-resource-collection>
+		
+		<auth-constraint>
+			<role-name>swsuperuser</role-name>
+		</auth-constraint>
+	</security-constraint>
+	
+	<login-config>
+		<auth-method>BASIC</auth-method>
+		<realm-name>Shadowolf API</realm-name>
+	</login-config>
+	
+	<security-role>
+		<description>Shadowolf API role</description>
+		<role-name>swsuperuser</role-name>
+	</security-role>
 	<!-- <display-name>Shadowolf</display-name>
 	<description>Bittorrent Tracker</description> -->
 	

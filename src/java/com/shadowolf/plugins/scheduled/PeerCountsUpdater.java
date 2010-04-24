@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.user.PeerListFactory;
+import com.shadowolf.util.Exceptions;
 
 public class PeerCountsUpdater extends ScheduledDBPlugin {
 	private final static boolean DEBUG = false;
@@ -64,8 +65,6 @@ public class PeerCountsUpdater extends ScheduledDBPlugin {
 						LOGGER.debug("Updated torrent with Seeders: " + updates.get(next)[0]);
 						LOGGER.debug("Updated torrent with Leechers: " + updates.get(next)[1]);
 					}
-
-					updateStmt.close();
 				}
 
 				this.commit();
@@ -73,7 +72,7 @@ public class PeerCountsUpdater extends ScheduledDBPlugin {
 				updateStmt.close();
 			}
 		} catch (final SQLException e) {
-			LOGGER.error("Failed query! " + e.getMessage());
+			LOGGER.error(Exceptions.logInfo(e));
 			this.rollback();
 		}
 	}

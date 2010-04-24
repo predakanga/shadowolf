@@ -18,6 +18,7 @@ public class UrlRewriter implements Filter {
 	private FilterConfig conf; //NOPMD - the conf is only there cause Filter dictates it should be
 	private static final String ANNOUNCE_PATH = "/announce";
 	private static final String SCRAPE_PATH = "/scrape";
+	int skipLength; // Length of the context path
 
 	/**
 	 * Initialises the Filter
@@ -26,6 +27,7 @@ public class UrlRewriter implements Filter {
 	@Override
 	public void init(final FilterConfig filterConfig) throws ServletException {
 		this.conf = filterConfig;
+		skipLength = this.conf.getServletContext().getContextPath().length() + 1;
 	}
 
 	/**
@@ -48,17 +50,16 @@ public class UrlRewriter implements Filter {
 	 */
 	@Override
 	public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
-		final String uri = ((HttpServletRequest) request).getRequestURI();
-		
+		final String uri = ((HttpServletRequest) request).getRequestURI();		
 
 		if (uri.endsWith(ANNOUNCE_PATH)) {
-			if(uri.length() > ANNOUNCE_PATH.length() + 1) {
-				request.setAttribute("passkey", uri.substring(1, uri.length() - ANNOUNCE_PATH.length()));
+			if(uri.length() > ANNOUNCE_PATH.length() + skipLength) {
+				request.setAttribute("passkey", uri.substring(skipLength, uri.length() - ANNOUNCE_PATH.length()));
 			}
 			this.conf.getServletContext().getRequestDispatcher(ANNOUNCE_PATH).forward(request, response);
 		} else if (uri.endsWith(SCRAPE_PATH)) {
-			if(uri.length() > SCRAPE_PATH.length() + 1) {
-				request.setAttribute(SCRAPE_PATH, uri.substring(1, uri.length() - SCRAPE_PATH.length()));
+			if(uri.length() > SCRAPE_PATH.length() + skipLength) {
+				request.setAttribute("passkey", uri.substring(skipLength, uri.length() - SCRAPE_PATH.length()));
 			}
 			this.conf.getServletContext().getRequestDispatcher(SCRAPE_PATH).forward(request, response);
 		} else {

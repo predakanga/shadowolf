@@ -14,18 +14,20 @@ import com.shadowolf.util.Data;
  * 
  */
 final public class Announce {
+	//private final Logger LOGGER = Logger.getLogger(Announce.class);
+	
 	public static final int DEFAULT_NUMWANT = 200;
 
-	private transient final Event event;
+	private final Event event;
 
-	private transient long uploaded;
-	private transient long downloaded;
-	private transient final long left;
-	private transient final int numwant;
+	private long uploaded;
+	private long downloaded;
+	private final long left;
+	private final int numwant;
 
-	private transient final String encoding;
-	private transient final String infoHash;
-	private transient final String peerId;
+	private final String key;
+	private final String infoHash;
+	private final String peerId;
 	/**
 	 * This is stored as a String because the majority of requests don't need
 	 * the numerical / byte value of the port. It's may be slightly (a couple of
@@ -67,9 +69,6 @@ final public class Announce {
 		// numwant is the same way
 		this.numwant = this.parseInt(request.getParameter("numwant")) > 0 ? this.parseInt(request.getParameter("numwant")) : DEFAULT_NUMWANT;
 
-		// get the encoding, which we need in a few places
-		this.encoding = this.parseEncoding(request.getCharacterEncoding());
-
 		// info_hash is mandatory
 		this.infoHash = this.parseInfoHash(request.getParameter("info_hash"));
 
@@ -79,6 +78,11 @@ final public class Announce {
 		// IP is... impossible to not have
 		this.IP = request.getRemoteAddr();
 
+		//key is a client ID
+		this.key = request.getParameter("key") == null 
+					? this.IP + this.port
+					: request.getParameter("key");
+		
 		// passkey is mandatory
 		//this.passkey = this.parseMandatoryString(request.getParameter("passkey"), Errors.MISSING_PASSKEY);
 		this.passkey = this.parseMandatoryObjectAsString(request.getAttribute("passkey"), Errors.MISSING_PASSKEY);
@@ -86,25 +90,22 @@ final public class Announce {
 		// peer_id is mandatory
 		this.peerId = this.parseMandatoryString(request.getParameter("peer_id"), Errors.MISSING_PEER_ID);
 	}
-
+	
 	private String parseInfoHash(final String originalHash) throws AnnounceException {
 		if (originalHash == null) {
-			throw new AnnounceException(Errors.MISSING_INFO_HASH.toString());
+			throw new AnnounceException(Errors.MISSING_INFO_HASH);
 		} else {
-			String hexString;
 			try {
-				hexString = Data.byteArrayToHexString(originalHash.getBytes(this.encoding));
+				return Data.byteArrayToHexString(originalHash.getBytes("ISO-8859-1"));
 			} catch (final UnsupportedEncodingException e) {
-				throw new AnnounceException(Errors.UNPARSEABLE_INFO_HASH.toString(), e);
+				throw new AnnounceException(Errors.UNPARSEABLE_INFO_HASH, e);
 			}
-
-			return hexString;
 		}
 	}
 
 	private String parseMandatoryString(final String param, final Errors error) throws AnnounceException {
 		if (param == null) {
-			throw new AnnounceException(error.toString());
+			throw new AnnounceException(error);
 		} else {
 			return param;
 		}
@@ -115,20 +116,8 @@ final public class Announce {
 			return (String) param;
 		}
 		else {
-			throw new AnnounceException(error.toString());
+			throw new AnnounceException(error);
 		}
-	}
-
-	private String parseEncoding(final String enc) {
-		String encoding;
-
-		if (enc == null) {
-			encoding = "ISO-8859-1";
-		} else {
-			encoding = enc;
-		}
-
-		return encoding;
 	}
 
 	private long parseLong(final String stringVal) {
@@ -170,6 +159,7 @@ final public class Announce {
 		return event;
 	}
 
+	
 	/**
 	 * Get the event specified for this announce.
 	 * @return the event
@@ -235,7 +225,7 @@ final public class Announce {
 	 * Get the peer_id for this torrent.
 	 * 
 	 * The peer_id is a partially-unique field sent with each announce.  The first few characters are usually a client
-	 * identifier, followed by a random string used to uniquely identify this tracker session.  The bytes are usually not
+	 * identifier, followed by a random string used to uniquely identify this tracker session on a per torrent basis.  The bytes are usually not
 	 * characters specified by a character set and if they are, it is entirely random.  As such, this string gets interpreted
 	 * using the character set (see {@link #getEncoding()}) associated with this announce.
 	 * @return the peer_id
@@ -246,13 +236,12 @@ final public class Announce {
 	}
 
 	/**
-	 * Get the encoding for this announce.  Set by the HTTP request or defaults to ISO-8859-1.
-	 * @return the character encoding.
+	 * Gets the key that is intended to represent a particular client.  Sets to "IP + port" if not present, as it is an optional field.
+	 * @return the key, or IP + port if not present.
 	 */
-	public String getEncoding() {
-		return this.encoding;
+	public String getKey() {
+		return this.key;
 	}
-
 	/**
 	 * Get the port that the client is listening on, as specified in the announce.
 	 * @return the port the client is listening on.

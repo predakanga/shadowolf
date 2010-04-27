@@ -10,7 +10,7 @@ public class CompactPeerEncoder {
 
 	public void addToIPv4(final byte[] address) throws AnnounceException {
 		if(address.length != 6) {
-			throw new AnnounceException(Errors.UNEXPECTED_4_PEER_LENGTH.toString());
+			throw new AnnounceException(Errors.UNEXPECTED_4_PEER_LENGTH);
 		}
 
 		final byte[] temp = Data.addByteArrays(this.IPv4, address);
@@ -19,7 +19,7 @@ public class CompactPeerEncoder {
 
 	public void addToIPv6(final byte[] address) throws AnnounceException {
 		if(address.length != 18) {
-			throw new AnnounceException(Errors.UNEXPECTED_6_PEER_LENGTH.toString());
+			throw new AnnounceException(Errors.UNEXPECTED_6_PEER_LENGTH);
 		}
 
 		final byte[] temp = Data.addByteArrays(this.IPv6, address);

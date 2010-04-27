@@ -27,6 +27,7 @@ public class UrlRewriter implements Filter {
 	@Override
 	public void init(final FilterConfig filterConfig) throws ServletException {
 		this.conf = filterConfig;
+		
 		skipLength = this.conf.getServletContext().getContextPath().length() + 1;
 	}
 
@@ -37,7 +38,7 @@ public class UrlRewriter implements Filter {
 	public void destroy() { //NOPMD - there is nothing to tear down, but we need this method to comply to Filter
 	}
 
-	/**
+	/**I ne
 	 * Filters a request.
 	 * Autodetecs passkey, and dispatches to AnnounceServlet or ScrapeServlet depending on the request.
 	 * If the request doesn't look like an announce, nor like a scrape, chains the next filter.
@@ -56,7 +57,11 @@ public class UrlRewriter implements Filter {
 			if(uri.length() > ANNOUNCE_PATH.length() + skipLength) {
 				request.setAttribute("passkey", uri.substring(skipLength, uri.length() - ANNOUNCE_PATH.length()));
 			}
-			this.conf.getServletContext().getRequestDispatcher(ANNOUNCE_PATH).forward(request, response);
+			
+			this.conf.
+				getServletContext().
+				getRequestDispatcher(ANNOUNCE_PATH).
+				forward(request, response);
 		} else if (uri.endsWith(SCRAPE_PATH)) {
 			if(uri.length() > SCRAPE_PATH.length() + skipLength) {
 				request.setAttribute("passkey", uri.substring(skipLength, uri.length() - SCRAPE_PATH.length()));

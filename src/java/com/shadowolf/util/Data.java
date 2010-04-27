@@ -2,15 +2,11 @@ package com.shadowolf.util;
 
 import java.lang.reflect.Array;
 
-import org.apache.log4j.Logger;
-
 /**
  * "Static" Data utility classes that wraps some useful methods.
  *
  */
 final public class Data {
-	private static final Logger LOGGER = Logger.getLogger(Data.class);
-
 	private Data() {
 
 	}
@@ -29,7 +25,7 @@ final public class Data {
 		'd', 'd', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'f', 'f', 'f',
 		'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', };
 
-static final private char[] HEX_CHAR_TABLE_MINOR = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
+	static final private char[] HEX_CHAR_TABLE_MINOR = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
 		'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0',
 		'1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5',
 		'6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',

@@ -74,12 +74,12 @@ public class AnnounceServlet extends HttpServlet {
 		final ServletOutputStream sos = response.getOutputStream();
 
 		try {
-			LOGGER.debug(request.getQueryString());
+		//	LOGGER.debug(request.getQueryString());
 			final Announce announce = new Announce(request);
 
 			Config.getPluginEngine().doAnnounce(announce);
 
-			final User user = UserFactory.getUser(announce.getPeerId(), announce.getPasskey());
+			final User user = UserFactory.getUser(announce.getKey(), announce.getPasskey());
 
 			user.updateStats(announce.getInfoHash(), announce.getUploaded(),
 					announce.getDownloaded(), announce.getIP(), announce.getPort());
@@ -93,8 +93,10 @@ public class AnnounceServlet extends HttpServlet {
 				peerlist.addSeeder(peer);
 			} else if (announce.getLeft() > 0) {
 				peerlist.removeLeecher(peer);
+				user.removePeer(peer);
 			} else {
 				peerlist.removeSeeder(peer);
+				user.removePeer(peer);
 			}
 
 			if(announce.getEvent() == Event.STOPPED) {

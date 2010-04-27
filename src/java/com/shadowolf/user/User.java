@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
+import com.shadowolf.config.Config;
+
 
 /*
  * This class is a multiton around itself.  The class doesn't serve much purpose other than to keep track
@@ -18,20 +20,15 @@ public class User {
 	private static final boolean DEBUG = false;
 
 	protected ConcurrentHashMap<String, WeakReference<Peer>> peers =
-		new ConcurrentHashMap<String, WeakReference<Peer>>(); // NOPMD by Eddie on 3/6/10 3:32 AM
+		new ConcurrentHashMap<String, WeakReference<Peer>>();
 
-	protected final String peerId;// NOPMD by Eddie on 3/6/10 3:32 AM
-	protected String passkey; // NOPMD by Eddie on 3/6/10 3:32 AM
+	protected final String peerId;
+	protected String passkey; 
 	protected long uploaded = 0L;
 	protected long downloaded = 0L;
 	protected final Object upLock = new Object();
 	protected final Object downLock = new Object();
 	protected long lastAccessed;
-
-	protected User() {
-		//this exists for our child class.
-		this.peerId = null;
-	}
 
 	public User(final String peerId, final String passkey) {
 		this.peerId = peerId;
@@ -75,13 +72,31 @@ public class User {
 			}
 
 			downDiff = downloaded - peer.getDownloaded();
+
+			if(downDiff < 0) {
+				this.addDownloaded(downloaded);
+				peer.setDownloaded(downloaded);
+			} else {
+				this.addUploaded(downDiff);
+				peer.setDownloaded(downloaded);
+			}
+
+			if(upDiff < 0) {
+				this.addUploaded(uploaded);
+				peer.setUploaded(uploaded);
+			} else {
+				this.addDownloaded(upDiff);
+				peer.setUploaded(uploaded);
+			}
 		}
+	}
 
-		peer.setDownloaded(downloaded);
-		peer.setUploaded(uploaded);
+	public void removePeer(final Peer peer) {
+		this.peers.remove(peer.getInfoHash());
+	}
 
-		this.addDownloaded(downDiff);
-		this.addUploaded(upDiff);
+	public void removePeer(final String infoHash) {
+		this.peers.remove(infoHash);
 	}
 
 	public Peer getPeer(final String infoHash, final String ipAddress, final String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
@@ -91,7 +106,7 @@ public class User {
 		}
 
 		if(this.peers.get(infoHash) == null) {
-			final Peer p =  new Peer(0L, 0L, ipAddress, port);
+			final Peer p =  new Peer(0L, 0L, ipAddress, port, infoHash);
 			this.peers.put(infoHash, new WeakReference<Peer>(p));  // NOPMD by Eddie on 3/6/10 3:32 AM
 			return p;
 		}
@@ -108,25 +123,15 @@ public class User {
 		return this.peers;
 	}
 
-	public Long getUploaded() {
+	public Long resetUploaded() {
 		synchronized(this.upLock) {
 			return this.uploaded;
 		}
 	}
 
-	public Long getDownloaded() {
+	public Long resetDownloaded() {
 		synchronized(this.downLock) {
 			return this.downloaded;
-		}
-	}
-
-	public void resetStats() {
-		synchronized(this.downLock) {
-			this.downloaded = 0;
-		}
-
-		synchronized(this.upLock) {
-			this.uploaded = 0;
 		}
 	}
 
@@ -136,5 +141,62 @@ public class User {
 
 	public void setLastAccessed(final long lastAccessed) {
 		this.lastAccessed = lastAccessed;
+	}
+
+	private static final User emptyInst = new User(null, null) {
+		@Override
+		public void addUploaded(final String uploaded) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void addDownloaded(final String downloaded) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void addUploaded(final long uploaded) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void addDownloaded(final long downloaded) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void updateStats(final String infoHash, final long uploaded, final long downloaded, final String ipAddress, final String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Peer getPeer(final String infoHash, final String ipAddress, final String port) throws IllegalAccessException, UnknownHostException, UnsupportedEncodingException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getPasskey() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ConcurrentHashMap<String, WeakReference<Peer>> getPeers() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Long resetUploaded() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Long resetDownloaded() {
+			throw new UnsupportedOperationException();
+		}
+	};
+
+	public static User getEmptyInstance() {
+		emptyInst.setLastAccessed(new Date().getTime() + (Integer.parseInt(Config.getParameter("peer.timeout")) * 1000));
+		return emptyInst;
 	}
 }

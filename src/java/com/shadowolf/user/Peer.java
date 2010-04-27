@@ -15,17 +15,23 @@ public class Peer {
 	private long lastAnnounce;
 	private long uploaded; //NOPMD
 	private long downloaded; //NOPMD
+	private final String infoHash;
 	final private byte[] ipAddress; //NOPMD
 	final private byte[] port; //NOPMD
 
 	public Peer(final long uploaded,final long downloaded, final String ipAddress,
-			final String port) throws UnknownHostException  {
+			final String port, final String infoHash) throws UnknownHostException  {
 
+		this.infoHash = infoHash;
 		this.uploaded = uploaded;
 		this.downloaded = downloaded;
 		this.lastAnnounce = new Date().getTime();
 		this.ipAddress = TrackerRequest.IPToBytes(ipAddress);
 		this.port = TrackerRequest.portToBytes(port);
+	}
+
+	public String getInfoHash() {
+		return this.infoHash;
 	}
 
 	public long getLastAnnounce() {

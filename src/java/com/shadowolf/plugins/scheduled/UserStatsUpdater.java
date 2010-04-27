@@ -63,18 +63,18 @@ public class UserStatsUpdater extends ScheduledDBPlugin implements AnnounceFilte
 		try {
 			try {
 				for(final String passkey : tempUpdates) {
+					final User userAggregate = UserFactory.aggregate(passkey);
+					
 					if(DEBUG) {
-						LOGGER.debug("Updating... " + passkey);
+						//LOGGER.debug("Updating " + passkey + " with upload: " + userAggregate.getUploaded() + " and download: " + userAggregate.getDownloaded());
 					}
 
-					final User userAggregate = UserFactory.aggregate(passkey);
-
-					stmt.setLong(1, userAggregate.getDownloaded());
-					stmt.setLong(2,  userAggregate.getUploaded());
+					stmt.setLong(1, userAggregate.resetDownloaded());
+					stmt.setLong(2,  userAggregate.resetUploaded());
 					stmt.setString(3, passkey);
 					stmt.executeUpdate();
 
-					userAggregate.resetStats(); //this is necessary in cases where stats do NOT get aggregated
+					//userAggregate.resetStats(); //this is necessary in cases where stats do NOT get aggregated
 				}
 			} finally {
 				stmt.close();

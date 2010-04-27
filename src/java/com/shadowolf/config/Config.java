@@ -16,6 +16,7 @@ import org.xml.sax.SAXException;
 import com.shadowolf.plugins.ConfigConsumer;
 import com.shadowolf.plugins.Plugin;
 import com.shadowolf.plugins.PluginEngine;
+import com.shadowolf.util.Exceptions;
 
 public class Config {
 	private static final boolean DEBUG = true;
@@ -25,9 +26,9 @@ public class Config {
 
 	private static List<PluginConfig> plugins = new ArrayList<PluginConfig>();
 	private static Map<String, String> parameters = new HashMap<String, String>();
-	
+
 	private static PluginEngine engine;
-	
+
 	private static boolean init = false;
 	private static Object initLock = new Object();
 
@@ -57,58 +58,58 @@ public class Config {
 					//parse config object
 					final Element configRoot = configParser.getRootElement();
 					Config.parseConfigElement(configRoot);
-					
+
 					Config.buildPluginEngine();
-					
+
 					init = true;
 				} catch (final ParserConfigurationException e) {
-					LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+					LOGGER.error(Exceptions.logInfo(e));
 				} catch (final SAXException e) {
-					LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+					LOGGER.error(Exceptions.logInfo(e));
 				} catch (final IOException e) {
-					LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+					LOGGER.error(Exceptions.logInfo(e));
 				}
 			}
 		}
 	}
-	
+
 	static public PluginEngine getPluginEngine() {
 		return engine;
 	}
-	
+
 	static public void destroy() {
 		engine.destroy();
 		engine = null;
 	}
-	
+
 	private static void buildPluginEngine() {
 		final ArrayList<Plugin> plugins = new ArrayList<Plugin>();
 
-			try {
-				for(final PluginConfig pConf : Config.getPlugins()) {
-					plugins.add(ConfigConsumer.consume(pConf));
-				}
-				
-				//fire plugin engine up with reflected plugin instances
-				engine = new PluginEngine(
-						plugins.toArray(new Plugin[plugins.size()])
-				);
-				engine.execute();
-			} catch (IllegalArgumentException e) {
-				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-			} catch (SecurityException e) {
-				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-			} catch (InstantiationException e) {
-				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-			} catch (IllegalAccessException e) {
-				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-			} catch (InvocationTargetException e) {
-				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-			} catch (NoSuchMethodException e) {
-				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
-			} catch (ClassNotFoundException e) {
-				LOGGER.error(e.getClass().toString() + "  parsing configuration: " + e.getMessage());
+		try {
+			for(final PluginConfig pConf : Config.getPlugins()) {
+				plugins.add(ConfigConsumer.consume(pConf));
 			}
+
+			//fire plugin engine up with reflected plugin instances
+			engine = new PluginEngine(
+					plugins.toArray(new Plugin[plugins.size()])
+			);
+			engine.execute();
+		} catch (final IllegalArgumentException e) {
+			LOGGER.error(Exceptions.logInfo(e));
+		} catch (final SecurityException e) {
+			LOGGER.error(Exceptions.logInfo(e));
+		} catch (final InstantiationException e) {
+			LOGGER.error(Exceptions.logInfo(e));
+		} catch (final IllegalAccessException e) {
+			LOGGER.error(Exceptions.logInfo(e));
+		} catch (final InvocationTargetException e) {
+			LOGGER.error(Exceptions.logInfo(e));
+		} catch (final NoSuchMethodException e) {
+			LOGGER.error(Exceptions.logInfo(e));
+		} catch (final ClassNotFoundException e) {
+			LOGGER.error(Exceptions.logInfo(e));
+		}
 	}
 
 	public static void parseConfigElement(final Element rootElement) {

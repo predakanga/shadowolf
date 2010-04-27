@@ -34,7 +34,7 @@ final public class ScrapeResponse {
 			this.responseString = builder.toString();
 			this.fetchTime = System.nanoTime();
 		} catch (UnsupportedEncodingException e) {
-			throw new ScrapeException(Errors.UNPARSEABLE_INFO_HASH.toString(), e);
+			throw new ScrapeException(Errors.UNPARSEABLE_INFO_HASH, e);
 		}
 	}
 

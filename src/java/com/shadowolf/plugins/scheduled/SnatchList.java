@@ -1,5 +1,7 @@
 package com.shadowolf.plugins.scheduled;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,18 +25,18 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 	private final static boolean DEBUG = true;
 	private final static Logger LOGGER = Logger.getLogger(SnatchList.class);
 
-	private final String torrentIDColumn; //NOPMD - not a bean
-	private final String infoHashColumn;//NOPMD - not a bean
-	private final String torrentTable;//NOPMD - not a bean
+	private final String torrentIDColumn; 
+	private final String infoHashColumn;
+	private final String torrentTable;
 
-	private final String passkeyColumn;//NOPMD - not a bean
-	private final String userIDColumn;//NOPMD - not a bean
-	private final String userTable;//NOPMD - not a bean
+	private final String passkeyColumn;
+	private final String userIDColumn;
+	private final String userTable;
 
-	private final String snatchedTable;//NOPMD - not a bean
-	private final String snatchedUserID;//NOPMD - not a bean
-	private final String snatchedTorrentID;//NOPMD - not a bean
-	private final String snatchTimeStamp;//NOPMD - not a bean
+	private final String snatchedTable;
+	private final String snatchedUserID;
+	private final String snatchedTorrentID;
+	private final String snatchTimeStamp;
 
 	private volatile FastSet<Snatch> snatches;
 
@@ -150,7 +152,8 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 		}
 
 		public int lookup(final String infoHash) throws SQLException {
-			this.stmt.setBytes(1, Data.hexStringToByteArray(infoHash));
+			InputStream infoStream = new ByteArrayInputStream(Data.hexStringToByteArray(infoHash));
+			this.stmt.setBinaryStream(1, infoStream, 20);
 			this.stmt.execute();
 			final ResultSet result = this.stmt.getResultSet();
 
@@ -160,7 +163,7 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 				if(result.next()) {
 					torrentId = result.getInt(1);
 				} else {
-					LOGGER.error("Executed userlookup statement but result had no rows");
+					LOGGER.error("Executed infoHash statement but result had no rows for info_hash: " + infoHash);
 				}
 			} finally {
 				result.close();
@@ -194,7 +197,7 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 				if(result.next()) {
 					userId = result.getInt(1);
 				} else {
-					LOGGER.error("Executed userlookup statement but result had no rows");
+					LOGGER.error("Executed userlookup statement but result had no rows for passkey: " + passkey);
 				}
 			} finally {
 				result.close();
@@ -237,7 +240,7 @@ public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
 			} else if(this.hashCodeOf(o1) == this.hashCodeOf(o2)) {
 				return 0;
 			} else {
-				return -1;
+				return 1;
 			}
 		}
 

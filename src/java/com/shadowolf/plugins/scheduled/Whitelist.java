@@ -10,7 +10,6 @@ import javolution.util.FastSet;
 import org.apache.log4j.Logger;
 
 import com.shadowolf.announce.Announce;
-import com.shadowolf.announce.Event;
 import com.shadowolf.plugins.AnnounceFilter;
 import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.tracker.AnnounceException;
@@ -77,10 +76,6 @@ public class Whitelist extends ScheduledDBPlugin implements AnnounceFilter {
 
 	@Override
 	public void doAnnounce(final Announce announce) throws AnnounceException {
-		if(announce.getEvent() == Event.STOPPED) {
-			return;
-		}
-
 		for(final String s : this.peerIds) {
 			if(this.DEBUG) {
 				LOGGER.debug(announce.getPeerId() + "\t" + s);
@@ -90,7 +85,7 @@ public class Whitelist extends ScheduledDBPlugin implements AnnounceFilter {
 			}
 		}
 
-		throw new AnnounceException(Errors.BANNED_CLIENT.toString());
+		throw new AnnounceException(Errors.BANNED_CLIENT);
 	}
 
 }

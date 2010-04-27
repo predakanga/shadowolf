@@ -19,11 +19,11 @@ import com.shadowolf.util.Data;
 
 public class InfoHashEnforcer extends ScheduledDBPlugin implements AnnounceFilter {
 	private final static boolean DEBUG = false;
-	protected final static Logger LOGGER = Logger.getLogger(InfoHashEnforcer.class);
+	private final static Logger LOGGER = Logger.getLogger(InfoHashEnforcer.class);
 	private final String column;
 	private final String table;
 	    
-	protected FastSet<String> hashes; //NOPMD ... not a bean.
+	protected FastSet<String> hashes; 
 	
 	public InfoHashEnforcer(final Map<String, String> attributes) {
 		this.hashes = new FastSet<String>();
@@ -53,7 +53,6 @@ public class InfoHashEnforcer extends ScheduledDBPlugin implements AnnounceFilte
 		try {
 			final PreparedStatement stmt = this.prepareStatement("SELECT " + this.column + " FROM " + this.table);
 			final FastSet<String> newHashes = new FastSet<String>(this.hashes.size());
-			
 			if(stmt == null) {
 				LOGGER.error("Could not prepare statement!");
 				return;
@@ -100,7 +99,7 @@ public class InfoHashEnforcer extends ScheduledDBPlugin implements AnnounceFilte
 		}
 
 		if(!this.hashes.contains(announce.getInfoHash())) {
-			throw new AnnounceException(Errors.TORRENT_NOT_REGISTERED.toString());
+			throw new AnnounceException(Errors.TORRENT_NOT_REGISTERED);
 		}
 	}
 }

@@ -15,7 +15,7 @@ final public class ScrapeResponseFactory {
 	
 	public static String scrape(final String encoding, final String[] parameterValues) throws ScrapeException {
 		if (parameterValues == null) {
-			throw new ScrapeException(Errors.MISSING_INFO_HASH.toString());
+			throw new ScrapeException(Errors.MISSING_INFO_HASH);
 		} else {
 			StringBuilder builder = new StringBuilder();
 			

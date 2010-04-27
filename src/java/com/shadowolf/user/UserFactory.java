@@ -1,10 +1,12 @@
 package com.shadowolf.user;
 
 import java.lang.ref.WeakReference;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import javolution.util.FastMap;
 
 import org.apache.log4j.Logger;
 
@@ -27,113 +29,133 @@ import com.shadowolf.tracker.Errors;
  * use {@link #aggregate(String)}, which also properly resets the user's stats so as not to corrupt user stats.
  */
 final public class UserFactory {
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final Logger LOGGER = Logger.getLogger(UserFactory.class);
-	private static ConcurrentHashMap<String, ConcurrentHashMap<String, WeakReference<User>>> users =
-		new ConcurrentHashMap<String, ConcurrentHashMap<String,WeakReference<User>>>(1024);
-	private static ConcurrentSkipListMap<Long, User> updates = new ConcurrentSkipListMap<Long,User>();
+	private static FastMap<String, UserList> users;
+
+	static {
+		users = new FastMap<String, UserList>();
+		users.shared();
+	}
 
 	private UserFactory() {}
-	public static void main(final String[] args) {
-		System.out.println(new Date().getTime());
-		System.out.println(System.nanoTime());
-	}
 
 	public static void cleanUp() {
 		if(DEBUG) {
 			LOGGER.debug("Cleaning up users...");
-			LOGGER.debug("Old count: " + updates.size());
 		}
 
-		updates.headMap(new Date().getTime() - Integer.parseInt(Config.getParameter("user.timeout")) * 1000).clear();
+		for(FastMap.Entry<String, UserList> n = users.head(), last = users.tail(); (n = n.getNext()) != last;) {
+			n.getValue().cleanUp();
+		}
 
 		if(DEBUG) {
-			LOGGER.debug("New count: " + updates.size());
+			LOGGER.debug("Finished cleanup");
 		}
 	}
 
-	public static User getUser(final String peerId, final String passkey) throws AnnounceException {
-		if(users.get(passkey) == null) {
-			users.put(passkey, new ConcurrentHashMap<String, WeakReference<User>>(1));
+	public static User getUser(final String key, final String passkey) throws AnnounceException {
+		LOGGER.debug("Passkey: " + passkey + " num peers: " + getOrSetUser(passkey).getPeerCount() + " key " + key);
+		if(getOrSetUser(passkey).getPeerCount() > Integer.parseInt(Config.getParameter("user.max_locations"))) {
+			throw new AnnounceException(Errors.TOO_MANY_LOCATIONS);
 		}
-
-		if (users.get(passkey).get(peerId) == null) {
-			final User user = new User(peerId, passkey);
-			users.get(passkey).put(peerId, new WeakReference<User>(user));
-			updates.put(user.getLastAccessed(), user);
-
-			return user; //NOPMD
-		} else if (users.get(passkey).size() >= Integer.parseInt(Config.getParameter("user.max_locations"))) {
-			throw new AnnounceException(Errors.TOO_MANY_LOCATIONS.toString());
-		}
-
-		User userRef = users.get(passkey).get(peerId).get();
-
-		if(userRef == null) {
-			if(DEBUG) {
-				LOGGER.debug("Found cleaned up user!");
-			}
-
-			userRef = new User(peerId, passkey);
-			users.get(passkey).put(peerId, new WeakReference<User>(userRef));
-			updates.put(userRef.getLastAccessed(), userRef);
-		} else {
-			updates.remove(userRef.getLastAccessed());
-			userRef.setLastAccessed(new Date().getTime());
-			updates.put(userRef.getLastAccessed(), userRef);
-		}
-
-		return userRef;
+		
+		return getOrSetUser(passkey).getPeerId(key);
 	}
 
 	public static User aggregate(final String passkey) {
-		final UserAggregate user = new UserAggregate(passkey);
+		return getOrSetUser(passkey).aggregate();
+	}
 
-		if(users.get(passkey) == null) {
-			LOGGER.debug("Returning default UA instance.");
-			return user; //NOPMD
-		} else if (users.get(passkey).size() == 1) {
-			final User userRef = users.get(passkey).values().iterator().next().get();
-			if(userRef == null) {
-				users.put(passkey, new ConcurrentHashMap<String, WeakReference<User>>());
-				LOGGER.debug("Returning default UA instance because of null WR instance.");
-				return user; //NOPMD
-			} else {
-				if(DEBUG) {
-					LOGGER.debug("Only found one user instance, directly returning it.");
-				}
-
-				return userRef;
-			}
-		} else {
-			//this isn't necessary but fucked if I'm typing that more than once
-			final ConcurrentHashMap<String, WeakReference<User>> set = users.get(passkey);
-			LOGGER.debug("Found " + set.size() + " user instances for passkey: " + passkey);
-
-			final Iterator<String> iter = set.keySet().iterator();
-
-			while(iter.hasNext()) {
-				final 	String nextKey = iter.next();
-				final User userRef = set.get(nextKey).get();
-				if(userRef == null) {
-					set.remove(nextKey);
-				} else {
-
-					final ConcurrentHashMap<String, WeakReference<Peer>> peers = userRef.getPeers();
-
-					user.addPeerlist(peers);
-					user.addDownloaded(userRef.getDownloaded());
-					user.addUploaded(userRef.getUploaded());
-
-					userRef.resetStats();
-
-					updates.remove(userRef.getLastAccessed());
-					userRef.setLastAccessed(new Date().getTime());//NOPMD ... this won't work unless we constantly poll for milliseconds
-					updates.put(userRef.getLastAccessed(), userRef);
-				}
-			}
+	private static UserList getOrSetUser(final String passkey) {
+		UserList u = users.get(passkey);
+		if(u == null) {
+			u = new UserList(passkey);
+			users.put(passkey, u);
 		}
+		
+		return u;
+	}
+	
+	private static class UserList {
+		private final String passkey;
+		private final FastMap<String, WeakReference<User>> peerIdTable;
+		private final SortedSet<User> users;
+		
+		public UserList(final String passkey) {
+			this.passkey = passkey;
+			this.peerIdTable = new FastMap<String, WeakReference<User>>();
+			this.peerIdTable.shared();
+			
+			this.users = new TreeSet<User>(new Comparator<User>() {
 
-		return user;
+				@Override
+				public int compare(User first, User second) {
+					if(first.getLastAccessed() > second.getLastAccessed()) {
+						return 1;
+					} else if (first.getLastAccessed() == second.getLastAccessed()) {
+						return 0;
+					} else {
+						return -1;
+					}
+				}
+				
+			});
+		}
+		
+		public synchronized int getPeerCount() {
+			return this.peerIdTable.size();
+		}
+		
+		public synchronized User getPeerId(final String key) {
+			WeakReference<User> weakRefU = this.peerIdTable.get(key);
+			User u;
+			
+			if(weakRefU == null) {
+				u = new User(key, this.passkey);
+				weakRefU = new WeakReference<User>(u);
+				this.peerIdTable.put(key, weakRefU);
+			} else {
+				u = weakRefU.get();
+				
+				if(u == null) {
+					u = new User(key, this.passkey);
+					weakRefU = new WeakReference<User>(u);
+					this.peerIdTable.put(key, weakRefU);
+				}
+				
+			}
+			
+			this.users.remove(u);
+			this.users.add(u);
+			return u;
+		}
+		
+		public synchronized void cleanUp() {
+			this.users.headSet(User.getEmptyInstance()).clear();
+		}
+		
+		public synchronized User aggregate() {
+			final UserAggregate user = new UserAggregate(this.passkey);
+
+			if(DEBUG) {
+				LOGGER.debug("Aggegating " + this.passkey + " with " + this.users.size() + " User instances.");
+			}
+			
+			if(this.users.size() == 1) {
+				return this.users.first();
+			} else if(this.users.size() > 1) {
+				for(final User u : this.users) {
+					user.addDownloaded(u.resetDownloaded());
+					user.addUploaded(u.resetUploaded());
+					
+					u.setLastAccessed(new Date().getTime());
+					
+					this.users.remove(u);
+					this.users.add(u);
+				}
+			}
+			return user;
+		}
 	}
 }

@@ -6,9 +6,9 @@ public enum Event {
 	ANNOUNCE("announce"), 
 	COMPLETED("completed");
 
-	private String humanReadable;
+	private final String humanReadable;
 
-	private Event(String humanReadable) {
+	private Event(final String humanReadable) {
 		this.humanReadable = humanReadable;
 	}
 

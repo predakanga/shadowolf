@@ -1,28 +1,18 @@
 package com.shadowolf.announce;
 
 public enum Event {
-	STARTED {
-		@Override
-		public String toString() {
-			return "started";
-		}
-	},
-	STOPPED {
-		@Override
-		public String toString() {
-			return "stopped";
-		}
-	},
-	ANNOUNCE {
-		@Override
-		public String toString() {
-			return "announce";
-		}
-	},
-	COMPLETED {
-		@Override
-		public String toString() {
-			return "completed";
-		}
+	STARTED("started"), 
+	STOPPED("stopped"), 
+	ANNOUNCE("announce"), 
+	COMPLETED("completed");
+
+	private String humanReadable;
+
+	private Event(String humanReadable) {
+		this.humanReadable = humanReadable;
+	}
+
+	public String toString() {
+		return this.humanReadable;
 	}
 }

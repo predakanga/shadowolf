@@ -15,13 +15,13 @@ import org.apache.log4j.Logger;
 
 import com.shadowolf.announce.Announce;
 import com.shadowolf.announce.Event;
-import com.shadowolf.plugins.AnnounceFilter;
+import com.shadowolf.plugins.AnnounceAction;
 import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.util.Data;
 import com.shadowolf.util.Exceptions;
 
-public class SnatchList extends ScheduledDBPlugin implements AnnounceFilter {
+public class SnatchList extends ScheduledDBPlugin implements AnnounceAction {
 	private final static boolean DEBUG = true;
 	private final static Logger LOGGER = Logger.getLogger(SnatchList.class);
 

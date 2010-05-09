@@ -9,13 +9,13 @@ import javolution.util.FastSet;
 import org.apache.log4j.Logger;
 
 import com.shadowolf.announce.Announce;
-import com.shadowolf.plugins.AnnounceFilter;
+import com.shadowolf.plugins.AnnounceAction;
 import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.user.User;
 import com.shadowolf.user.UserFactory;
 
-public class UserStatsUpdater extends ScheduledDBPlugin implements AnnounceFilter {
+public class UserStatsUpdater extends ScheduledDBPlugin implements AnnounceAction {
 	private final static boolean DEBUG = false;
 	private final static Logger LOGGER = Logger.getLogger(UserStatsUpdater.class);
 

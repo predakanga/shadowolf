@@ -73,7 +73,7 @@ public class PasskeyEnforcer extends ScheduledDBPlugin implements AnnounceFilter
 	}
 
 	@Override
-	public void doAnnounce(final Announce announce) throws AnnounceException {
+	public void filterAnnounce(final Announce announce) throws AnnounceException {
 		if(!this.hashes.contains(announce.getPasskey())) {
 			throw new AnnounceException(Errors.INVALID_PASSKEY);
 		}

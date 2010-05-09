@@ -93,7 +93,7 @@ public class InfoHashEnforcer extends ScheduledDBPlugin implements AnnounceFilte
 	}
 
 	@Override
-	public void doAnnounce(final Announce announce) throws AnnounceException {
+	public void filterAnnounce(final Announce announce) throws AnnounceException {
 		if(DEBUG) {
 			LOGGER.debug("Checking " + announce.getInfoHash() + " against cache of " + this.hashes.size());
 		}

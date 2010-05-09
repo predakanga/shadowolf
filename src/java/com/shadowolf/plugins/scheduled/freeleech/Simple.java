@@ -11,12 +11,12 @@ import javolution.util.FastSet;
 import org.apache.log4j.Logger;
 
 import com.shadowolf.announce.Announce;
-import com.shadowolf.plugins.AnnounceFilter;
+import com.shadowolf.plugins.AnnounceAction;
 import com.shadowolf.plugins.ScheduledDBPlugin;
 import com.shadowolf.tracker.AnnounceException;
 import com.shadowolf.util.Data;
 
-public class Simple extends ScheduledDBPlugin implements AnnounceFilter {
+public class Simple extends ScheduledDBPlugin implements AnnounceAction {
 	private final boolean DEBUG = true;
 	protected final static Logger LOGGER = Logger.getLogger(Simple.class);
 	private FastSet<String> freeHashes;

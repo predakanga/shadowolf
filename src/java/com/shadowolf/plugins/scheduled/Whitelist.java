@@ -75,7 +75,7 @@ public class Whitelist extends ScheduledDBPlugin implements AnnounceFilter {
 	}
 
 	@Override
-	public void doAnnounce(final Announce announce) throws AnnounceException {
+	public void filterAnnounce(final Announce announce) throws AnnounceException {
 		for(final String s : this.peerIds) {
 			if(this.DEBUG) {
 				LOGGER.debug(announce.getPeerId() + "\t" + s);

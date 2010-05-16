@@ -7,9 +7,7 @@ build.dir = build
 java.src.dir = src/java
 webapp.src.dir = WebContent
 project.name = shadowolf
-	
-extern.lib.dir = extern/lib
-	
+
 java.build.dir = ${build.dir}/java
 java.build.classes.dir = ${build.dir}/java/classes
 java.build.src.dir = ${build.dir}/java/src

@@ -11,5 +11,6 @@
 		<dependency org="javolution" name="javolution" rev="5.5.1"/>
 		<dependency org="log4j" name="log4j" rev="1.2.15" transitive="false"/>
 		<dependency org="com.google.code.gson" name="gson" rev="1.4"/>
+		<dependency org="mysql" name="mysql-connector-java" rev="5.1.12"/>
 	</dependencies>
 </ivy-module>

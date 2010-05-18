@@ -13,7 +13,6 @@ public class Peer implements Serializable {
 	private long downloaded = 0L;
 	private long latestAnnounce;
 	private int torrentId;
-	private ClientIdentifier clientIdentifier;
 	
 	public Peer() {
 		this.latestAnnounce = new Date().getTime();
@@ -51,12 +50,5 @@ public class Peer implements Serializable {
 		this.uploaded = uploaded;
 	}
 
-	public void setClientIdentifier(ClientIdentifier clientIdentifier) {
-		this.clientIdentifier = clientIdentifier;
-	}
-
-	public ClientIdentifier getClientIdentifier() {
-		return clientIdentifier;
-	}
 
 }

@@ -2,6 +2,7 @@ package com.shadowolf.core.application.tracker;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -108,11 +109,16 @@ public class Client implements Comparable<Client> {
 
 		peer = new Peer();
 		peer.setTorrentId(torrentId);
-
+		
+		Registry.addClient(this, torrentId);
 		this.peers.put(torrentId, peer);
 
 		return peer;
 
+	}
+
+	public ClientIdentifier getClientId() {
+		return this.clientId;
 	}
 
 	/**
@@ -145,6 +151,16 @@ public class Client implements Comparable<Client> {
 	 */
 	public void removePeer(final Integer torrentId) {
 		this.peers.remove(torrentId);
+		if(this.peers.size() == 0) {
+			List<Integer> list = Collections.emptyList();
+			Registry.removeClient(this, list);
+		} else {
+			Registry.removePeer(this.clientId, torrentId);
+		}
+	}
+	
+	public void destroy() {
+		Registry.removeClient(this, this.peers.keySet());
 	}
 
 	/**

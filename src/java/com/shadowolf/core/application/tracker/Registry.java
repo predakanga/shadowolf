@@ -32,9 +32,67 @@ public class Registry {
 	private static Map<Integer, Set<ClientIdentifier>> torrents =
 			new FastMap<Integer, Set<ClientIdentifier>>();
 
+	
 	private final static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 	private final static ReadLock readLock = lock.readLock();
 	private final static WriteLock writeLock = lock.writeLock();
+
+	static void addClient(Client client, Integer torrentId) {
+		try {
+			writeLock.lock();
+			//put a client reference in the clientidentifier lookup table
+			clients.put(client.getClientId(), new WeakReference<Client>(client));
+			
+			//add the client id to the torrent lookup table
+			ensureTorrentSet(torrentId);
+			torrents.get(torrentId).add(client.getClientId());
+			
+			//and add the client to the sorted client list
+			client.setLatestAccess();
+			clientList.remove(client); //we remove and re-add, if it exists, for sorting purposes
+			clientList.add(client);
+		} finally {
+			writeLock.unlock();
+		}
+	}
+	
+	static void removeClient(Client client, Iterable<Integer> torrentIds) {
+		try {
+			writeLock.lock();
+			
+			//remove the reference from the client id lookup table
+			clients.remove(client.getClientId());
+			
+			//remove all torrents
+			for(Integer i : torrentIds) {
+				Set<ClientIdentifier> set = torrents.get(i);
+				if(set != null) { 
+					set.remove(client.getClientId());
+				}
+			}
+			
+			//and remove the client from the sorted client list
+			client.setLatestAccess();
+			clientList.remove(client); 
+		} finally {
+			writeLock.unlock();
+		}
+	}
+	
+	static void removePeer(ClientIdentifier identifier, Integer torrentId) {
+		try {
+			writeLock.lock();
+			
+			Set<ClientIdentifier> set = torrents.get(torrentId);
+			if(set != null) { 
+				set.remove(identifier);
+			}
+			
+			
+		} finally {
+			writeLock.unlock();
+		}
+	}
 
 	public static void cleanup() {
 		try {

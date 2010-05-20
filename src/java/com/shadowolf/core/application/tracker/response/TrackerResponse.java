@@ -40,20 +40,7 @@ public class TrackerResponse {
 	}
 
 	private static byte[] compactEncodingAnnounce(final ClientIdentifier peer) {
-		final byte[] portArr = peer.getPort();
-		final byte[] IPArr = peer.getIpAddress();
-
-		if (IPArr.length == 4) {
-			final byte[] address = new byte[6];
-			System.arraycopy(IPArr, 0, address, 0, 4);
-			System.arraycopy(portArr, 0, address, 4, 2);
-			return address; // NOPMD
-		} else {
-			final byte[] address = new byte[18];
-			System.arraycopy(IPArr, 0, address, 0, 16);
-			System.arraycopy(portArr, 0, address, 16, 2);
-			return address;
-		}
+		return Data.addByteArrays(peer.getIpAddress(), peer.getPort());
 	}
 
 	private final int interval;

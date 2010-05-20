@@ -194,6 +194,13 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 	}
 	
 	/**
+	 * Get the size of this cache
+	 */
+	public int size() {
+		return this.cache.size();
+	}
+	
+	/**
 	 * Simple class that wraps two maps so that the swap operation can be atomic, as well as removal and get operations.
 	 */
 	private class IDCache {
@@ -218,8 +225,8 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 		}
 
 		public Integer lookupTorrentId(String hexHash) {
-			readLock.lock();
 			try {
+				readLock.lock();
 				return this.infoHashes.get(hexHash);
 			} finally {
 				readLock.unlock();
@@ -227,8 +234,8 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 		}
 		
 		public String lookupInfoHash(Integer torrentId) {
-			readLock.lock();
 			try {
+				readLock.lock();
 				return this.idNumbers.get(torrentId);
 			} finally {
 				readLock.unlock();
@@ -236,12 +243,10 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 		}
 		
 		public void removeByInfoHash(String hexHash) {
-			writeLock.lock();
-			
 			Integer torrentId = this.lookupTorrentId(hexHash);
 			if(torrentId != null) {
-				writeLock.lock();
 				try {
+					writeLock.lock();
 					this.infoHashes.remove(hexHash);
 					this.idNumbers.remove(torrentId);
 				} finally {
@@ -251,12 +256,11 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 		}
 		
 		public void removeByTorrentId(Integer torrentId) {
-			writeLock.lock();
-			
 			String hexHash = this.lookupInfoHash(torrentId);
 			
 			if(hexHash != null) {
 				try {
+					writeLock.lock();
 					this.idNumbers.remove(torrentId);
 					this.infoHashes.remove(hexHash);
 				} finally {

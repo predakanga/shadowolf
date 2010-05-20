@@ -110,7 +110,7 @@ public class Client implements Comparable<Client> {
 		peer = new Peer();
 		peer.setTorrentId(torrentId);
 		
-		Registry.addClient(this, torrentId);
+		Registry.addPeer(this, torrentId);
 		this.peers.put(torrentId, peer);
 
 		return peer;

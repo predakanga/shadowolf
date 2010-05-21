@@ -46,6 +46,11 @@ public class TrackerResponse {
 	private final int interval;
 	private final int minInterval;
 
+	/**
+	 * Creates a new TrackerResponse instance 
+	 * @param interval the interval to be sent - will be used for all announces encoded by this instance
+	 * @param minInterval the minimum interval to be sent - will be used for all announces encoded by this instance
+	 */
 	public TrackerResponse(final int interval, final int minInterval) {
 		this.interval = interval;
 		this.minInterval = minInterval;

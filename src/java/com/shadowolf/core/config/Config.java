@@ -106,21 +106,4 @@ public class Config {
 		}
 		
 	};
-	
-	public static void main(String[] args) {
-		Config c = Config.newInstance("C:/Users/Eddie/workspace/Shadowolf Refactor/WebContent/WEB-INF/config.xml");
-		
-		for(String key : c.getParameters().keySet()) {
-			System.out.println("Parameter: " + key + "; " + c.getParameter(key));
-		}
-		
-		for(Plugin p : c.getPlugins()) {
-			System.out.println("Plugin: " + p.getClassName());
-			for(String key : p.getOptions().keySet()) {
-				System.out.println("Parameter: " + key + "; " + p.getOption(key));
-			}
-			
-		}
-	}
-
 }

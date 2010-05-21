@@ -74,10 +74,10 @@ public class Registry {
 	 * is package private, as the Client instance should call this method on itself, and shouldn't be called publically.
 	 * @param client the Client instance to add to a particular swam
 	 * @param torrentId the ID of the torrent to add to the swarm
-	 * @see {@link Client#getClientId()}
-	 * @see {@link #getClient(ClientIdentifier)}
-	 * @see {@link Announce#getClientIdentifier()}
-	 * @see {@link InfoHashCache#lookupTorrentId(String)}
+	 * @see Client#getClientId()
+	 * @see #getClient(ClientIdentifier)}
+	 * @see Announce#getClientIdentifier()}
+	 * @see InfoHashCache#lookupTorrentId(String)}
 	 * @see {@link Client#getPeer(Integer)}
 	 */
 	static void addPeer(Client client, Integer torrentId) {

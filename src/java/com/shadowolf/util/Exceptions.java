@@ -6,7 +6,6 @@ import java.io.Writer;
 
 /**
  * Class which provides a static method for uniform logging of exceptions
- * @author Shadowolf
  */
 final public class Exceptions {
 	private Exceptions() {

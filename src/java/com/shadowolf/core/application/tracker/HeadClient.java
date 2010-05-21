@@ -3,6 +3,10 @@ package com.shadowolf.core.application.tracker;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * Empty Client class used for sorting Registry entries.  You shouldn't touch this.
+ *
+ */
 class HeadClient extends Client {
 	HeadClient() {
 		super(null);

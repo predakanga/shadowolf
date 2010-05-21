@@ -159,8 +159,18 @@ public class Client implements Comparable<Client> {
 		}
 	}
 	
+	/**
+	 * "destroys" this Client, by resetting its state back to an effective new class.
+	 * <br/><br/>
+	 * The internal peer list is cleared, it's removed from the {@link Registry} and the stats are cleared.
+	 * <br/><br/>
+	 * The ClientIdentifier reference is NOT cleared.
+	 */
 	public void destroy() {
 		Registry.removeClient(this, this.peers.keySet());
+		this.downloaded.set(0);
+		this.uploaded.set(0);
+		this.peers.clear();
 	}
 
 	/**

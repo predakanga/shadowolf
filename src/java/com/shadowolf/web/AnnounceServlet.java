@@ -3,7 +3,6 @@ package com.shadowolf.web;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;

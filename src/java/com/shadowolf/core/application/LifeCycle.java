@@ -8,6 +8,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import com.shadowolf.core.application.cache.InfoHashCache;
+import com.shadowolf.core.application.plugin.PluginEngine;
 import com.shadowolf.core.config.Config;
 
 /**
@@ -20,7 +21,8 @@ import com.shadowolf.core.config.Config;
  *		the core pool size appropriately.
  *	</li>
  *	<li>"infoHashCache": an instance of {@link InfoHashCache}.  Anything needing to store
- *		identifying information about a torrent should use this instance and only this instance.
+ *		identifying information about a torrent should use this instance and only this instance.</li>
+ *	<li>"pluginEngine": the Plugin Engine.
  * </ul>
  */
 public class LifeCycle implements ServletContextListener {
@@ -37,6 +39,7 @@ public class LifeCycle implements ServletContextListener {
 		context.setAttribute("config", config);
 		context.setAttribute("infoHashCache", cache);
 		context.setAttribute("scheduledThreadPoolExecutor", executor);
+		context.setAttribute("pluginEngine", new PluginEngine(config.getPlugins(), context));
 	}
 
 	@Override
@@ -45,6 +48,9 @@ public class LifeCycle implements ServletContextListener {
 		
 		ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) context.getAttribute("scheduledThreadPoolExecutor"); 
 		executor.shutdown();
+		
+		PluginEngine engine = (PluginEngine) context.getAttribute("pluginEngine");
+		engine.destroy();
 	}
 
 }

@@ -19,7 +19,6 @@ public class UrlRewriter implements Filter {
 	private static final String ANNOUNCE_PATH = "/announce";
 	private static final String SCRAPE_PATH = "/scrape";
 	int skipLength; // Length of the context path
-
 	/**
 	 * Initialises the Filter
 	 * @param filterConfig the configuration of the filter. Nothing is really done with that.
@@ -38,7 +37,7 @@ public class UrlRewriter implements Filter {
 	public void destroy() { //NOPMD - there is nothing to tear down, but we need this method to comply to Filter
 	}
 
-	/**I ne
+	/**
 	 * Filters a request.
 	 * Autodetecs passkey, and dispatches to AnnounceServlet or ScrapeServlet depending on the request.
 	 * If the request doesn't look like an announce, nor like a scrape, chains the next filter.

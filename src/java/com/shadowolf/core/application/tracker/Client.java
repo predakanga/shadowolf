@@ -110,7 +110,7 @@ public class Client implements Comparable<Client> {
 		peer = new Peer();
 		peer.setTorrentId(torrentId);
 		
-		Registry.addPeer(this, torrentId);
+		Registry.addPeer(this, torrentId, false);
 		this.peers.put(torrentId, peer);
 
 		return peer;
@@ -233,7 +233,16 @@ public class Client implements Comparable<Client> {
 				this.addDownloaded(upDelta);
 			}
 			peer.setDownloaded(downloaded);
+			
 		}
+	}
+	
+	
+	public void markAsSeeder(final Integer torrentId) {
+		final Peer peer = this.getPeer(torrentId);
+		
+		Registry.removePeer(this.clientId, torrentId);
+		Registry.addPeer(this, torrentId, true);
 	}
 
 	@Override

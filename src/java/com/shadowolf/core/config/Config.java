@@ -23,7 +23,7 @@ public class Config {
 	private static Logger LOGGER = Logger.getLogger(Config.class);
 	
 	private Map<String, String> parameters = new FastMap<String, String>();
-	private Set<Plugin> plugins = new FastSet<Plugin>();
+	private Set<PluginConfig> plugins = new FastSet<PluginConfig>();
 
 	/**
 	 * Constructs a new instance of this class with the given path to the configuration file. 
@@ -49,7 +49,7 @@ public class Config {
 		this.parameters.put(key, value.trim());
 	}
 	
-	private void addPlugin(Plugin p) {
+	private void addPlugin(PluginConfig p) {
 		this.plugins.add(p);
 	}
 	
@@ -73,11 +73,11 @@ public class Config {
 	}
 	
 	/**
-	 * Returns a set of the {@link Plugin} configuration instances.
-	 * @see {@link Plugin}
+	 * Returns a set of the {@link PluginConfig} configuration instances.
+	 * @see {@link PluginConfig}
 	 * @return the plugin set
 	 */
-	public Set<Plugin> getPlugins() {
+	public Set<PluginConfig> getPlugins() {
 		return Collections.unmodifiableSet(this.plugins);
 	}
 	
@@ -91,11 +91,11 @@ public class Config {
 				p = xml.get("parameter", Parameter.class);
 			}
 			
-			Plugin plugin = xml.get("plugin", Plugin.class);
+			PluginConfig plugin = xml.get("plugin", PluginConfig.class);
 			
 			while(plugin != null) {
 				config.addPlugin(plugin);
-				plugin = xml.get("plugin", Plugin.class);
+				plugin = xml.get("plugin", PluginConfig.class);
 			}
 		}
 

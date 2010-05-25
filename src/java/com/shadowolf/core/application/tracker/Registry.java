@@ -1,9 +1,12 @@
 package com.shadowolf.core.application.tracker;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -13,10 +16,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import javolution.util.FastMap;
 import javolution.util.FastSet;
+import javolution.util.FastTable;
 
 import org.apache.log4j.Logger;
 
-import com.shadowolf.core.application.announce.Announce;
 import com.shadowolf.core.application.cache.InfoHashCache;
 
 /**
@@ -46,7 +49,7 @@ public class Registry {
 			new FastMap<ClientIdentifier, WeakReference<Client>>();
 
 	/**
-	 * <i>torrents</i> is a Map of Integer -> Set&lt;ClientIdentifier&gt; that serves as a lookup
+	 * <i>seeders and leechers</i> are both a Map of Integer -> Set&lt;ClientIdentifier&gt; that serve as a lookup
 	 * table for torrents based on their id.  The value is a set of ClientIdentifiers that contain
 	 * peers for this torrent.  Rather than keep references to the Client instances themselves (which
 	 * can be easily obtained by accessing {@link #getClient(ClientIdentifier)}) or Peer instances,
@@ -54,9 +57,11 @@ public class Registry {
 	 * needs to send out on an announce or scrape response (IP and port) and allows for easy computation
 	 * of the size of a particular torrent's swarm.
 	 */
-	private static Map<Integer, Set<ClientIdentifier>> torrents =
+	private static Map<Integer, Set<ClientIdentifier>> seeders =
 			new FastMap<Integer, Set<ClientIdentifier>>();
 
+	private static Map<Integer, Set<ClientIdentifier>> leechers =
+		new FastMap<Integer, Set<ClientIdentifier>>();
 	
 	/**
 	 * This lock (well, its children) guard this entire collection.  Because the three collections
@@ -80,15 +85,21 @@ public class Registry {
 	 * @see InfoHashCache#lookupTorrentId(String)}
 	 * @see {@link Client#getPeer(Integer)}
 	 */
-	static void addPeer(Client client, Integer torrentId) {
+	static void addPeer(Client client, Integer torrentId, boolean isSeeder) {
 		try {
 			writeLock.lock();
 			//put a client reference in the clientidentifier lookup table
 			clients.put(client.getClientId(), new WeakReference<Client>(client));
 			
 			//add the client id to the torrent lookup table
-			ensureTorrentSet(torrentId);
-			torrents.get(torrentId).add(client.getClientId());
+			
+			if(isSeeder) {
+				ensureSeederSet(torrentId);
+				seeders.get(torrentId).add(client.getClientId());
+			} else {
+				ensureLeecherSet(torrentId);
+				leechers.get(torrentId).add(client.getClientId());
+			}
 			
 			//and add the client to the sorted client list
 			client.setLatestAccess();
@@ -109,7 +120,7 @@ public class Registry {
 	 * @param client the Client instance to remove from this tracker
 	 * @param torrentIds the "list" of all torrent Ids to remove it from
 	 * @see {@link Client#destroy()}
-	 * @see {@link #torrents}
+	 * @see {@link #seeders}
 	 * @see {@link #clientList}
 	 * @see {@link #clients}
 	 */
@@ -122,7 +133,7 @@ public class Registry {
 			
 			//remove all torrents
 			for(Integer i : torrentIds) {
-				Set<ClientIdentifier> set = torrents.get(i);
+				Set<ClientIdentifier> set = seeders.get(i);
 				if(set != null) { 
 					set.remove(client.getClientId());
 				}
@@ -135,6 +146,7 @@ public class Registry {
 			writeLock.unlock();
 		}
 	}
+	
 	
 	/**
 	 * Removes a ClientIdentifier from a particular client.  We only need the client identifier here
@@ -150,11 +162,15 @@ public class Registry {
 		try {
 			writeLock.lock();
 			
-			Set<ClientIdentifier> set = torrents.get(torrentId);
+			Set<ClientIdentifier> set = seeders.get(torrentId);
 			if(set != null) { 
 				set.remove(identifier);
 			}
 			
+			set = leechers.get(torrentId);
+			if(set != null) { 
+				set.remove(identifier);
+			}
 			
 		} finally {
 			writeLock.unlock();
@@ -202,40 +218,110 @@ public class Registry {
 			
 			if (DEBUG) {
 				LOGGER.debug("Finished cleanup, current client list (hard references) size: " + clientList.size());
-				LOGGER.debug("Starting cleanup, current torrent list size: " + torrents.size());
+				LOGGER.debug("Starting cleanup, current torrent list size: " + seeders.size());
 			}
 			
-			Iterator<Integer> torrentIter = torrents.keySet().iterator();
-			
-			while(torrentIter.hasNext()) {
-				Integer torrentId = torrentIter.next();
-				if(torrents.get(torrentId) == null || torrents.get(torrentId).size() == 0) {
-					torrentIter.remove();
-				} else {
-					Set<ClientIdentifier> set = torrents.get(torrentId);
-					
-					Iterator<ClientIdentifier> setIter = set.iterator();
-					
-					while(setIter.hasNext()) {
-						ClientIdentifier cid = setIter.next();
-						if(clients.get(cid) == null || clients.get(cid).get() == null) {
-							setIter.remove();
-						}
-					}
-					
-					if(set.size() == 0) {
-						torrentIter.remove();
-					}
-				}
-			}
+			cleanTorrentCollection(seeders.keySet().iterator());
+			cleanTorrentCollection(leechers.keySet().iterator());
 			
 			if (DEBUG) {
-				LOGGER.debug("Finished cleanup, current torrent list size: " + torrents.size());
+				LOGGER.debug("Finished cleanup, current torrent list size: " + seeders.size());
 			}
 		} finally {
 			writeLock.unlock();
 		}
 
+	}
+
+	/**
+	 * Returns an iterable collection of ClientIdentifiers that's suited to feeding to a client.  Ordering of the CID's is not 
+	 * guaranteed and somewhat random.
+	 * @param torrentId the torrent ID from which to pull peers
+	 * @param numwant the number of wanted peers
+	 * @param preferLeechers whether to prefer leechers or not; seeders should anounce true, leechers false.
+	 * @return
+	 */
+	public static Iterable<ClientIdentifier> getAnnounceablePeerlist(Integer torrentId, int numwant, boolean preferLeechers) {
+		try {
+			readLock.lock();
+			Set<ClientIdentifier> peers; 
+			
+			if(preferLeechers) {
+				//in this case, we have a seeder announcing, so fuck 'em if there aren't enough, they don't need other seeds
+				ensureLeecherSet(torrentId);
+				peers = leechers.get(torrentId);
+				
+				if(peers.size() > numwant) {
+					return reservoirSample(peers, numwant);
+				} else {
+					return Collections.unmodifiableSet(peers);
+				}
+				
+			} else {
+				//this is a leecher, so they want mostly leechers but we'll give them seeds if there are too few (<50).
+				ensureLeecherSet(torrentId);
+				peers = leechers.get(torrentId);
+				
+				if(peers.size() > numwant) {
+					return reservoirSample(peers, numwant);
+				} else if (peers.size() >= 50) {
+					return Collections.unmodifiableSet(peers);
+				} else {
+					ensureSeederSet(torrentId);
+					Set<ClientIdentifier> list = new FastSet<ClientIdentifier>();
+					list.addAll(peers);
+					list.addAll(reservoirSample(seeders.get(torrentId), numwant - peers.size()));
+					return Collections.unmodifiableSet(list);
+				}
+			}
+			
+		} finally {
+			readLock.unlock();
+		}
+	}
+
+	//trivial implementation of reservoir sampling
+	private static List<ClientIdentifier> reservoirSample(Iterable<ClientIdentifier> set, int size) {
+		List<ClientIdentifier> sampled = new FastTable<ClientIdentifier>(size);
+		int count = 0;
+		Random rand = new Random(System.nanoTime());
+		for(ClientIdentifier id :  set) {
+			count++;
+			if(count <= size) {
+				sampled.add(id);
+			} else {
+				int rnd = rand.nextInt(count);
+				if(rnd < size) {
+					sampled.set(rnd, id);
+				}
+			}
+		}
+		
+		return Collections.unmodifiableList(sampled);
+	}
+	
+	private static void cleanTorrentCollection(Iterator<Integer> torrentIter) {
+		while(torrentIter.hasNext()) {
+			Integer torrentId = torrentIter.next();
+			if(seeders.get(torrentId) == null || seeders.get(torrentId).size() == 0) {
+				torrentIter.remove();
+			} else {
+				Set<ClientIdentifier> set = seeders.get(torrentId);
+				
+				Iterator<ClientIdentifier> setIter = set.iterator();
+				
+				while(setIter.hasNext()) {
+					ClientIdentifier cid = setIter.next();
+					if(clients.get(cid) == null || clients.get(cid).get() == null) {
+						setIter.remove();
+					}
+				}
+				
+				if(set.size() == 0) {
+					torrentIter.remove();
+				}
+			}
+		}
 	}
 
 	/**
@@ -263,12 +349,43 @@ public class Registry {
 	public static int torrents() {
 		try {
 			readLock.lock();
-			return torrents.size();
+			Set<Integer> tempSet = new FastSet<Integer>(seeders.size() + leechers.size());
+			tempSet.addAll(seeders.keySet());
+			tempSet.addAll(leechers.keySet());
+			return tempSet.size();
 		} finally {
 			readLock.unlock();
 		}
 	}
 
+	/**
+	 * Get the total number of seeders currently tracked.
+	 * @return the number of seeders currently tracked.
+	 */
+	public static int seeders() {
+		return countTorrentCollection(seeders);
+	}
+	/**
+	 * Get the total number of leechers.
+	 * @return the number of leechers.
+	 */
+	public static int leechers() {
+		return countTorrentCollection(leechers);
+	}
+	private static int countTorrentCollection(Map<Integer, Set<ClientIdentifier>> set) {
+		try {
+			readLock.lock();
+			int count = 0;
+			for(Set<ClientIdentifier> current : set.values()) {
+				if(current != null) {
+					count += current.size();
+				}
+			}
+			return count;
+		} finally {
+			readLock.unlock();
+		}
+	}
 	/**
 	 * Determine whether or not a particular client, identified by <i>identifier</i> is active.
 	 * @param identifier The client identifier for the clietn we'd like to check activity for
@@ -291,7 +408,7 @@ public class Registry {
 	public static boolean containsTorrent(Integer torrentId) {
 		try {
 			readLock.lock();
-			return torrents.containsKey(torrentId);
+			return seeders.containsKey(torrentId) || leechers.containsKey(torrentId);
 		} finally {
 			readLock.unlock();
 		}
@@ -364,22 +481,32 @@ public class Registry {
 	 * torrent ID.
 	 */
 	public static Set<ClientIdentifier> getClientList(Integer torrentId) {
-		ensureTorrentSet(torrentId);
+		ensureSeederSet(torrentId);
 		try {
 			readLock.lock();
-			return Collections.unmodifiableSet(torrents.get(torrentId));
+			return Collections.unmodifiableSet(seeders.get(torrentId));
 		} finally {
 			readLock.unlock();
 		}
 		
 	}
 
-	private static void ensureTorrentSet(Integer id) {
+	private static void ensureSeederSet(Integer id) {
 		try {
 			readLock.lock();
-			if (torrents.get(id) == null) {
-				
-				torrents.put(id, new FastSet<ClientIdentifier>());
+			if (seeders.get(id) == null) {
+				seeders.put(id, new FastSet<ClientIdentifier>());
+			}
+		} finally {
+			readLock.unlock();
+		}
+	}
+	
+	private static void ensureLeecherSet(Integer id) {
+		try {
+			readLock.lock();
+			if (leechers.get(id) == null) {
+				leechers.put(id, new FastSet<ClientIdentifier>());
 			}
 		} finally {
 			readLock.unlock();

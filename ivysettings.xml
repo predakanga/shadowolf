@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivysettings>
-	<ivysettings>
     <settings defaultResolver="chained"/>
     
     <property name="java.net.maven.pattern" value="[organisation]/jars/[artifact]-[revision].[ext]"/>
@@ -15,6 +14,5 @@
             		m2compatible="true"/>
         </chain>
     </resolvers>
-</ivysettings>
 
 </ivysettings>

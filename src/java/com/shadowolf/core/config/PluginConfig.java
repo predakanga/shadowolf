@@ -11,7 +11,7 @@ import javolution.xml.stream.XMLStreamException;
 /**
  * Encapsulates the values from a &lt;plugin&gt; specified in config.xml.  See the xml file comments for more information on its formation.
  */
-public class Plugin implements XMLSerializable {
+public class PluginConfig implements XMLSerializable {
 	private static final long serialVersionUID = 1801664393544220873L;
 	private String className;
 	private Map<String, String> options = new FastMap<String, String>();
@@ -49,10 +49,10 @@ public class Plugin implements XMLSerializable {
 		this.options.put(key, value);
 	}
 	
-	protected static XMLFormat<Plugin> PLUGIN_XML = new XMLFormat<Plugin>(Plugin.class) {
+	protected static XMLFormat<PluginConfig> PLUGIN_XML = new XMLFormat<PluginConfig>(PluginConfig.class) {
 
 		@Override
-		public void read(XMLFormat.InputElement xml, Plugin obj) throws XMLStreamException {
+		public void read(XMLFormat.InputElement xml, PluginConfig obj) throws XMLStreamException {
 			obj.setClassName(xml.getAttribute("class").toString());
 			
 			Parameter p = xml.get("option", Parameter.class);
@@ -64,7 +64,7 @@ public class Plugin implements XMLSerializable {
 		}
 
 		@Override
-		public void write(Plugin obj, XMLFormat.OutputElement xml) throws XMLStreamException {
+		public void write(PluginConfig obj, XMLFormat.OutputElement xml) throws XMLStreamException {
 			
 		}
 		

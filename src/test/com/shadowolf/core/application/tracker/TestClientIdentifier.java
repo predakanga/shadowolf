@@ -1,4 +1,4 @@
-package com.shadowolf.core.application.tracker.peers;
+package com.shadowolf.core.application.tracker;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;

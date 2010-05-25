@@ -129,6 +129,9 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 				}
 				
 				this.cache = new IDCache(torrents, idNumbers);
+				if(DEBUG) {
+					LOGGER.debug("Finished InfoHashCache.run(). New cache size: " + this.cache.size());
+				}
 			} finally {
 				stmt.close();
 			}
@@ -136,10 +139,10 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 			LOGGER.error(Exceptions.logInfo(e));
 			this.connectionIsValid = false;
 		} finally {
-			if(DEBUG) {
-				LOGGER.debug("Finished InfoHashCache.run(). New cache size: " + this.cache.size());
-			}
+			
 		}
+		
+		
 	}
 	
 	/**

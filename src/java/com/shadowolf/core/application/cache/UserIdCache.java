@@ -27,9 +27,9 @@ import com.shadowolf.util.Exceptions;
  * Also, WHERE clauses that bind binary data tend, in our experience, to behave inconsistently and this works
  * around that issue.
  */
-public class InfoHashCache extends DatabaseWrapper implements Runnable {
+public class UserIdCache extends DatabaseWrapper implements Runnable {
 	private static final boolean DEBUG = true;
-	private static final Logger LOGGER = Logger.getLogger(InfoHashCache.class);
+	private static final Logger LOGGER = Logger.getLogger(UserIdCache.class);
 	
 	//SQL crap
 	private final String infoHashColumn;
@@ -39,40 +39,40 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 	private IDCache cache;
 	
 	/**
-	 * Constructs a new InfoHashCache.  The configuration values torrents.table, torrents.info_hash_column, 
-	 * and torrents.id_column are used to construct a query that looks, quite simple like:
-	 * SELECT infoHash, torrent_id FROM torrents.
+	 * Constructs a new UserIdCache.  The configuration values user.table, user.passkey_column, 
+	 * and user.id_column are used to construct a query that looks, quite simple like:
+	 * SELECT passkey, user_id FROM users.
 	 * @param configValues Configuration values, usually from configInstance.getParameters().
 	 */
-	public InfoHashCache(Map<String, String> configValues) {
+	public UserIdCache(Map<String, String> configValues) {
 		//Go ahead and build a faux cache here, so that calls to other methods don't blow up.
 		Map<String, Integer> emptyHashesMap = Collections.emptyMap();
 		Map<Integer, String> emptyIntMap = Collections.emptyMap();
 		this.cache = new IDCache(emptyHashesMap, emptyIntMap);
 		
-		String tableName = configValues.get("torrents.table");
-		String infoHashColumn = configValues.get("torrents.info_hash_column");
-		String idColumn = configValues.get("torrents.id_column");
+		String tableName = configValues.get("user.table");
+		String passkeyColumn = configValues.get("user.passkey_column");
+		String idColumn = configValues.get("user.id_column");
 		
 		if(tableName == null) {
-			throw new RuntimeException("Required config value torrents.table not set.");
+			throw new RuntimeException("Required config value user.table not set.");
 		} 
 		
-		if(infoHashColumn == null) {
-			throw new RuntimeException("Required config value torrents.info_hash_column not set.");
+		if(passkeyColumn == null) {
+			throw new RuntimeException("Required config value user.info_hash_column not set.");
 		} else {
-			this.infoHashColumn = infoHashColumn;
+			this.infoHashColumn = passkeyColumn;
 		}
 		
 		if(idColumn == null) {
-			throw new RuntimeException("Required config value torrents.id_column not set.");
+			throw new RuntimeException("Required config value user.id_column not set.");
 		} else {
 			this.idColumn = idColumn;
 		}
 		
 		StringBuilder builder = new StringBuilder();
 		builder.append("SELECT ");
-		builder.append(infoHashColumn); 
+		builder.append(passkeyColumn); 
 		builder.append(", ");
 		builder.append(idColumn);
 		builder.append(" FROM ");
@@ -106,7 +106,7 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 			
 			//we set the default value to the current size, since it'll be mostly appropriate
 			//these are NOT marked shared() because the threadsafety is delegated to the inner class IDClass
-			Map<String, Integer> torrents = new FastMap<String,Integer>(this.cache.size());
+			Map<String, Integer> users = new FastMap<String,Integer>(this.cache.size());
 			Map<Integer, String> idNumbers = new FastMap<Integer,String>(this.cache.size());
 			
 			PreparedStatement stmt = this.prepareStatement(this.query);
@@ -121,13 +121,14 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 					try {
 						String hex = Data.byteArrayToHexString(infoHash.getBytes(1L, (int)infoHash.length()));
 						Integer torrentId = results.getInt(this.idColumn);
-						torrents.put(hex, torrentId);
+						users.put(hex, torrentId);
 						idNumbers.put(torrentId, hex);
 					} finally {
 						infoHash.free();
 					}
 				}
-				IDCache temp = new IDCache(torrents, idNumbers);
+				
+				IDCache temp = new IDCache(users, idNumbers);
 				this.cache = temp;
 				if(DEBUG) {
 					LOGGER.debug("Finished InfoHashCache.run(). New cache size: " + this.cache.size());
@@ -146,54 +147,37 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 	}
 	
 	/**
-	 * Returns the torrent id specified by this infoHash or null if not present.
-	 * @param infoHash the info_hash to lookup
-	 * @return the torrent id, or null if not found.
+	 * Returns the torrent id specified by this passkey, or null if not present.
+	 * @param passkey the passkey to look up.
+	 * @return the user ID (Integer object) or null.
 	 */
-	public Integer lookupTorrentId(byte[] infoHash) {
-		return this.lookupTorrentId(Data.byteArrayToHexString(infoHash));
+	public Integer lookupUserId(String passkey) {
+		return this.cache.lookupUserId(passkey);
 	}
 	
 	/**
-	 * Returns the torrent id specified by this hex-encoded infoHash, or null if not present.
-	 * @param hexHash the hex-encoded infoHash.
-	 * @return the torrent ID (Integer object) or null.
+	 * Returns the passkey for the given user ID or null if not present.
+	 * @param userId the passkey.
+	 * @return the passkey or null.
 	 */
-	public Integer lookupTorrentId(String hexHash) {
-		return this.cache.lookupTorrentId(hexHash);
+	public String lookupPasskey(Integer userId) {
+		return this.cache.lookupPasskey(userId);
 	}
 	
 	/**
-	 * Returns the hex-encoded infoHash for the given torrent ID or null if not present.
-	 * @param torrentId the hex-encoded infoHash.
-	 * @return the hex-encoded infoHash or null.
+	 * Removes the specified passkey from this cache.
+	 * @param passkey the passkey to remove.
 	 */
-	public String lookupInfoHash(Integer torrentId) {
-		return this.cache.lookupInfoHash(torrentId);
+	public void removeByPasskey(String passkey) {
+		this.cache.removeByPasskey(passkey);
 	}
 	
 	/**
-	 * Removes the specified hex-encoded infoHash from this cache.
-	 * @param hexHash the infoHash to remove
+	 * Removes the specified user ID from this cache. 
+	 * @param userId the user ID to remove.
 	 */
-	public void removeByInfoHash(String hexHash) {
-		this.cache.removeByInfoHash(hexHash);
-	}
-	
-	/**
-	 * Removes the specified infoHash from this cache.
-	 * @param infoHash the infoHash to remove.
-	 */
-	public void removeByInfoHash(byte[] infoHash) {
-		this.removeByInfoHash(Data.byteArrayToHexString(infoHash));
-	}
-	
-	/**
-	 * Removes the specified torrent ID from this cache.  This method is n
-	 * @param torrentId the torrent ID to remove.
-	 */
-	public void removeByTorrentId(Integer torrentId) {
-		this.cache.removeByTorrentId(torrentId);
+	public void removeByUserId(Integer userId) {
+		this.cache.removeByUserId(userId);
 	}
 	
 	/**
@@ -207,36 +191,36 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 	 * Simple class that wraps two maps so that the swap operation can be atomic, as well as removal and get operations.
 	 */
 	private class IDCache {
-		public Map<String, Integer> infoHashes;
+		public Map<String, Integer> passkeys;
 		public Map<Integer, String> idNumbers;
 		
 		private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 		private final Lock readLock = readWriteLock.readLock();
 		private final Lock writeLock = readWriteLock.writeLock();
 		
-		public IDCache(Map<String, Integer> infoHashes, Map<Integer, String> idNumbers) {
-			if(infoHashes.size() != idNumbers.size()) {
+		public IDCache(Map<String, Integer> passkeys, Map<Integer, String> idNumbers) {
+			if(passkeys.size() != idNumbers.size()) {
 				throw new RuntimeException("IDCache instantiated with non-congruent sized maps.");
 			}
 			
-			this.infoHashes = infoHashes;
+			this.passkeys = passkeys;
 			this.idNumbers = idNumbers;
 		}
 		
 		public int size() {
-			return this.infoHashes.size();
+			return this.passkeys.size();
 		}
 
-		public Integer lookupTorrentId(String hexHash) {
+		public Integer lookupUserId(String passkey) {
 			try {
 				readLock.lock();
-				return this.infoHashes.get(hexHash);
+				return this.passkeys.get(passkey);
 			} finally {
 				readLock.unlock();
 			}
 		}
 		
-		public String lookupInfoHash(Integer torrentId) {
+		public String lookupPasskey(Integer torrentId) {
 			try {
 				readLock.lock();
 				return this.idNumbers.get(torrentId);
@@ -245,27 +229,27 @@ public class InfoHashCache extends DatabaseWrapper implements Runnable {
 			}
 		}
 		
-		public void removeByInfoHash(String hexHash) {
-			Integer torrentId = this.lookupTorrentId(hexHash);
-			if(torrentId != null) {
+		public void removeByPasskey(String passkey) {
+			Integer userId = this.lookupUserId(passkey);
+			if(userId != null) {
 				try {
 					writeLock.lock();
-					this.infoHashes.remove(hexHash);
-					this.idNumbers.remove(torrentId);
+					this.passkeys.remove(passkey);
+					this.idNumbers.remove(userId);
 				} finally {
 					writeLock.unlock();
 				}
 			}
 		}
 		
-		public void removeByTorrentId(Integer torrentId) {
-			String hexHash = this.lookupInfoHash(torrentId);
+		public void removeByUserId(Integer userId) {
+			String passkey = this.lookupPasskey(userId);
 			
-			if(hexHash != null) {
+			if(passkey != null) {
 				try {
 					writeLock.lock();
-					this.idNumbers.remove(torrentId);
-					this.infoHashes.remove(hexHash);
+					this.idNumbers.remove(userId);
+					this.passkeys.remove(passkey);
 				} finally {
 					writeLock.lock();
 				}

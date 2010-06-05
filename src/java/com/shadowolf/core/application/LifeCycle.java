@@ -8,6 +8,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import com.shadowolf.core.application.cache.InfoHashCache;
+import com.shadowolf.core.application.cache.UserIdCache;
 import com.shadowolf.core.application.plugin.PluginEngine;
 import com.shadowolf.core.config.Config;
 
@@ -31,13 +32,16 @@ public class LifeCycle implements ServletContextListener {
 	public void contextInitialized(ServletContextEvent event) {
 		ServletContext context = event.getServletContext();
 		Config config = Config.newInstance(context.getRealPath("/WEB-INF/config.xml"));
-		InfoHashCache cache = new InfoHashCache(config.getParameters());
+		InfoHashCache infoHashCache = new InfoHashCache(config.getParameters());
+		UserIdCache userIdCache = new UserIdCache(config.getParameters());
+		
 		ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 		
-		executor.scheduleAtFixedRate(cache, 0, Integer.parseInt(config.getParameter("torrents.cache_update_interval")), TimeUnit.SECONDS);
-
+		executor.scheduleAtFixedRate(infoHashCache, 0, Integer.parseInt(config.getParameter("torrents.cache_update_interval")), TimeUnit.SECONDS);
+		executor.scheduleAtFixedRate(userIdCache, 0, Integer.parseInt(config.getParameter("user.cache_update_interval")), TimeUnit.SECONDS);
+		
 		context.setAttribute("config", config);
-		context.setAttribute("infoHashCache", cache);
+		context.setAttribute("infoHashCache", infoHashCache);
 		context.setAttribute("scheduledThreadPoolExecutor", executor);
 		context.setAttribute("pluginEngine", new PluginEngine(config.getPlugins(), context));
 	}

@@ -1,12 +1,11 @@
 package com.shadowolf.core.application.tracker;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -16,11 +15,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import javolution.util.FastMap;
 import javolution.util.FastSet;
-import javolution.util.FastTable;
 
 import org.apache.log4j.Logger;
 
 import com.shadowolf.core.application.cache.InfoHashCache;
+import com.shadowolf.util.ReservoirSampler;
 
 /**
  * This class serves as a registry for all things torrent.
@@ -38,7 +37,19 @@ public class Registry {
 	 * and pushed back into it.  The sorting is done so that garbage Clients that don't
 	 * clean themselves up (which will happen for various reasons) can be periodically cleaned out.
 	 */
-	private static SortedSet<Client> clientList = new TreeSet<Client>();
+	private static SortedSet<Client> clientList = new TreeSet<Client>(new Comparator<Client>() {
+		@Override
+		public int compare(Client arg0, Client arg1) {
+			if(arg0.getLatestAccess() > arg0.getLatestAccess()) {
+				return 1;
+			} else if (arg0.getLatestAccess() < arg1.getLatestAccess()) {
+				return -1;
+			} else {
+				return 0;
+			}
+		}
+		
+	});
 
 	/**
 	 * <i>clients</i> is a Map of ClientIdentifier -> WeakReference&lt;Client&gt; that serves
@@ -200,8 +211,9 @@ public class Registry {
 	 * 		Mostly as a paranoia measure, also iterate over the torrents lookup table, removing clients we've destroyed.
 	 * 	</li>
 	 * </ul>
+	 * @param removeSeconds the age of Peers to remove, anything that hasn't been accessed in <i>removeSeconds</i> is removed. 
 	 */
-	public static void cleanup() {
+	public static void cleanup(long removeSeconds) {
 		try {
 			if(DEBUG) {
 				LOGGER.debug("Starting cleanup, current client list size: " + clientList.size());
@@ -221,8 +233,8 @@ public class Registry {
 				LOGGER.debug("Starting cleanup, current torrent list size: " + seeders.size());
 			}
 			
-			cleanTorrentCollection(seeders.keySet().iterator());
-			cleanTorrentCollection(leechers.keySet().iterator());
+			cleanTorrentCollection(seeders.keySet().iterator(), removeSeconds);
+			cleanTorrentCollection(leechers.keySet().iterator(), removeSeconds);
 			
 			if (DEBUG) {
 				LOGGER.debug("Finished cleanup, current torrent list size: " + seeders.size());
@@ -252,7 +264,7 @@ public class Registry {
 				peers = leechers.get(torrentId);
 				
 				if(peers.size() > numwant) {
-					return reservoirSample(peers, numwant);
+					return ReservoirSampler.listSample(peers, numwant);
 				} else {
 					return Collections.unmodifiableSet(peers);
 				}
@@ -263,14 +275,14 @@ public class Registry {
 				peers = leechers.get(torrentId);
 				
 				if(peers.size() > numwant) {
-					return reservoirSample(peers, numwant);
+					return ReservoirSampler.listSample(peers, numwant);
 				} else if (peers.size() >= 50) {
 					return Collections.unmodifiableSet(peers);
 				} else {
 					ensureSeederSet(torrentId);
 					Set<ClientIdentifier> list = new FastSet<ClientIdentifier>();
 					list.addAll(peers);
-					list.addAll(reservoirSample(seeders.get(torrentId), numwant - peers.size()));
+					list.addAll(ReservoirSampler.listSample(seeders.get(torrentId), numwant - peers.size()));
 					return Collections.unmodifiableSet(list);
 				}
 			}
@@ -280,27 +292,7 @@ public class Registry {
 		}
 	}
 
-	//trivial implementation of reservoir sampling
-	private static List<ClientIdentifier> reservoirSample(Iterable<ClientIdentifier> set, int size) {
-		List<ClientIdentifier> sampled = new FastTable<ClientIdentifier>(size);
-		int count = 0;
-		Random rand = new Random(System.nanoTime());
-		for(ClientIdentifier id :  set) {
-			count++;
-			if(count <= size) {
-				sampled.add(id);
-			} else {
-				int rnd = rand.nextInt(count);
-				if(rnd < size) {
-					sampled.set(rnd, id);
-				}
-			}
-		}
-		
-		return Collections.unmodifiableList(sampled);
-	}
-	
-	private static void cleanTorrentCollection(Iterator<Integer> torrentIter) {
+	private static void cleanTorrentCollection(Iterator<Integer> torrentIter, long removeSeconds) {
 		while(torrentIter.hasNext()) {
 			Integer torrentId = torrentIter.next();
 			if(seeders.get(torrentId) == null || seeders.get(torrentId).size() == 0) {
@@ -312,6 +304,26 @@ public class Registry {
 				
 				while(setIter.hasNext()) {
 					ClientIdentifier cid = setIter.next();
+					
+					WeakReference<Client> client = clients.get(cid);
+					
+					if(client != null) {
+						Client cli = client.get();
+						if(cli == null) {
+							clients.remove(client);
+						} else {
+							long removeTime = new Date().getTime() - removeSeconds * 1000;
+							Map<Integer, Peer> peers = cli.getPeers();
+							Iterator<Integer> iter = peers.keySet().iterator();
+							for(Integer i : peers.keySet()) {
+								if(peers.get(i).getLatestAnnounce() < removeTime) {
+									iter.remove();
+								}
+							}
+							
+						}
+					}
+					
 					if(clients.get(cid) == null || clients.get(cid).get() == null) {
 						setIter.remove();
 					}
@@ -464,23 +476,10 @@ public class Registry {
 	}
 
 	/**
-	 * Returns an immutable view of all Clients currently tracked by this tracker.
-	 * References should not be kept and behavior is undefined if they are.
-	 */
-	public static Set<Client> getClientSet() {
-		try {
-			readLock.lock();
-			return Collections.unmodifiableSet(clientList);
-		} finally {
-			readLock.unlock();
-		}
-	}
-
-	/**
-	 * Returns a Set of ClientIdentifiers that make up the swarm for the supplied
+	 * Returns a Set of ClientIdentifiers (for seeders) that make up the swarm for the supplied
 	 * torrent ID.
 	 */
-	public static Set<ClientIdentifier> getClientList(Integer torrentId) {
+	public static Set<ClientIdentifier> getSeederList(Integer torrentId) {
 		ensureSeederSet(torrentId);
 		try {
 			readLock.lock();
@@ -491,6 +490,21 @@ public class Registry {
 		
 	}
 
+	/**
+	 * Returns a Set of ClientIdentifiers (for leechers) that make up the swarm for the supplied
+	 * torrent ID.
+	 */
+	public static Set<ClientIdentifier> getLeecherList(Integer torrentId) {
+		ensureLeecherSet(torrentId);
+		try {
+			readLock.lock();
+			return Collections.unmodifiableSet(leechers.get(torrentId));
+		} finally {
+			readLock.unlock();
+		}
+		
+	}
+	
 	private static void ensureSeederSet(Integer id) {
 		try {
 			readLock.lock();

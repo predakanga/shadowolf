@@ -1,0 +1,21 @@
+#this is probably the only line you need to change
+servlet.dir = /path/to/tomcat6
+
+servlet.lib.dir = ${servlet.dir}/lib
+	
+build.dir = build
+java.src.dir = src/java
+webapp.src.dir = WebContent
+project.name = shadowolf
+
+java.build.dir = ${build.dir}/java
+java.build.classes.dir = ${build.dir}/java/classes
+java.build.src.dir = ${build.dir}/java/src
+java.jar = ${build.dir}/java/${project.name}.jar
+java.src.jar = ${build.dir}/java/${project.name}-src.jar
+	
+webapp.name = ${project.name}
+webapp.build.dir = ${build.dir}/webapp/${webapp.name}
+webapp.build.classes.dir = ${build.dir}/webapp/${webapp.name}/WEB-INF
+webapp.metainf = ${build.dir}/webapp/${webapp.name}/META-INF
+webapp.war = ${build.dir}/webapp/${webapp.name}.war

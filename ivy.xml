@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+    <info
+        organisation="com.shadowolf"
+        module="shadowolf"
+        >
+	</info>
+	
+	<dependencies defaultconf="*->*,!sources,!javadoc,!ear">
+		<dependency org="javolution" name="javolution" rev="5.5.1"/>
+		<dependency org="log4j" name="log4j" rev="1.2.15" transitive="false"/>
+		<dependency org="com.google.code.gson" name="gson" rev="1.4"/>
+		<dependency org="mysql" name="mysql-connector-java" rev="5.1.12"/>
+	</dependencies>
+</ivy-module>

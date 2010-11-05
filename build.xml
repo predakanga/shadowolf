@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
+
+<project name="shadowolf" basedir="." default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" />
+
+	<property file="build.properties"/>
+	
+	<path id="java.classpath"	>
+		<fileset dir="${lib.dir}">
+			<patternset>
+				<include name="**/*.jar" />
+			</patternset>
+		</fileset>
+	</path>
+	
+	<target name="build">
+		<delete dir="${java.build.dir}" />
+		
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${java.build.classes.dir}" />
+		<mkdir dir="${java.build.src.dir}" />
+		
+		<ivy:resolve/>
+		<ivy:retrieve 
+			pattern="${lib.dir}/[module]-[revision]-[type].[ext]" />
+				
+		
+		<javac
+			debug="true"
+			srcdir="${java.src.dir}"
+			destdir="${java.build.classes.dir}"
+		>
+			<classpath refid="java.classpath"/>
+		</javac>
+		
+		<copy todir="${java.build.src.dir}">
+			<fileset dir="${java.src.dir}"/>
+		</copy>
+		
+		<jar jarfile="${java.src.jar}">
+			<fileset dir="${java.build.src.dir}"/>
+		</jar>
+
+		<jar jarfile="${java.jar}">
+			<fileset dir="${java.build.src.dir}"/>
+		</jar>
+		
+	</target>
+</project>

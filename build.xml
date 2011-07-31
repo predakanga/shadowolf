@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
+
+<project name="Shadowolf" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<property file="build.properties" />
+	<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" />
+	
+	<path id="compile.classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar" />
+	</path>
+	
+
+	<!-- All targets (except clean) call "init" -->
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.classes}" />
+		<ivy:resolve /> 
+		<ivy:retrieve type="jar" pattern="${lib.dir}/[module]-[revision].[ext]" /> 
+	</target>
+
+	<target name="compile-core" depends="init">
+		<javac classpathref="compile.classpath" srcdir="${src.java}" destdir="${build.classes}" target="1.7" includeAntRuntime="false" />
+	</target>
+
+	<target name="compile-plugins">
+		<subant antfile="build-plugin.xml" inheritall="true" target="build">
+			<fileset dir="." includes="plugins/*/build-plugin.xml" />
+		</subant>
+	</target>
+
+	<target name="jar" depends="init, compile-core">
+		<jar destfile="${build.dir}/Shadowolf-${version}.jar">
+			<fileset dir="${build.classes}"/>
+		</jar>
+	</target>
+
+	<target name="build">
+		<antcall target="compile-core" />
+		<antcall target="compile-plugins" />
+		<antcall target="jar" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+	</target>
+</project>

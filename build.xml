@@ -15,10 +15,10 @@
 		<mkdir dir="${build.dir}" />
 		<mkdir dir="${build.classes}" />
 		<ivy:resolve /> 
-		<ivy:retrieve type="jar" pattern="${lib.dir}/[module]-[revision].[ext]" /> 
+		<ivy:retrieve type="jar" pattern="${lib.dir}/[module]-[revision]-[type].[ext]" /> 
 	</target>
 
-	<target name="compile-core" depends="init">
+	<target name="compile-core">
 		<javac classpathref="compile.classpath" srcdir="${src.java}" destdir="${build.classes}" target="1.7" includeAntRuntime="false" />
 	</target>
 
@@ -28,13 +28,13 @@
 		</subant>
 	</target>
 
-	<target name="jar" depends="init, compile-core">
+	<target name="jar" depends="compile-core">
 		<jar destfile="${build.dir}/Shadowolf-${version}.jar">
 			<fileset dir="${build.classes}"/>
 		</jar>
 	</target>
 
-	<target name="build">
+	<target name="build" depends="init">
 		<antcall target="compile-core" />
 		<antcall target="compile-plugins" />
 		<antcall target="jar" />

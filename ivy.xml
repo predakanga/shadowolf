@@ -9,9 +9,11 @@
 	
 	<dependencies>
 		<dependency org="log4j" name="log4j" rev="1.2.16" transitive="false"/>
-		<dependency org="com.google.code.gson" name="gson" rev="1.4"/>
+		<dependency org="com.google.code.gson" name="gson" rev="1.7.1"/>
 		<dependency org="com.google.guava" name="guava" rev="r09" />
 		<dependency org="org.eclipse.jetty" name="jetty-server" rev="7.4.5.v20110725"/>
+		<dependency org="org.eclipse.jetty" name="jetty-security" rev="7.4.5.v20110725"/>
 		<dependency org="commons-configuration" name="commons-configuration" rev="1.6" />
+		<dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" />
 	</dependencies>
 </ivy-module>

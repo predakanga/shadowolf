@@ -143,7 +143,7 @@ public class JettyServer {
 	
 	
 	private static final class RequestHandler extends AbstractHandler implements Server.Graceful {
-		private boolean shutdown = false;
+		private volatile boolean shutdown = false;
 		
 		private final HttpServlet announce = new AnnounceRequest();
 		private final HttpServlet scrape = new ScrapeRequest();

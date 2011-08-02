@@ -43,10 +43,17 @@ import com.shadowolf.protocol.Announce;
  * 
  * <br/><br/>
  * 
- * Immediate tasks ({@link LifeCycleTask}, {@link PreAnnounceFilter}, {@Link AnnounceDecorator}) run
+ * Immediate tasks ({@link LifeCycleTask}, {@link PreAnnounceFilter}, {@link AnnounceDecorator}) run
  * in the calling thread.  This is because the majority of tasks are done in
  * http worker threads that would otherwise have to block for their result.
  * 
+ * @see {@link PluginLoader}
+ * @see {@link AnnounceDecorator}
+ * @see {@link AsyncAnnounceTask}
+ * @see {@link LifeCycleTask}
+ * @see {@link PreAnnounceFilter}
+ * @see {@link ScheduledTask}
+ *  
  */
 public class PluginEngine {
 	private Multimap<Class<?>, Object> objectsAtPoint = HashMultimap.create();

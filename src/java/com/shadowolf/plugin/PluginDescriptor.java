@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -132,6 +133,9 @@ public class PluginDescriptor {
 		Unmarshaller um = context.createUnmarshaller();
 		PluginDescriptor a = (PluginDescriptor) um.unmarshal(new File("src/plugin/ClientWhitelist/sw_plugin.xml"));
 
+		Marshaller m = context.createMarshaller();
+		m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+		m.marshal(a, System.out);
 		System.out.println(a.getExtensions().get(0).point);
 	}
 }

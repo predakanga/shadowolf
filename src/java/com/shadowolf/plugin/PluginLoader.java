@@ -63,6 +63,19 @@ public class PluginLoader implements ShadowolfComponent {
 		return context;
 	}
 
+	public void loadAllPluginsInDir() {
+		File[] pluginDirs = new File(pluginsFolder).listFiles(new FileFilter(){
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.isDirectory();
+			}
+		});
+		
+		for(File f : pluginDirs) {
+			PluginDescriptor desc = createPluginDescriptor(new File(f.getAbsolutePath() + "/sw_plugin.xml"));
+			loadPluginRecurse(desc, null);
+		}
+	}
 	
 	/**
 	 * Return whether or not a plugin exists in the plugin directory,
@@ -90,7 +103,7 @@ public class PluginLoader implements ShadowolfComponent {
 
 	private PluginDescriptor createPluginDescriptor(File file) {
 		try {
-			if(file.exists() && file.canRead() && file.isDirectory()) {
+			if(file.exists() && file.canRead() && !file.isDirectory()) {
 				return (PluginDescriptor) unmarshaller.unmarshal(file); 
 			} else {
 				return null;
@@ -183,44 +196,46 @@ public class PluginLoader implements ShadowolfComponent {
 		Multimap<Class<?>, Object> extensions = HashMultimap.create();
 		Set<String> instantiated = new HashSet<>();
 		
-		for(Extension e : descriptor.getExtensions()) {
-			String className = e.getClassName();
-
-			if(instantiated.contains(className)) {
-				continue;
-			}
-			
-			try {
-				Object o = loader.loadClass(className).newInstance();
-				
-				if(o instanceof ShadowolfComponent) {
-					((ShadowolfComponent) o).setContext(context);
+		if(descriptor.getExtensions() != null) { 
+			for(Extension e : descriptor.getExtensions()) {
+				String className = e.getClassName();
+	
+				if(instantiated.contains(className)) {
+					continue;
 				}
 				
-				if(o instanceof AnnounceDecorator) {
-					extensions.put(AnnounceDecorator.class, o);
-				}
+				try {
+					Object o = loader.loadClass(className).newInstance();
+					
+					if(o instanceof ShadowolfComponent) {
+						((ShadowolfComponent) o).setContext(context);
+					}
+					
+					if(o instanceof AnnounceDecorator) {
+						extensions.put(AnnounceDecorator.class, o);
+					}
+					
+					if(o instanceof AsyncAnnounceTask) {
+						extensions.put(AsyncAnnounceTask.class, o);
+					}
+					
+					if(o instanceof LifeCycleTask) {
+						extensions.put(LifeCycleTask.class, o);
+					}
+					
+					if(o instanceof PreAnnounceFilter) {
+						extensions.put(PreAnnounceFilter.class, o);
+					}
+					
+					if(o instanceof ScheduledTask) {
+						extensions.put(ScheduledTask.class, o);
+					}
 				
-				if(o instanceof AsyncAnnounceTask) {
-					extensions.put(AsyncAnnounceTask.class, o);
+					instantiated.add(className);
+				} catch (InstantiationException | IllegalAccessException | ClassNotFoundException ex) {
+					Exceptions.log(ex);
+					throw new RuntimeException("Error instantiating plugin, please see logs.");
 				}
-				
-				if(o instanceof LifeCycleTask) {
-					extensions.put(LifeCycleTask.class, o);
-				}
-				
-				if(o instanceof PreAnnounceFilter) {
-					extensions.put(PreAnnounceFilter.class, o);
-				}
-				
-				if(o instanceof ScheduledTask) {
-					extensions.put(ScheduledTask.class, o);
-				}
-			
-				instantiated.add(className);
-			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException ex) {
-				Exceptions.log(ex);
-				throw new RuntimeException("Error instantiating plugin, please see logs.");
 			}
 		}
 		
@@ -273,5 +288,9 @@ public class PluginLoader implements ShadowolfComponent {
 		}
 		
 		return tree;
+	}
+
+	public Map<String, Plugin> getPlugins() {
+		return plugins;
 	}
 }

@@ -16,6 +16,8 @@ import javax.xml.bind.Unmarshaller;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.shadowolf.ShadowolfComponent;
+import com.shadowolf.ShadowolfContext;
 import com.shadowolf.plugin.PluginDescriptor.Extension;
 import com.shadowolf.plugin.points.AnnounceDecorator;
 import com.shadowolf.plugin.points.AsyncAnnounceTask;
@@ -34,22 +36,34 @@ import com.shadowolf.util.Exceptions;
  * The class also keeps track of all plugins that it's loaded
  * so that it only loads them once.
  */
-public class PluginLoader {
+public class PluginLoader implements ShadowolfComponent {
 	private final String pluginsFolder = "src/plugin/";
 	private final String libsFolder = "src/lib";
-	private final JAXBContext context;
+	private final JAXBContext jaxbContext;
 	private final Unmarshaller unmarshaller;
 	private final Map<String, Plugin> plugins = new HashMap<String, Plugin>();
+	private ShadowolfContext context;
 	
 	public PluginLoader() {
 		try {
-			context = JAXBContext.newInstance(PluginDescriptor.class);
-			unmarshaller = context.createUnmarshaller();
+			jaxbContext = JAXBContext.newInstance(PluginDescriptor.class);
+			unmarshaller = jaxbContext.createUnmarshaller();
 		} catch (JAXBException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
+	@Override
+	public void setContext(ShadowolfContext context) {
+		this.context = context;
+	}
+
+	@Override
+	public ShadowolfContext getContext() {
+		return context;
+	}
+
+	
 	/**
 	 * Return whether or not a plugin exists in the plugin directory,
 	 * usually the "plugins/" directory.
@@ -179,6 +193,10 @@ public class PluginLoader {
 			try {
 				Object o = loader.loadClass(className).newInstance();
 				
+				if(o instanceof ShadowolfComponent) {
+					((ShadowolfComponent) o).setContext(context);
+				}
+				
 				if(o instanceof AnnounceDecorator) {
 					extensions.put(AnnounceDecorator.class, o);
 				}
@@ -251,7 +269,6 @@ public class PluginLoader {
 				}
 				
 				loadTree(depDescriptor, tree);
-				
 			}
 		}
 		

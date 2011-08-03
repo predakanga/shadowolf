@@ -28,6 +28,8 @@ import org.eclipse.jetty.util.thread.ThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.shadowolf.ShadowolfComponent;
+import com.shadowolf.ShadowolfContext;
 import com.shadowolf.server.request.AnnounceRequest;
 import com.shadowolf.server.request.ScrapeRequest;
 
@@ -35,7 +37,7 @@ import com.shadowolf.server.request.ScrapeRequest;
  * A Jetty server for shadowolf.  This is, for now, the only 
  * implementation.
  */
-public class JettyServer {
+public class JettyServer implements ShadowolfComponent {
 	private static final Logger LOG = LoggerFactory.getLogger(JettyServer.class);
 	private static final String ANNOUNCE_URL = "/announce";
 	private static final String SCRAPE_URL = "/scrape";
@@ -46,10 +48,22 @@ public class JettyServer {
 	private Server server;
 	private ExecutorService executor = Executors.newCachedThreadPool(new ServerThreadFactory());
 	
+	private ShadowolfContext context;
+	
 	public JettyServer(InetAddress address, int port) throws ServletException {
 		this.port = port;
 		this.address = address;
 		this.handler = new RequestHandler();
+	}
+	
+	@Override
+	public void setContext(ShadowolfContext context) {
+		this.context = context;
+	}
+
+	@Override
+	public ShadowolfContext getContext() {
+		return context;
 	}
 	
 	/**

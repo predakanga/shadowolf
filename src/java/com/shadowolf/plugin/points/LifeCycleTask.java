@@ -1,6 +1,8 @@
 package com.shadowolf.plugin.points;
 
-public interface LifeCycleTask extends AbstractPlugin {
+import com.shadowolf.ShadowolfComponent;
+
+public interface LifeCycleTask extends ShadowolfComponent {
 	public void onStart();
 	public void onShutdown();
 }

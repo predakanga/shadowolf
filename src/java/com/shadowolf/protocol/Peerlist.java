@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 
 import com.google.common.collect.MapMaker;
@@ -31,7 +30,6 @@ import com.shadowolf.util.ReservoirSampler;
 public class Peerlist implements ShadowolfComponent {
 	private final ConcurrentMap<InetAddress,Peer> map;
 	
-	@GuardedBy("this")
 	private ShadowolfContext context;
 	
 	public Peerlist(ShadowolfContext s) {
@@ -68,12 +66,12 @@ public class Peerlist implements ShadowolfComponent {
 	}
 	
 	@Override
-	public synchronized void setContext(ShadowolfContext c) {
+	public void setContext(ShadowolfContext c) {
 		context = c;
 	}
 
 	@Override
-	public synchronized ShadowolfContext getContext() {
+	public ShadowolfContext getContext() {
 		return context;
 	}
 }

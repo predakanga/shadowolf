@@ -9,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.concurrent.Immutable;
 import javax.servlet.ServletException;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -35,7 +36,8 @@ import com.shadowolf.util.Exceptions;
  * application.  Creating a new instance should be synonymous with
  * starting a new tracker on a new socket.  The provided factory
  * method creates and initializes an object with the default
- * configuration location and names.    
+ * configuration location and names. Custom behavior can be achieved
+ * by subclassing.
  * 
  * <br/><br/>
  * 
@@ -46,9 +48,15 @@ import com.shadowolf.util.Exceptions;
  * may support "multi-core" trackers that function as a cluster 
  * in a single application. 
  * 
+ * <strong>This class, itself, is threadsafe because it's immutable.
+ * 	This class provides no guarantees about the thread safety of methods
+ *  invoked on this class's members</strong>
+ *   
  * <strong>The state of this class is currently transient
  * 	and may change at any moment!</strong>
  */
+
+@Immutable
 public class ShadowolfContext {
 	private PluginLoader pluginLoader;
 	private PluginEngine pluginEngine;
@@ -58,55 +66,56 @@ public class ShadowolfContext {
 	private Configuration configuration;
 	private AccessList serverAccessList;
 	
-	private ShadowolfContext() {
+	protected ShadowolfContext() {
 		
 	}
 	
 	public PluginLoader getPluginLoader() {
 		return pluginLoader;
 	}
-	public void setPluginLoader(PluginLoader pluginLoader) {
+	protected void setPluginLoader(PluginLoader pluginLoader) {
 		this.pluginLoader = pluginLoader;
 	}
 
 	public PluginEngine getPluginEngine() {
 		return pluginEngine;
 	}
-	public void setPluginEngine(PluginEngine pluginEngine) {
+	protected void setPluginEngine(PluginEngine pluginEngine) {
 		this.pluginEngine = pluginEngine;
 	}
 
 	public ExecutorService getHttpWorkerPool() {
 		return httpWorkerPool;
 	}
-	public void setHttpWorkerPool(ExecutorService httpWorkerPool) {
+	protected void setHttpWorkerPool(ExecutorService httpWorkerPool) {
 		this.httpWorkerPool = httpWorkerPool;
 	}
 
 	public ExecutorService getAsyncPluginWorkerPool() {
 		return asyncPluginWorkerPool;
 	}
-	public void setAsyncPluginWorkerPool(ExecutorService asyncPluginWorkerPool) {
+	protected void setAsyncPluginWorkerPool(ExecutorService asyncPluginWorkerPool) {
 		this.asyncPluginWorkerPool = asyncPluginWorkerPool;
 	}
 
 	public JettyServer getJettyServer() {
 		return jettyServer;
 	}
-	public void setJettyServer(JettyServer jettyServer) {
+	protected void setJettyServer(JettyServer jettyServer) {
 		this.jettyServer = jettyServer;
 	}
 
 	public Configuration getConfiguration() {
 		return configuration;
 	}
-	public void setConfiguration(Configuration configuration) {
+	protected void setConfiguration(Configuration configuration) {
 		this.configuration = configuration;
 	}
 
 	public void start() throws Exception {
 		pluginEngine.startScheduler();
 		jettyServer.startServer(serverAccessList);
+		jettyServer.join();
 	}
 	
 	public static ShadowolfContext createNewContext(String configFile) {

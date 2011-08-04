@@ -8,5 +8,6 @@ public interface ScheduledTask extends Runnable, ShadowolfComponent {
 	public TimeUnit getTimeUnit();
 	public int getInterval();
 	public int getDelay();
+	@Override
 	public void run();
 }

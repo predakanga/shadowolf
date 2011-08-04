@@ -41,7 +41,7 @@ public class PluginLoader implements ShadowolfComponent {
 	private final String libsFolder = "src/lib";
 	private final JAXBContext jaxbContext;
 	private final Unmarshaller unmarshaller;
-	private final Map<String, Plugin> plugins = new HashMap<String, Plugin>();
+	private final Map<String, Plugin> plugins = new HashMap<>();
 	private ShadowolfContext context;
 	
 	public PluginLoader() {

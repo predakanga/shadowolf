@@ -121,7 +121,7 @@ public class DependencyTree<E> {
      * @param e the child to add
      */
     public void addChild(E e) {
-        children.add(new DependencyTree<E>(e, this));
+        children.add(new DependencyTree<>(e, this));
     }
 
 
@@ -185,7 +185,7 @@ public class DependencyTree<E> {
      * @return a List of child dependencies.
      */
     public List<E> getChildValues() {
-        List<E> vals = new ArrayList<E>(children.size());
+        List<E> vals = new ArrayList<>(children.size());
         for(DependencyTree<E> e : children) {
             vals.add(e.getVal());
         }

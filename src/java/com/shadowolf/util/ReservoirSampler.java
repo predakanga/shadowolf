@@ -42,7 +42,7 @@ public class ReservoirSampler {
 		
 	
 	public static <T> List<T> listSample(T[] collection, int sampleSize) {
-		List<T> list = new ArrayList<T>(sampleSize);
+		List<T> list = new ArrayList<>(sampleSize);
 		int count = 0;
 		Random rand = new Random(System.nanoTime());
 		for(T t : collection) {
@@ -61,7 +61,7 @@ public class ReservoirSampler {
 	}
 	
 	public static <T> List<T> listSample(Iterable<T> collection, int sampleSize) {
-		List<T> list = new ArrayList<T>(sampleSize);
+		List<T> list = new ArrayList<>(sampleSize);
 		int count = 0;
 		Random rand = new Random(System.nanoTime());
 		for(T t : collection) {

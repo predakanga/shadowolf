@@ -95,7 +95,7 @@ public class JettyServer implements ShadowolfComponent {
 		this.server.setGracefulShutdown(30000);
 		
 		HashLoginService loginService = new HashLoginService();
-		List<ConstraintMapping> maps = new ArrayList<ConstraintMapping>();
+		List<ConstraintMapping> maps = new ArrayList<>();
 		
 		if(accessList != null) {
 			for(AccessList.Role role : accessList.getRoles()) {

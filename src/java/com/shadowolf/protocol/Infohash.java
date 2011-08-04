@@ -1,14 +1,18 @@
 package com.shadowolf.protocol;
 
 import java.util.Arrays;
+
+import javax.annotation.concurrent.ThreadSafe;
+
 import com.google.common.base.Charsets;
 
 /**
- * This class represents a torrent's infohash -- a sha1 hash
- * that uniquely identifies the torrent. This class is fully
+ * This class represents a torrent's infohash (a sha1 hash
+ * that uniquely identifies the torrent). This class is fully
  * thread-safe, as it is immutable.
  *
  */
+@ThreadSafe
 public class Infohash implements Comparable<Infohash> {
 	final private byte[] data;
 	

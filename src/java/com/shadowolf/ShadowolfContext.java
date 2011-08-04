@@ -2,8 +2,10 @@ package com.shadowolf;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -19,9 +21,11 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
+import com.google.common.collect.MapMaker;
 import com.shadowolf.plugin.Plugin;
 import com.shadowolf.plugin.PluginEngine;
 import com.shadowolf.plugin.PluginLoader;
+import com.shadowolf.protocol.Peer;
 import com.shadowolf.server.AccessList;
 import com.shadowolf.server.JettyServer;
 import com.shadowolf.util.Exceptions;
@@ -65,9 +69,11 @@ public class ShadowolfContext {
 	private JettyServer jettyServer;
 	private Configuration configuration;
 	private AccessList serverAccessList;
+	private MapMaker peerlistMapMaker;
 	
 	protected ShadowolfContext() {
 		
+				
 	}
 	
 	public PluginLoader getPluginLoader() {
@@ -112,6 +118,10 @@ public class ShadowolfContext {
 		this.configuration = configuration;
 	}
 
+	public ConcurrentMap<InetSocketAddress, Peer> makepeerListMap() {
+		return peerlistMapMaker.makeMap();
+	}
+	
 	public void start() throws Exception {
 		pluginEngine.startScheduler();
 		jettyServer.startServer(serverAccessList);
@@ -179,6 +189,21 @@ public class ShadowolfContext {
 		for(Plugin p : context.pluginLoader.getPlugins().values()) {
 			context.pluginEngine.addPlugin(p);
 		}
+		
+		int peerExpiry = context.getConfiguration().getInt("protocol.Peerlist.peerExpiry", 2400);
+		int httpWorkers = context.getConfiguration().getInt("server.workers.max", 16);
+		// 1/8th of all workers accessing the same peerlist seems unlikely
+		// and a concurrency level of six seems sane... these values might need to be tuned later
+		int concurrencyLevel = (httpWorkers/8) > 6 ? 6 : httpWorkers/8; 
+		
+		//make mapmaker
+		context.peerlistMapMaker = new MapMaker().
+				expireAfterWrite(peerExpiry, TimeUnit.SECONDS).
+				concurrencyLevel(concurrencyLevel).
+				initialCapacity(4); 
+				//the largest majority of torrents that will ever be tracked will have
+				//less than 4 peers, so reducing the default size means that we'll have
+				//slightly less memory overhead
 		
 		return context;
 	}

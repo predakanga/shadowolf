@@ -1,7 +1,7 @@
 package com.shadowolf.protocol;
 
-import java.net.InetAddress;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
@@ -28,40 +28,69 @@ import com.shadowolf.util.ReservoirSampler;
  */
 @ThreadSafe
 public class Peerlist implements ShadowolfComponent {
-	private final ConcurrentMap<InetAddress,Peer> map;
+	private ConcurrentMap<InetSocketAddress,Peer> map;
 	
 	private ShadowolfContext context;
 	
 	public Peerlist(ShadowolfContext s) {
 		setContext(s);
 		
-		MapMaker m = new MapMaker();
-		m.weakValues();
-		m.expireAfterWrite(context.getConfiguration().getLong("protocol.Peerlist.peerExpiry", 2400L), TimeUnit.SECONDS);
-		map = m.makeMap();
+		int peerExpiry = context.getConfiguration().getInt("protocol.Peerlist.peerExpiry", 2400);
+		int httpWorkers = context.getConfiguration().getInt("server.workers.max", 16);
+		// 1/8th of all workers accessing the same peerlist seems unlikely
+		// and a concurrency level of six seems sane... these values might need to be tuned later
+		int concurrencyLevel = (httpWorkers/8) > 6 ? 6 : httpWorkers/8; 
+
+		map = new MapMaker().
+				expireAfterWrite(peerExpiry, TimeUnit.SECONDS).
+				concurrencyLevel(concurrencyLevel).
+				initialCapacity(4). 
+				//the largest majority of torrents that will ever be tracked will have
+				//less than 4 peers, so reducing the default size means that we'll have
+				//slightly less memory overhead
+				makeMap();
+		
 	}
 	
-	public Peer put(InetAddress i) {
-		Peer p = get(i);
-		if(p == null) {
-			p = createPeer(i);
+	public boolean touchPeer(InetSocketAddress address) {
+		Peer peer = map.get(address);
+		
+		if(peer == null) {
+			return false;
 		}
 		
-		map.put(i,p);
+		peer.touch();
+		map.put(address, peer);
+		return true;
+	}
+	
+	public Peer put(InetSocketAddress address) {
+		Peer p = get(address);
+		
+		if(p == null) {
+			p = createPeer(address);
+		}
+		
+		map.put(address, p);
 		
 		return p;
 	}
 	
-	public Peer get(InetAddress i) {
-		return map.get(i);
+	public Peer get(InetSocketAddress address) {
+		return map.get(address);
 	}
 	
-	private Peer createPeer(InetAddress i) {
-		return new Peer(i);
+	private Peer createPeer(InetSocketAddress address) {
+		return new Peer(address);
 	}
 	
-	public List<Peer> getPeers(int i) {
-		return ReservoirSampler.listSample(map.values(), i);
+	public Collection<Peer> getPeers(int numwant, boolean preferLeechers) {
+		if(numwant > map.size()) {
+			return ReservoirSampler.listSample(map.values(), numwant);
+		} else {
+			return map.values();
+		}
+		
 		
 	}
 	

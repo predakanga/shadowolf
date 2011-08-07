@@ -3,7 +3,13 @@ package com.shadowolf.protocol;
 import java.net.InetSocketAddress;
 
 /**
- * POJO with fields that represent an announce.
+ * This represents the actual data of an announce. It stores the Infohash,
+ * passkey, peerId, event, the number of peers desired, as well as changes 
+ * in upload, download, and time since the last announce. This object
+ * is fully mutable until unmutable() is called, after which no modifications
+ * will be prmitted, and will throw an IllegalStateException. if attempted.
+ * <br /><br />
+ * <strong>This class is only threadsafe after unmutable() is called!</strong>
  */
 public class Announce {
 	public static enum Event {
@@ -20,17 +26,20 @@ public class Announce {
 	
 	private long upDelta;
 	private long downDelta;
-	private long timeDelta;
+	private int timeDelta;
 	private long left;
-	private long numwant;
+	private int numwant;
 	
 	private InetSocketAddress address;
+	
+	private boolean mutable;
 
 	public Infohash getHash() {
 		return hash;
 	}
 
 	public void setHash(Infohash hash) {
+		checkMutable();
 		this.hash = hash;
 	}
 
@@ -39,6 +48,7 @@ public class Announce {
 	}
 
 	public void setPasskey(String passkey) {
+		checkMutable();
 		this.passkey = passkey;
 	}
 
@@ -47,6 +57,7 @@ public class Announce {
 	}
 
 	public void setPeerId(String peerId) {
+		checkMutable();
 		this.peerId = peerId;
 	}
 
@@ -55,6 +66,7 @@ public class Announce {
 	}
 
 	public void setEvent(Event event) {
+		checkMutable();
 		this.event = event;
 	}
 
@@ -63,6 +75,7 @@ public class Announce {
 	}
 
 	public void setUpDelta(long upDelta) {
+		checkMutable();
 		this.upDelta = upDelta;
 	}
 
@@ -71,6 +84,7 @@ public class Announce {
 	}
 
 	public void setDownDelta(long downDelta) {
+		checkMutable();
 		this.downDelta = downDelta;
 	}
 
@@ -78,7 +92,8 @@ public class Announce {
 		return timeDelta;
 	}
 
-	public void setTimeDelta(long timeDelta) {
+	public void setTimeDelta(int timeDelta) {
+		checkMutable();
 		this.timeDelta = timeDelta;
 	}
 
@@ -87,14 +102,17 @@ public class Announce {
 	}
 
 	public void setLeft(long left) {
+		checkMutable();
 		this.left = left;
 	}
 
-	public long getNumwant() {
+	public int getNumwant() {
+		checkMutable();
 		return numwant;
 	}
 
-	public void setNumwant(long numwant) {
+	public void setNumwant(int numwant) {
+		checkMutable();
 		this.numwant = numwant;
 	}
 
@@ -103,6 +121,22 @@ public class Announce {
 	}
 
 	public void setAddress(InetSocketAddress address) {
+		checkMutable();
 		this.address = address;
+	}
+	
+	/**
+	 * This prevents all further modifications to the object, making it immutable and thread safe. This
+	 * should be called before it reaches the asynchronous queue. Any further modifications will throw
+	 * an IllegalStateException.
+	 */
+	public void unmutable() {
+		mutable = false;
+	}
+	
+	private void checkMutable() {
+		if(!mutable) {
+			throw new IllegalStateException("Announce object finalized, unable to modify.");
+		}
 	}
 }

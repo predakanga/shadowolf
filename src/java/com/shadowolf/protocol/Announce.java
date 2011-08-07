@@ -18,8 +18,9 @@ public class Announce {
 	private String peerId;
 	private Event event;
 	
-	private long uploaded;
-	private long downloaded;
+	private long upDelta;
+	private long downDelta;
+	private long timeDelta;
 	private long left;
 	private long numwant;
 	
@@ -57,20 +58,28 @@ public class Announce {
 		this.event = event;
 	}
 
-	public long getUploaded() {
-		return uploaded;
+	public long getUpDelta() {
+		return upDelta;
 	}
 
-	public void setUploaded(long uploaded) {
-		this.uploaded = uploaded;
+	public void setUpDelta(long upDelta) {
+		this.upDelta = upDelta;
 	}
 
-	public long getDownloaded() {
-		return downloaded;
+	public long getDownDelta() {
+		return downDelta;
 	}
 
-	public void setDownloaded(long downloaded) {
-		this.downloaded = downloaded;
+	public void setDownDelta(long downDelta) {
+		this.downDelta = downDelta;
+	}
+
+	public long getTimeDelta() {
+		return timeDelta;
+	}
+
+	public void setTimeDelta(long timeDelta) {
+		this.timeDelta = timeDelta;
 	}
 
 	public long getLeft() {
@@ -96,5 +105,4 @@ public class Announce {
 	public void setAddress(InetSocketAddress address) {
 		this.address = address;
 	}
-	
 }

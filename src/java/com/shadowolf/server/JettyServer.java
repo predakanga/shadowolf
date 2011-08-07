@@ -10,7 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -42,7 +41,7 @@ public class JettyServer implements ShadowolfComponent {
 	private static final String ANNOUNCE_URL = "/announce";
 	private static final String SCRAPE_URL = "/scrape";
 	
-	private final Handler handler;
+	private Handler handler;
 	private final InetAddress address;
 	private final int port;
 	private Server server;
@@ -53,7 +52,6 @@ public class JettyServer implements ShadowolfComponent {
 	public JettyServer(InetAddress address, int port) throws ServletException {
 		this.port = port;
 		this.address = address;
-		this.handler = new RequestHandler();
 	}
 	
 	@Override
@@ -88,6 +86,9 @@ public class JettyServer implements ShadowolfComponent {
 	 */
 	public void startServer(AccessList accessList) throws Exception {
 		LOG.info("Starting embedded Jetty server on " + this.address.getHostAddress() + ":" + this.port);
+		
+		this.handler = new RequestHandler();
+		
 		InetSocketAddress address = new InetSocketAddress(this.address, port);
 		this.server = new Server(address);
 		this.server.setSendServerVersion(false);
@@ -156,16 +157,18 @@ public class JettyServer implements ShadowolfComponent {
 	}
 	
 	
-	private static final class RequestHandler extends AbstractHandler implements Server.Graceful {
+	private class RequestHandler extends AbstractHandler implements Server.Graceful {
 		private volatile boolean shutdown = false;
 		
-		private final HttpServlet announce = new AnnounceRequest();
-		private final HttpServlet scrape = new ScrapeRequest();
+		private final AnnounceRequest announce = new AnnounceRequest();
+		private final ScrapeRequest scrape = new ScrapeRequest();
 		
 		public RequestHandler() throws ServletException {
 			super();
 			announce.init();
+			announce.setContext(getContext());
 			scrape.init();
+			scrape.setContext(getContext());
 		}
 		
 		

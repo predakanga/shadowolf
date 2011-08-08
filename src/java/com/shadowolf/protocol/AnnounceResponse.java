@@ -162,20 +162,28 @@ public class AnnounceResponse {
 		
 		for(Peer p : peers) {
 			int index;
+			int portIndex;
 			byte[] b = p.getAddress().getAddress().getAddress();
-			
+			byte[] port = intToByte(p.getAddress().getPort());
 			if(b.length > 4) {
-				index = ipv6Index; 
+				index = ipv6Index;
+				portIndex = index+4;
 				ipv4Index += 6;
 			} else {
 				index = ipv6Index;
+				portIndex = index+16;
 				ipv6Index += 18;
 			}
 
 			System.arraycopy(b, 0, result, index, b.length);
+			System.arraycopy(port, 0, result, portIndex, port.length);
+			
 		}
 		
 		return result;
 	}
 	
+	private static byte[] intToByte(int i) {
+		return new byte[] { (byte)(i >>> 8), (byte) i};
+	}
 }

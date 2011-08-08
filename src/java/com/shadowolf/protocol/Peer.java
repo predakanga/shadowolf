@@ -6,23 +6,28 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * TBD
+ * 
+ * This represents the actual peer of a torrent. It stores information about
+ * their current activity, primarily their InetAddress, and the upload and
+ * download amounts. These amounts are on a per session basis, and accumulate
+ * over time.
  *
  */
 @ThreadSafe
 public class Peer {
-	private InetSocketAddress address;
+	private final InetSocketAddress address;
 	
-	private AtomicLong lastUpdate = new AtomicLong(0);
-	private AtomicLong uploaded = new AtomicLong(0);
-	private AtomicLong downloaded = new AtomicLong(0);
+	private final AtomicLong lastUpdate = new AtomicLong(0);
+	private final AtomicLong uploaded = new AtomicLong(0);
+	private final AtomicLong downloaded = new AtomicLong(0);
 	
 	
-	public Peer(InetSocketAddress address) {
+	Peer(InetSocketAddress address) {
 		this.address = address;
 		lastUpdate.set(System.currentTimeMillis());
 	}
-
+	
+	
 	public void touch() {
 		lastUpdate.set(System.currentTimeMillis());
 	}
@@ -37,10 +42,6 @@ public class Peer {
 	
 	public InetSocketAddress getAddress() {
 		return address;
-	}
-
-	public void setAddress(InetSocketAddress address) {
-		this.address = address;
 	}
 
 	public long getLastUpdate() {

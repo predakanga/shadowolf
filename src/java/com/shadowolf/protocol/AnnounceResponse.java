@@ -6,11 +6,11 @@ package com.shadowolf.protocol;
  *
  */
 public class AnnounceResponse {
-	int seeders;
-	int leechers;
-	Peer[] peers;
-	int interval;
-	int minInterval;
+	private int seeders;
+	private int leechers;
+	private Peer[] peers;
+	private int interval;
+	private int minInterval;
 	
 	public AnnounceResponse(int seeders, int leechers, Peer[] peers, int interval, int minInterval) {
 		super();
@@ -80,7 +80,12 @@ public class AnnounceResponse {
 	public void setMinInterval(int minInterval) {
 		this.minInterval = minInterval;
 	}
+	
 	public String bencode() {
-		return "";
+		StringBuilder sb = new StringBuilder();
+		
+		//todo
+		return sb.toString();
 	}
+	
 }

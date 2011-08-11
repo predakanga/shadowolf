@@ -32,7 +32,7 @@ public class Peerlist implements ShadowolfComponent {
 	
 	public Peerlist(ShadowolfContext s) {
 		setContext(s);
-		map = s.makepeerListMap();
+		map = s.getBittorrentContext().getPeerlistMapMaker().makeMap();
 	}
 	
 	public boolean touchPeer(InetSocketAddress address) {
@@ -86,4 +86,5 @@ public class Peerlist implements ShadowolfComponent {
 	public ShadowolfContext getContext() {
 		return context;
 	}
+	
 }

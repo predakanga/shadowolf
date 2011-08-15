@@ -115,14 +115,15 @@ public class AnnounceResponse {
 	
 	public String bencode() {
 		if(error.length() > 0) {
-			return "d14:failure reason"+error.length()+":"+error+"e\r\n";
+			return "d14:failure reason"+error.length()+":"+error+"e\r\n"; // size 
 		}
 		StringBuilder sb = new StringBuilder();
 		
-		String s = "d8:intervali" + interval + "e" + "12:min intervali" + minInterval + "e10:incompletei" + leechers + "e8:completei" + seeders + "e";
-		sb.append(s.getBytes(Charsets.UTF_8));
-		sb.append(encodePeers());
-		sb.append("e\r\n".getBytes(Charsets.UTF_8));
+		String s = "d8:intervali" + interval + "e" + "12:min intervali" + minInterval + "e10:incompletei" + leechers + "e8:completei" + seeders + "e"; //length 14+18+16+13=66
+		sb.append(s);
+		//sb.append(s.getBytes(Charsets.UTF_8));
+		sb.append(new String(encodePeers()));
+		sb.append("\r\n"/*.getBytes(Charsets.UTF_8)*/); // length2
 		
 		return sb.toString();
 	}
@@ -140,16 +141,24 @@ public class AnnounceResponse {
 			}
 		}
 		
-		byte[] ipv4start = ("5:peers"+(ipv4Count*6)+":").getBytes(Charsets.UTF_8);
-		byte[] ipv6start = new byte[0];
+		//These may not be defined here because we want to omit them if size = 0 for ipv4 or ipv6
+		byte[] ipv4start = new byte[0]; // length 0
+		byte[] ipv6start = new byte[0]; // length 0
 		
-		if(ipv6Count > 0) {
-			ipv6start = ("6:peers6"+(ipv6Count*18)+":").getBytes(Charsets.UTF_8);
+		if(ipv4Count > 0) {
+			ipv4start = ("5:peers"+(ipv4Count*6)+":").getBytes(Charsets.UTF_8); // length 10
+			//System.out.println(ipv4start.length);
 		}
 		
-		int size = ipv6start.length + ipv4start.length + (ipv6Count * 18) + (ipv4Count * 6);
+		if(ipv6Count > 0) {
+			ipv6start = ("6:peers6"+(ipv6Count*18)+":").getBytes(Charsets.UTF_8); // length 10
+		}
+		
+		int size = ipv6start.length + ipv4start.length + (ipv6Count * 18) + (ipv4Count * 6)+1;
 		
 		byte[] result = new byte[size];
+		
+		result[size-1] = 'e';
 		
 		int ipv4Index = 0;
 		int ipv6Index = ipv4start.length+(6*ipv4Count);
@@ -167,12 +176,12 @@ public class AnnounceResponse {
 			byte[] port = intToByte(p.getAddress().getPort());
 			if(b.length > 4) {
 				index = ipv6Index;
-				portIndex = index+4;
-				ipv4Index += 6;
-			} else {
-				index = ipv6Index;
 				portIndex = index+16;
 				ipv6Index += 18;
+			} else {
+				index = ipv4Index;
+				portIndex = index+4;
+				ipv4Index += 6;
 			}
 
 			System.arraycopy(b, 0, result, index, b.length);

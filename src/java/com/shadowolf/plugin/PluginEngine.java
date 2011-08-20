@@ -3,6 +3,8 @@ package com.shadowolf.plugin;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -56,9 +58,9 @@ import com.shadowolf.protocol.Announce;
  *  
  */
 public class PluginEngine {
-	private Multimap<Class<?>, Object> objectsAtPoint = HashMultimap.create();
+	private final Multimap<Class<?>, Object> objectsAtPoint = HashMultimap.create();
 	private ScheduledThreadPoolExecutor scheduler;
-	private ExecutorService asyncExecutor;
+	private final ExecutorService asyncExecutor;
 	
 	/**
 	 * Create a new PluginEngine with a default thread pool. 
@@ -188,12 +190,13 @@ public class PluginEngine {
 		int size = objectsAtPoint.get(ScheduledThreadPoolExecutor.class).size();
 		
 		if(size > 0 && scheduler == null) {
-			scheduler = new ScheduledThreadPoolExecutor(size);
+			scheduler = new ScheduledThreadPoolExecutor(size, new ThreadPoolExecutor.DiscardPolicy());
+			
 			
 			for(Object plugin : objectsAtPoint.get(ScheduledTask.class)) {
 				ScheduledTask task = (ScheduledTask) plugin;
 				
-				scheduler.scheduleAtFixedRate(task, task.getDelay(), task.getInterval(), task.getTimeUnit());
+				new SchedueledRunnable(task).enqueue();
 			}
 		}
 		
@@ -243,5 +246,33 @@ public class PluginEngine {
 			task.run(announce);
 		}
 		
+	}
+	
+	private class SchedueledRunnable implements Runnable {
+		private long interval;
+		private long nextExecution;
+		private ScheduledTask task;
+		
+		private SchedueledRunnable(ScheduledTask task) {
+			this.task = task;
+			this.interval = task.getTimeUnit().toMillis(task.getInterval());
+			nextExecution = System.currentTimeMillis() + task.getTimeUnit().toMillis(task.getDelay());
+		}
+		
+		@Override
+		public void run() {
+			task.run();
+			
+			while(System.currentTimeMillis() > nextExecution) {
+				nextExecution += interval;
+			}
+			
+			enqueue();
+		}
+		
+		
+		private void enqueue() {
+			scheduler.schedule(this, nextExecution-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+		}
 	}
 }
